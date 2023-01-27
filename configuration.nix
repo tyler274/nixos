@@ -550,7 +550,7 @@ in
     # required to run chromium
     chromiumSuidSandbox.enable = true;
     # App Armor broken right now https://github.com/NixOS/nixpkgs/issues/169056
-    #apparmor.enable = true;
+    apparmor.enable = true;
 
     pam.services.kwallet = {
       name = "kwallet";
