@@ -20,6 +20,7 @@ in
     ];
   # I don't have my swap on top of ZFS but suspend/hibernation is still weird.
   #boot.zfs.allowHibernation = true;
+  boot.loader.grub.memtest86.enable = true;
 
   boot.blacklistedKernelModules = [
     # Obscure network protocols
