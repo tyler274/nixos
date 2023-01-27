@@ -75,6 +75,17 @@ in
   services = {
     # Enable the OpenSSH daemon.
     # services.openssh.enable = true;
+    openssh = {
+      enable = true;
+      permitRootLogin = "prohibit-password";
+      passwordAuthentication = false;
+      forwardX11 = true;
+      port = [ 42069 ];
+    };
+
+    smartd = { 
+      enable = true;
+    };
 
     # The general ZFS things that weren't provided by OpenZFS in `zfs.nix`
     zfs = {
@@ -364,28 +375,44 @@ in
           })
           (pkgs.makeDesktopItem {
             name = "DiscordWayland";
+            # Does not appear to actually set the icon correctly.
             icon = "Discord";
             exec = "discord-wayland";
             desktopName = "DiscordWayland";
           })
+          # Telegram desktop client.
           tdesktop
+          # A nix language server.
           rnix-lsp
           krita
+          # appimage-run lets you run appimages, but the runtime needs some other packages for certain apps to run.
+          # webkitgtk takes a long time to build.... 
           (appimage-run.override { extraPkgs = pkgs: [ pkgs.nss pkgs.swt webkitgtk glib-networking ]; })
+          # Not sure if glib-networking is needed here, was from debugging appimage-run above. TEST.
           glib-networking
+          # Downloads Youtube videos and other media.
           yt-dlp
+          # Give me a system pip.
           python310Packages.pip
+          # Discord plugin framework installer.
           betterdiscordctl
           blender
           spotify
+          # controls water pumps. Doesn't work with mine (yet). 
           liquidctl
+          # Alternative to steam proton for e.g. Epic Game Store
           lutris
+          # drop down terminal.
           yakuake
+          # The critically acclaimed MMORPG.
           xivlauncher
+          # gives me the dotnet sdk, but can't run e.g. ryujinx without other dependencies. 
           dotnet-sdk_7
+          # Get my factor counts up. 	
           authy
           (pkgs.writeShellApplication {
             name = "authy-wayland";
+            # Authy actually uses a recent enough Electron to support wayland. 
             text = "${pkgs.authy}/bin/authy --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
           })
           (pkgs.makeDesktopItem {
@@ -393,17 +420,28 @@ in
             exec = "authy-wayland";
             desktopName = "AuthyWayland";
           })
+          # Better PlayStation remote play client.
           chiaki
+          # Finely grained application firewall gui.
           opensnitch-ui
+          # Streaming and recording video. Audio processing whenever Nvidia gets on it.  
           obs-studio
+          # Get the Glorious Eggroll Proton up to date. 
           protonup-ng
+          # Make sure wayland's user facing stuff is available. 
           wayland
+          # Media players.
           vlc
           mpv
+          # Torrent client
           qbittorrent
+          # Matrix chat client (rust)
           fractal-next
+          # Matrix homeserver (rust)
           matrix-conduit
+          # Red team yourself. 
           metasploit
+          # Chromium offshoot for casting and TTS.
           microsoft-edge
           (pkgs.writeShellApplication {
             name = "microsoft-edge-wayland";
@@ -414,10 +452,14 @@ in
             exec = "microsoft-edge-wayland";
             desktopName = "MicrosoftEdgeWayland";
           })
+          # Another secure chat client. 
           signal-desktop
+          # Supposed to enable adding my ssh key to ssh-agent on kwallet opening,
+          # but not configured.
           libsForQt5.ksshaskpass
-          #ryujinx-master
+          # Digital Audio Workstation. 
           reaper
+          # Working with MS office documents, spreadsheets, etc. 
           libreoffice-qt
         ];
       };
@@ -623,29 +665,33 @@ in
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    # Wireguard cli tools
     wireguard-tools
+    # 7Zip 
     p7zip
     git
     wayland
+    # Still needed for KDE wayland to work on the Nvidia driver.
     egl-wayland
+    xwayland
     htop
+    nvtop
     pciutils
     usbutils
     nix-index
-    xwayland
-    # deez Network UPS tools
+    dmidecode
+    # deez Network UPS Tools
     nut
-    #mullvad
-    #mullvad-vpn
-    nvtop
-    # userspace snapshot management tools
+    # ZFS userspace snapshot management tools
     sanoid
-    # deps for Sanoid
+    # deps for Sanoid's syncoid tool
     pv
     mbuffer
     lzop
     zstd
+    # Lets you easily, but very destructively, prune snapshots. 
     zfs-prune-snapshots
+    # tools 
     smartmontools
     httm
     hydra-check
