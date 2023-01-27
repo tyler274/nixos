@@ -734,7 +734,7 @@ in
       enable = true;
       allowReboot = false;
       persistent = true;
-      flake = "github:tyler274/nixos-configurations";
+      flake = "github:tyler274/nixos";
       flags = [
         "--recreate-lock-file"
         "--no-write-lock-file"
