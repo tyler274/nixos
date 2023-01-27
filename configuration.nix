@@ -196,7 +196,10 @@ in
       enable = true;
       layout = "us";
       # X Server enabled video drivers.
-      videoDrivers = [ "nvidia" "amdgpu" ];
+      videoDrivers = [ 
+        "nvidia"
+        #"amdgpu" 
+      ];
 
       # Enables GDM and Gnome.
       #displayManager.gdm.enable = true;
