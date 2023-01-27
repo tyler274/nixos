@@ -80,7 +80,7 @@ in
       permitRootLogin = "prohibit-password";
       passwordAuthentication = false;
       forwardX11 = true;
-      port = [ 42069 ];
+      ports = [ 42069 ];
     };
 
     smartd = { 
