@@ -87,6 +87,10 @@ in
       enable = true;
     };
 
+    logrotate = {
+      enable = true;
+    };
+
     # The general ZFS things that weren't provided by OpenZFS in `zfs.nix`
     zfs = {
       # Checks for checksum errors.
