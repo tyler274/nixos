@@ -474,8 +474,8 @@ in
 
     # Open ports in the firewall.
     firewall.allowedTCPPorts = [
-      5432
-      5433
+      #5432
+      #5433
     ];
     # networking.firewall.allowedUDPPorts = [ ... ];
     # Or disable the firewall altogether.
