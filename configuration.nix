@@ -64,9 +64,6 @@ in
   # Enable CUDA support for packages that can use it.
   nixpkgs.config.cudaSupport = true;
 
-  # Allowed dynamically linked things expecting a normal ld to work.
-  programs.nix-ld.enable = true;
-
   # swap this to "mimalloc" to test it. Mainly firefox and chromium/electron things break
   # as they ship their own mallocs. Do other Rust things break? perhaps closed source
   # precompiled things....
@@ -221,7 +218,18 @@ in
     };
 
     # Enable CUPS service to print documents.
-    printing.enable = true;
+    printing = {
+      enable = true;
+      drivers = [ pkgs.cnijfilter2 ];
+    };
+    avahi = {
+      # for a WiFi printer
+      enable = true;
+      openFirewall = true;
+      nssmdns = true;
+    };
+    # for an USB printer
+    #ipp-usb.enable = true;
 
     # Enable sound.
     # Remove sound.enable or turn it off if you had it set previously, it seems to cause conflicts with pipewire
@@ -292,11 +300,11 @@ in
     # Settings for the Nvidia drivers
     nvidia = {
       # Use the more recent nvidia drivers. 
-      package = config.boot.kernelPackages.nvidiaPackages.beta;
+      package = config.boot.kernelPackages.nvidiaPackages.production;
       # Enables driver modesetting
       modesetting.enable = true;
       # Enables the Nvidia open source kernel modesetting driver. 
-      open = true;
+      open = false;
     };
 
     # Bluetooth driver support
@@ -306,7 +314,12 @@ in
 
     # Make sure Pulseaudio stays dead.
     pulseaudio.enable = false;
-
+    
+    sane = {
+      enable = true;
+      extraBackends = [ pkgs.sane-airscan ];
+      
+    };
   };
 
   # at some point something will make a /var/state/ups directory,
@@ -348,7 +361,7 @@ in
       # Define a user account. Don't forget to set a password with ‘passwd’.
       luluco = {
         isNormalUser = true;
-        extraGroups = [ "wheel" "networkmanager" ]; # Enable ‘sudo’ for the user.
+        extraGroups = [ "wheel" "networkmanager" "scanner" "lp" ]; # Enable ‘sudo’ for the user.
         packages = with pkgs; [
           firefox-wayland
           thunderbird
@@ -624,6 +637,10 @@ in
   };
 
   programs = {
+    # Allowed dynamically linked things expecting a normal ld to work.
+    nix-ld.enable = true;
+    # Phone link 
+    kdeconnect.enable = true;
     # Firejail to restrict the access of the two things that raw dog the internet the
     # most. Microsoft Edge doesn't seem to work with it, possibly due to the issues with 
     # App Armor.
@@ -786,18 +803,18 @@ in
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
     stateVersion = "22.11"; # Did you read the comment?
 
-    autoUpgrade = {
-      enable = true;
-      allowReboot = false;
-      persistent = true;
-      flake = "github:tyler274/nixos";
-      flags = [
-        "--recreate-lock-file"
-        "--no-write-lock-file"
-        "-L" # print build logs
-      ];
-      dates = "daily";
-    };
+    #autoUpgrade = {
+    #  enable = true;
+    #  allowReboot = false;
+    #  persistent = true;
+    #  flake = "github:tyler274/nixos";
+    #  flags = [
+    #    "--recreate-lock-file"
+    #    "--no-write-lock-file"
+    #    "-L" # print build logs
+    #  ];
+    #  dates = "daily";
+    #};
   };
 
 }
