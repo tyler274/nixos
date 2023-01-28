@@ -117,6 +117,7 @@ in
         daily = 30;
         monthly = 3;
         yearly = 1;
+        recursive = true;
       };
     };
 
@@ -285,7 +286,7 @@ in
       enable = true;
       driSupport = true;
       # Enables 32bit library support. 
-      # driSupport32Bit = true;
+      driSupport32Bit = true;
     };
 
     # Settings for the Nvidia drivers
@@ -709,6 +710,7 @@ in
 
 
   virtualisation = {
+    waydroid.enable = true;
     lxd.enable = true;
     lxc = {
       enable = true;
