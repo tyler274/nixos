@@ -59,6 +59,9 @@ in
 
   # Enable Flakes for better package updates
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Not sure how to actually adjust system march/mtune with non-legacy configuration.
+  nix.settings.system-features = [ "gccarch-znver3" ];
+  nix.settings.extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
   # allow unfree packages to be installed from repos. 
   nixpkgs.config.allowUnfree = true;
   #unstable.config.allowUnfree = true;
@@ -200,7 +203,7 @@ in
       # X Server enabled video drivers.
       videoDrivers = [ 
         "nvidia"
-        #"amdgpu" 
+        "amdgpu" 
       ];
 
       # Enables GDM and Gnome.
@@ -418,8 +421,8 @@ in
           # webkitgtk takes a long time to build.... 
           (appimage-run.override { 
             extraPkgs = pkgs: [ 
-              pkgs.nss 
-              pkgs.swt 
+              nss 
+              swt 
               webkitgtk 
               #glib-networking 
             ]; 
@@ -796,6 +799,32 @@ in
   
   nixpkgs.overlays = [
     (self: super: {
+      webkitgtk = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
+      tdesktop = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
+
+      ccacheWrapper = super.ccacheWrapper.override {
+      extraConfig = ''
+        export CCACHE_COMPRESS=1
+        export CCACHE_DIR="${config.programs.ccache.cacheDir}"
+        export CCACHE_UMASK=007
+        if [ ! -d "$CCACHE_DIR" ]; then
+          echo "====="
+          echo "Directory '$CCACHE_DIR' does not exist"
+          echo "Please create it with:"
+          echo "  sudo mkdir -m0770 '$CCACHE_DIR'"
+          echo "  sudo chown root:nixbld '$CCACHE_DIR'"
+          echo "====="
+          exit 1
+        fi
+        if [ ! -w "$CCACHE_DIR" ]; then
+          echo "====="
+          echo "Directory '$CCACHE_DIR' is not accessible for user $(whoami)"
+          echo "Please verify its access permissions"
+          echo "====="
+          exit 1
+        fi
+      '';
+    };
       #discord = super.discord.overrideAttrs (
       #  _: {
       #    src = builtins.fetchTarball https://discord.com/api/download?platform=linux&format=tar.gz;
