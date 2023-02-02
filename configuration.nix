@@ -4,7 +4,7 @@
 
 { config, pkgs, ... }:
 let
-  unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
+  #unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
   ups_vendorid = "0764";
   ups_productid = "0501";
   ups_product = "CP1500AVRLCDa";
@@ -61,6 +61,7 @@ in
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # allow unfree packages to be installed from repos. 
   nixpkgs.config.allowUnfree = true;
+  #unstable.config.allowUnfree = true;
   # Enable CUDA support for packages that can use it.
   nixpkgs.config.cudaSupport = true;
 
@@ -75,8 +76,10 @@ in
     # services.openssh.enable = true;
     openssh = {
       enable = true;
-      permitRootLogin = "prohibit-password";
-      passwordAuthentication = false;
+      settings = {
+        PermitRootLogin = "prohibit-password";
+        PasswordAuthentication = false;
+      };
       forwardX11 = true;
       ports = [ 42069 ];
     };
@@ -304,7 +307,7 @@ in
       # Enables driver modesetting
       modesetting.enable = true;
       # Enables the Nvidia open source kernel modesetting driver. 
-      open = false;
+      open = true;
     };
 
     # Bluetooth driver support
@@ -361,11 +364,12 @@ in
       # Define a user account. Don't forget to set a password with ‘passwd’.
       luluco = {
         isNormalUser = true;
-        extraGroups = [ "wheel" "networkmanager" "scanner" "lp" ]; # Enable ‘sudo’ for the user.
+        extraGroups = [ "wheel" "networkmanager" "scanner" "lp" "docker" ]; # Enable ‘sudo’ for the user.
         packages = with pkgs; [
           firefox-wayland
           thunderbird
           gcc
+          wezterm
           cudaPackages.cudatoolkit
           cudaPackages.cudnn
           #cudaPackages.libcublas
@@ -385,6 +389,8 @@ in
             exec = "bitwarden-wayland";
             desktopName = "BitwardenWayland";
           })
+          llvmPackages.bintools
+          mold
           rustup
           discord
           # Work around #159267
@@ -406,10 +412,18 @@ in
           tdesktop
           # A nix language server.
           rnix-lsp
+          # Image creation and editing tool
           krita
           # appimage-run lets you run appimages, but the runtime needs some other packages for certain apps to run.
           # webkitgtk takes a long time to build.... 
-          (appimage-run.override { extraPkgs = pkgs: [ pkgs.nss pkgs.swt webkitgtk glib-networking ]; })
+          (appimage-run.override { 
+            extraPkgs = pkgs: [ 
+              pkgs.nss 
+              pkgs.swt 
+              webkitgtk 
+              #glib-networking 
+            ]; 
+          })
           # Not sure if glib-networking is needed here, was from debugging appimage-run above. TEST.
           glib-networking
           # Downloads Youtube videos and other media.
@@ -418,7 +432,9 @@ in
           python310Packages.pip
           # Discord plugin framework installer.
           betterdiscordctl
+          # 3D model and graphics multitool 
           blender
+          # really just audiobooks
           spotify
           # controls water pumps. Doesn't work with mine (yet). 
           liquidctl
@@ -458,12 +474,12 @@ in
           # Torrent client
           qbittorrent
           # Matrix chat client (rust)
-          fractal-next
+          stable.fractal-next
           # Matrix homeserver (rust)
           matrix-conduit
           # Red team yourself. 
           metasploit
-          # Chromium offshoot for casting and TTS.
+          # Chromium offshoot for casting and Speechify TTS.
           microsoft-edge
           (pkgs.writeShellApplication {
             name = "microsoft-edge-wayland";
@@ -684,6 +700,18 @@ in
 
     # Friendly nehghborhood SSH Agent.
     ssh.startAgent = true;
+
+    ccache = {
+      enable = true;
+      packageNames = [ 
+        "ffmpeg"
+        #"blender"
+        "chromium"
+        "krita" 
+        #"webkitgtk" 
+        #"opencv" 
+      ];
+    };
   };
 
   # List packages installed in system profile. To search, run:
@@ -733,6 +761,15 @@ in
       enable = true;
       lxcfs.enable = true;
     };
+    docker = {
+      enable = true;
+      storageDriver = "zfs";
+      enableNvidia = true;
+      rootless = {
+        enable = true;
+        setSocketVariable = true;
+      };
+    };
     #  podman = {
     #    enable = true;
 
@@ -756,7 +793,7 @@ in
     #    };
     #  };
   };
-
+  
   nixpkgs.overlays = [
     (self: super: {
       #discord = super.discord.overrideAttrs (
