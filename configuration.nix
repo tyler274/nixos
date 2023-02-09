@@ -56,11 +56,16 @@ in
     { device = "/dev/disk/by-uuid/94e48780-db14-4388-9fe0-42f9b5639d61"; }
     { device = "/dev/disk/by-uuid/2c2f46cd-1f7a-4859-b021-e14e2786f7b5"; }
   ];
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+  };
 
   # Enable Flakes for better package updates
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Not sure how to actually adjust system march/mtune with non-legacy configuration.
-  nix.settings.system-features = [ "gccarch-znver3" ];
+  nix.settings.system-features = [ "kvm" "nixos-test" "benchmark" "big-parallel" "gccarch-znver3" ];
+  #nix.settings.system-features = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
   nix.settings.extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
   # allow unfree packages to be installed from repos. 
   nixpkgs.config.allowUnfree = true;
@@ -87,7 +92,7 @@ in
       ports = [ 42069 ];
     };
 
-    smartd = { 
+    smartd = {
       enable = true;
     };
 
@@ -201,9 +206,9 @@ in
       enable = true;
       layout = "us";
       # X Server enabled video drivers.
-      videoDrivers = [ 
+      videoDrivers = [
         "nvidia"
-        "amdgpu" 
+        #"amdgpu" 
       ];
 
       # Enables GDM and Gnome.
@@ -320,11 +325,10 @@ in
 
     # Make sure Pulseaudio stays dead.
     pulseaudio.enable = false;
-    
+
     sane = {
       enable = true;
       extraBackends = [ pkgs.sane-airscan ];
-      
     };
   };
 
@@ -392,7 +396,7 @@ in
             exec = "bitwarden-wayland";
             desktopName = "BitwardenWayland";
           })
-          llvmPackages.bintools
+          llvmPackages_15.bintools
           mold
           rustup
           discord
@@ -400,7 +404,7 @@ in
           (pkgs.writeShellApplication {
             name = "discord-wayland";
             # This actually force disables wayland
-            text = "${pkgs.discord}/bin/discord --use-gl=desktop";
+            text = "${pkgs.discord}/bin/discord --enable-features=WebRTCPipeWireCapturer --use-gl=desktop";
             # To try actual wayland support. 
             # text = "${pkgs.discord}/bin/discord --enable-features=WebRTCPipeWireCapturer --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
           })
@@ -412,20 +416,20 @@ in
             desktopName = "DiscordWayland";
           })
           # Telegram desktop client.
-          tdesktop
+          stable.tdesktop
           # A nix language server.
           rnix-lsp
           # Image creation and editing tool
           krita
           # appimage-run lets you run appimages, but the runtime needs some other packages for certain apps to run.
           # webkitgtk takes a long time to build.... 
-          (appimage-run.override { 
-            extraPkgs = pkgs: [ 
-              nss 
-              swt 
-              webkitgtk 
-              #glib-networking 
-            ]; 
+          (appimage-run.override {
+            extraPkgs = pkgs: [
+              nss
+              swt
+              webkitgtk
+              glib-networking
+            ];
           })
           # Not sure if glib-networking is needed here, was from debugging appimage-run above. TEST.
           glib-networking
@@ -656,7 +660,7 @@ in
   };
 
   programs = {
-    # Allowed dynamically linked things expecting a normal ld to work.
+    # Allows dynamically linked things expecting a normal ld to work.
     nix-ld.enable = true;
     # Phone link 
     kdeconnect.enable = true;
@@ -706,13 +710,14 @@ in
 
     ccache = {
       enable = true;
-      packageNames = [ 
+      packageNames = [
         "ffmpeg"
         #"blender"
         "chromium"
-        "krita" 
+        "krita"
         #"webkitgtk" 
         #"opencv" 
+        # "libreoffice-qt"
       ];
     };
   };
@@ -736,6 +741,7 @@ in
     pciutils
     usbutils
     nix-index
+    # Read info on RAM modules, like their speed. 
     dmidecode
     # deez Network UPS Tools
     nut
@@ -773,66 +779,66 @@ in
         setSocketVariable = true;
       };
     };
-    #  podman = {
-    #    enable = true;
-
-    # Create a `docker` alias for podman, to use it as a drop-in replacement
-    #    dockerCompat = true;
-
-    # Required for containers under podman-compose to be able to talk to each other.
-    #    defaultNetwork.dnsname.enable = true;
-
-    #    enableNvidia = true; 
-    #    extraPackages = [ 
-    #      pkgs.zfs 
-    #pkgs.fuse-overlayfs
-    #    ];
-    #  };
-    #  containers.storage.settings = {
-    #    storage = {
-    #      driver = "zfs";
-    #      graphroot = "/var/lib/containers/storage";
-    #      runroot = "/run/containers/storage";
-    #    };
-    #  };
   };
-  
+
   nixpkgs.overlays = [
     (self: super: {
-      webkitgtk = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
-      tdesktop = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
+      # webkitgtk = super.webkitgtk.override {
+      #   stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      # };
+      webkitgtk = super.webkitgtk.override {
+        stdenv = super.llvmPackages_15.stdenv;
+      };
+      blender = super.blender.override {
+        # stdenv = super.llvmPackages_15.stdenv;
+        stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      };
+      # libreoffice = super.libreoffice.override {
+      #   stdenv = super.llvmPackages_15.stdenv;
+      #   # stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      # };
+      # chromium = super.chromium.override {
+      #   stdenv = super.llvmPackages_15.stdenv;
+      # };
+      #webkitgtk = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
+      # tdesktop = super.tdesktop.override { stdenv = super.ccacheStdenv; };
+      tdesktop = super.libreoffice-qt.override
+        {
+          stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+        };
 
-      ccacheWrapper = super.ccacheWrapper.override {
-      extraConfig = ''
-        export CCACHE_COMPRESS=1
-        export CCACHE_DIR="${config.programs.ccache.cacheDir}"
-        export CCACHE_UMASK=007
-        if [ ! -d "$CCACHE_DIR" ]; then
-          echo "====="
-          echo "Directory '$CCACHE_DIR' does not exist"
-          echo "Please create it with:"
-          echo "  sudo mkdir -m0770 '$CCACHE_DIR'"
-          echo "  sudo chown root:nixbld '$CCACHE_DIR'"
-          echo "====="
-          exit 1
-        fi
-        if [ ! -w "$CCACHE_DIR" ]; then
-          echo "====="
-          echo "Directory '$CCACHE_DIR' is not accessible for user $(whoami)"
-          echo "Please verify its access permissions"
-          echo "====="
-          exit 1
-        fi
-      '';
-    };
-      #discord = super.discord.overrideAttrs (
-      #  _: {
-      #    src = builtins.fetchTarball https://discord.com/api/download?platform=linux&format=tar.gz;
+      ccacheWrapper = super.ccacheWrapper.override
+        {
+          extraConfig = ''
+            export CCACHE_COMPRESS=1
+            export CCACHE_DIR="${config.programs.ccache.cacheDir}"
+            export CCACHE_UMASK=007
+            if [ ! -d "$CCACHE_DIR" ]; then
+              echo "====="
+              echo "Directory '$CCACHE_DIR' does not exist"
+              echo "Please create it with:"
+              echo "  sudo mkdir -m0770 '$CCACHE_DIR'"
+              echo "  sudo chown root:nixbld '$CCACHE_DIR'"
+              echo "====="
+              exit 1
+            fi
+            if [ ! -w "$CCACHE_DIR" ]; then
+              echo "====="
+              echo "Directory '$CCACHE_DIR' is not accessible for user $(whoami)"
+              echo "Please verify its access permissions"
+              echo "====="
+              exit 1
+            fi
+          '';
+        };
+      #    discord = super.discord.overrideAttrs (
+      #      _: {
+      #        src = builtins.fetchTarball https://discord.com/api/download?platform=linux&format=tar.gz;
       #postInstall = (_.postInstall or "") + ''
       #  substituteInPlace $out/share/applications/discord.desktop --replace "/bin/discord %U" "/bin/discord %U --use-gl=desktop"
       #''; 
-      #  }
-      #);
+      #       }
+      #     );
       # ryujinx-master = super.ryujinx.overrideAttrs (
       #   _: {
       #     src = super.fetchFromGitHub {
@@ -859,6 +865,7 @@ in
     # Copy the NixOS configuration file and link it from the resulting system
     # (/run/current-system/configuration.nix). This is useful in case you
     # accidentally delete configuration.nix.
+    # Appears to render the system derivation impure. 
     copySystemConfiguration = false;
 
     # This value determines the NixOS release from which the default
