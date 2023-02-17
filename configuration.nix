@@ -20,6 +20,7 @@ in
     ];
   # I don't have my swap on top of ZFS but suspend/hibernation is still weird.
   #boot.zfs.allowHibernation = true;
+  # Booting memtest from grub is broken as of 2023/2/14
   boot.loader.grub.memtest86.enable = true;
 
   boot.blacklistedKernelModules = [
@@ -67,6 +68,8 @@ in
   nix.settings.system-features = [ "kvm" "nixos-test" "benchmark" "big-parallel" "gccarch-znver3" ];
   #nix.settings.system-features = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
   nix.settings.extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
+  nix.gc.automatic = true;
+  nix.gc.dates = "hourly";
   # allow unfree packages to be installed from repos. 
   nixpkgs.config.allowUnfree = true;
   #unstable.config.allowUnfree = true;
@@ -87,8 +90,8 @@ in
       settings = {
         PermitRootLogin = "prohibit-password";
         PasswordAuthentication = false;
+        X11Forwarding = true;
       };
-      forwardX11 = true;
       ports = [ 42069 ];
     };
 
@@ -253,7 +256,7 @@ in
       jack.enable = true;
     };
 
-    opensnitch.enable = true;
+    #opensnitch.enable = true;
 
     # enable antivirus clamav and
     # keep the signatures' database updated
@@ -288,6 +291,11 @@ in
 
     # Emby fork for media server stuff
     jellyfin.enable = true;
+
+    # Rust Bitwarden server reimplementation
+    #vaultwarden = {
+    #  enable = true;
+    #};
   };
 
   hardware = {
@@ -315,12 +323,13 @@ in
       # Enables driver modesetting
       modesetting.enable = true;
       # Enables the Nvidia open source kernel modesetting driver. 
-      open = true;
+      #open = false;
     };
 
     # Bluetooth driver support
     bluetooth = {
       enable = true;
+      package = pkgs.bluez5-experimental;
     };
 
     # Make sure Pulseaudio stays dead.
@@ -376,7 +385,8 @@ in
           firefox-wayland
           thunderbird
           gcc
-          wezterm
+          freetype
+          #wezterm
           cudaPackages.cudatoolkit
           cudaPackages.cudnn
           #cudaPackages.libcublas
@@ -385,6 +395,8 @@ in
           python310
           vscode
           cura
+          libsForQt5.ark
+          ryujinx
           bitwarden
           (pkgs.writeShellApplication {
             name = "bitwarden-wayland";
@@ -416,7 +428,7 @@ in
             desktopName = "DiscordWayland";
           })
           # Telegram desktop client.
-          stable.tdesktop
+          stable-pkgs.tdesktop
           # A nix language server.
           rnix-lsp
           # Image creation and editing tool
@@ -440,9 +452,19 @@ in
           # Discord plugin framework installer.
           betterdiscordctl
           # 3D model and graphics multitool 
-          blender
+          #blender
           # really just audiobooks
-          spotify
+          #spotify
+          #(pkgs.writeShellApplication {
+          #  name = "spotify-wayland";
+          #  text = "${pkgs.spotify}/bin/spotify --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
+          #})
+          #(pkgs.makeDesktopItem {
+          #  name = "SpotifyWayland";
+          #  exec = "spotify-wayland";
+          #  desktopName = "SpotifyWayland";
+          #})
+
           # controls water pumps. Doesn't work with mine (yet). 
           liquidctl
           # Alternative to steam proton for e.g. Epic Game Store
@@ -468,7 +490,7 @@ in
           # Better PlayStation remote play client.
           chiaki
           # Finely grained application firewall gui.
-          opensnitch-ui
+          #opensnitch-ui
           # Streaming and recording video. Audio processing whenever Nvidia gets on it.  
           obs-studio
           # Get the Glorious Eggroll Proton up to date. 
@@ -481,7 +503,7 @@ in
           # Torrent client
           qbittorrent
           # Matrix chat client (rust)
-          stable.fractal-next
+          fractal-next
           # Matrix homeserver (rust)
           matrix-conduit
           # Red team yourself. 
@@ -502,10 +524,12 @@ in
           # Supposed to enable adding my ssh key to ssh-agent on kwallet opening,
           # but not configured.
           libsForQt5.ksshaskpass
+          pkgs.libsForQt5.qtstyleplugin-kvantum
           # Digital Audio Workstation. 
           reaper
           # Working with MS office documents, spreadsheets, etc. 
           libreoffice-qt
+          rpcs3
         ];
       };
     };
@@ -662,6 +686,7 @@ in
   programs = {
     # Allows dynamically linked things expecting a normal ld to work.
     nix-ld.enable = true;
+    htop.enable = true;
     # Phone link 
     kdeconnect.enable = true;
     # Firejail to restrict the access of the two things that raw dog the internet the
@@ -715,7 +740,8 @@ in
         #"blender"
         "chromium"
         "krita"
-        #"webkitgtk" 
+        "mongodb"
+        "webkitgtk" 
         #"opencv" 
         # "libreoffice-qt"
       ];
@@ -727,6 +753,8 @@ in
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    lm_sensors
+    freetype
     # Wireguard cli tools
     wireguard-tools
     # 7Zip 
@@ -736,8 +764,9 @@ in
     # Still needed for KDE wayland to work on the Nvidia driver.
     egl-wayland
     xwayland
-    htop
+    zenith-nvidia
     nvtop
+    gwe
     pciutils
     usbutils
     nix-index
@@ -783,12 +812,12 @@ in
 
   nixpkgs.overlays = [
     (self: super: {
-      # webkitgtk = super.webkitgtk.override {
-      #   stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
-      # };
-      webkitgtk = super.webkitgtk.override {
-        stdenv = super.llvmPackages_15.stdenv;
-      };
+       #webkitgtk = super.webkitgtk.override {
+       #  stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+       #};
+      #webkitgtk = super.webkitgtk.override {
+      #  stdenv = super.llvmPackages_15.stdenv;
+      #};
       blender = super.blender.override {
         # stdenv = super.llvmPackages_15.stdenv;
         stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
@@ -802,10 +831,9 @@ in
       # };
       #webkitgtk = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
       # tdesktop = super.tdesktop.override { stdenv = super.ccacheStdenv; };
-      tdesktop = super.libreoffice-qt.override
-        {
-          stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
-        };
+      tdesktop = super.libreoffice-qt.override {
+        stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      };
 
       ccacheWrapper = super.ccacheWrapper.override
         {
