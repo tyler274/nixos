@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1676520949,
-        "narHash": "sha256-13Sc7yOC+C/0DMTWMd5tLIRjUnGM0KQGkv4sqTfipcA=",
+        "lastModified": 1676931714,
+        "narHash": "sha256-Zh2q9it1lpLHD/Bj1EaQjmfRmireQ1v48pgLFsPLz+U=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "063272c0d839f614d574af5d97338f185a430876",
+        "rev": "be2cc24ae2e6160118f344c7e8216acce6c1cc45",
         "type": "github"
       },
       "original": {
@@ -18,11 +18,11 @@
     },
     "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1676511583,
-        "narHash": "sha256-5icaKgZwaY29eP2tN62/MVVQl577zrjAfFrqVBdac1g=",
+        "lastModified": 1676926203,
+        "narHash": "sha256-gQQXEs+M/R+eySJ6Xj7iA7LJBB4lF9yEAoFvDRyMAaU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "1034a15ff369910f023e9d81b5ee9306cdc3155c",
+        "rev": "cd56369075acb5fa8459e640b56a0dc1f05e1022",
         "type": "github"
       },
       "original": {
@@ -32,13 +32,29 @@
         "type": "github"
       }
     },
-    "nixpkgs-unstable": {
+    "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1676300157,
-        "narHash": "sha256-1HjRzfp6LOLfcj/HJHdVKWAkX9QRAouoh6AjzJiIerU=",
+        "lastModified": 1676916125,
+        "narHash": "sha256-P08WbrKcA8W5N/dvnEBnQHBGDD0F3fUG3ER0Vvn8Y8Y=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "545c7a31e5dedea4a6d372712a18e00ce097d462",
+        "rev": "e579b2b641d68248acaa2cd0669f96e2b6cb85d0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "staging",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1676721149,
+        "narHash": "sha256-mN2EpTGxxVNnFZLoLWRwh6f7UWhXy4qE+wO2CZyrXps=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5f4e07deb7c44f27d498f8df9c5f34750acf52d2",
         "type": "github"
       },
       "original": {
@@ -52,6 +68,7 @@
       "inputs": {
         "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable",
+        "nixpkgs-staging": "nixpkgs-staging",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }
     }

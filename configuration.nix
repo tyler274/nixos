@@ -121,7 +121,7 @@ in
     sanoid = {
       enable = true;
       interval = "hourly";
-      datasets."rpool/nixos" = {
+      datasets."rpool/nixos/home" = {
         autoprune = true;
         autosnap = true;
         hourly = 36;
@@ -130,6 +130,25 @@ in
         yearly = 1;
         recursive = true;
       };
+      datasets."rpool/nixos/root" = {
+        autoprune = true;
+        autosnap = true;
+        hourly = 36;
+        daily = 14;
+        monthly = 0;
+        yearly = 0;
+        recursive = true;
+      };
+      datasets."rpool/nixos/var" = {
+        autoprune = true;
+        autosnap = true;
+        hourly = 36;
+        daily = 14;
+        monthly = 0;
+        yearly = 0;
+        recursive = true;
+      };
+
     };
 
     syncoid = {
@@ -256,7 +275,7 @@ in
       jack.enable = true;
     };
 
-    #opensnitch.enable = true;
+    opensnitch.enable = true;
 
     # enable antivirus clamav and
     # keep the signatures' database updated
@@ -296,6 +315,11 @@ in
     #vaultwarden = {
     #  enable = true;
     #};
+
+    # home-assistant = {
+    #   enable = true;
+
+    # };
   };
 
   hardware = {
@@ -452,9 +476,9 @@ in
           # Discord plugin framework installer.
           betterdiscordctl
           # 3D model and graphics multitool 
-          #blender
+          blender
           # really just audiobooks
-          #spotify
+          spotify
           #(pkgs.writeShellApplication {
           #  name = "spotify-wayland";
           #  text = "${pkgs.spotify}/bin/spotify --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
@@ -490,7 +514,7 @@ in
           # Better PlayStation remote play client.
           chiaki
           # Finely grained application firewall gui.
-          #opensnitch-ui
+          opensnitch-ui
           # Streaming and recording video. Audio processing whenever Nvidia gets on it.  
           obs-studio
           # Get the Glorious Eggroll Proton up to date. 
@@ -503,7 +527,7 @@ in
           # Torrent client
           qbittorrent
           # Matrix chat client (rust)
-          fractal-next
+          #fractal-next
           # Matrix homeserver (rust)
           matrix-conduit
           # Red team yourself. 
@@ -737,13 +761,13 @@ in
       enable = true;
       packageNames = [
         "ffmpeg"
-        #"blender"
+        "blender"
         "chromium"
         "krita"
         "mongodb"
-        "webkitgtk" 
-        #"opencv" 
-        # "libreoffice-qt"
+        "webkitgtk"
+        "opencv"
+        "libreoffice"
       ];
     };
   };
@@ -812,27 +836,28 @@ in
 
   nixpkgs.overlays = [
     (self: super: {
-       #webkitgtk = super.webkitgtk.override {
-       #  stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
-       #};
-      #webkitgtk = super.webkitgtk.override {
-      #  stdenv = super.llvmPackages_15.stdenv;
-      #};
-      blender = super.blender.override {
-        # stdenv = super.llvmPackages_15.stdenv;
-        stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      webkitgtk = super.webkitgtk.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
       };
-      # libreoffice = super.libreoffice.override {
-      #   stdenv = super.llvmPackages_15.stdenv;
-      #   # stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
-      # };
-      # chromium = super.chromium.override {
-      #   stdenv = super.llvmPackages_15.stdenv;
-      # };
-      #webkitgtk = super.webkitgtk.override { stdenv = super.ccacheStdenv; };
-      # tdesktop = super.tdesktop.override { stdenv = super.ccacheStdenv; };
+      opencv = super.blender.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
+      };
+      blender = super.blender.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
+        #stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      };
+      libreoffice = super.libreoffice.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
+        # stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+      };
+      ffmpeg = super.ffmpeg.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
+      };
+      chromium = super.chromium.override {
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
+      };
       tdesktop = super.libreoffice-qt.override {
-        stdenv = super.overrideCC super.llvmPackages_15.stdenv (super.llvmPackages_15.stdenv.cc.override { inherit (super.llvmPackages_15) bintools; });
+        stdenv = pkgs.staging-pkgs.stdenvAdapters.useMoldLinker super.llvmPackages_15.stdenv;
       };
 
       ccacheWrapper = super.ccacheWrapper.override

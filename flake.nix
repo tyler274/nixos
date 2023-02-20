@@ -2,13 +2,14 @@
   description = "NixOS configuration";  
   
   inputs = {
-    #nixpkgs.url = "github:nixos/nixpkgs/release-22.11";
+    #nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/release-22.11";
+    nixpkgs-staging.url = "github:nixos/nixpkgs/staging";
     nixpkgs.url = "github:nixos/nixpkgs/master";
   };  
   
-  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-unstable, ... }: 
+  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-unstable, nixpkgs-staging, ... }: 
     let
       system = "x86_64-linux";
       overlay-stable-unstable-pkgs = final: prev: {
@@ -21,6 +22,10 @@
          unstable-pkgs = import nixpkgs-unstable {
            inherit system;
            config.allowUnfree = true;
+         };
+         staging-pkgs = import nixpkgs-staging {
+           inherit system;
+           config.allowUnfree = true;	
          };
       };
     in {
