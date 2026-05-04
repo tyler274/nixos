@@ -1,44 +1,67 @@
 {
-  description = "NixOS configuration";  
-  
+  description = "Multi-host NixOS flake (Sulla, nixos-wsl, Laptop) with Home Manager as the primary user surface";
+
   inputs = {
-    #nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/release-22.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
     nixpkgs-staging.url = "github:nixos/nixpkgs/staging";
-    nixpkgs.url = "github:nixos/nixpkgs/master";
-  };  
-  
-  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-unstable, nixpkgs-staging, ... }: 
-    let
-      system = "x86_64-linux";
-      overlay-stable-unstable-pkgs = final: prev: {
-        #unstable = nixpkgs-unstable.legacyPackages.${prev.system};
-        # use this variant if unfree packages are needed:
-         stable-pkgs = import nixpkgs-stable {
-           inherit system;
-           config.allowUnfree = true;
-         };
-         unstable-pkgs = import nixpkgs-unstable {
-           inherit system;
-           config.allowUnfree = true;
-         };
-         staging-pkgs = import nixpkgs-staging {
-           inherit system;
-           config.allowUnfree = true;	
-         };
-      };
-    in {
-    nixosConfigurations = {
-      Sulla = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          # Overlays-module makes "pkgs.unstable" available in configuration.nix
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-stable-unstable-pkgs ]; })
-          ./configuration.nix
-        ];
-      };
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  
+
+  outputs =
+    { self
+    , nixpkgs
+    , nixpkgs-stable
+    , nixpkgs-staging
+    , nixos-hardware
+    , nixos-wsl
+    , home-manager
+    , ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+
+      pkgsOverlay = final: prev: {
+        stable-pkgs = import nixpkgs-stable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+        staging-pkgs = import nixpkgs-staging {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      };
+
+      mkHost = hostPath: extraModules: nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
+          home-manager.nixosModules.home-manager
+          hostPath
+        ] ++ extraModules;
+      };
+    in
+    {
+      nixosConfigurations = {
+        Sulla = mkHost ./hosts/sulla [ ];
+
+        nixos-wsl = mkHost ./hosts/wsl [
+          nixos-wsl.nixosModules.default
+        ];
+
+        Laptop = mkHost ./hosts/laptop [ ];
+      };
+    };
 }
