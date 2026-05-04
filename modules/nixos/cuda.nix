@@ -19,23 +19,37 @@
 
 { pkgs, lib, ... }:
 
+let
+  # Pin to CUDA 13.2 (matches the version targeted by NVIDIA's cuda-samples
+  # repo). The default `cudaPackages` alias in nixpkgs-unstable still resolves
+  # to 12.9 as of this writing; selecting `cudaPackages_13_2` explicitly keeps
+  # nvcc, cudart, and cudatoolkit on the same major/minor.
+  cudaPkgs = pkgs.cudaPackages_13_2;
+in
 {
   hardware.graphics.enable = true;
 
   nixpkgs.config.cudaSupport = true;
 
   environment.systemPackages = with pkgs; [
-    cudaPackages.cudatoolkit
-    cudaPackages.cuda_cudart
-    cudaPackages.cuda_nvcc
+    cudaPkgs.cudatoolkit
+    cudaPkgs.cuda_cudart
+    cudaPkgs.cuda_nvcc
     nvtopPackages.nvidia
+
+    # Host build toolchain for CUDA samples (cuda-samples is CMake-based,
+    # invokes nvcc which shells out to a host C/C++ compiler).
+    cmake
+    gnumake
+    gcc
+    pkg-config
   ];
 
   environment.sessionVariables = {
-    CUDA_PATH = "${pkgs.cudaPackages.cudatoolkit}";
+    CUDA_PATH = "${cudaPkgs.cudatoolkit}";
     LD_LIBRARY_PATH = "/usr/lib/wsl/lib:${lib.makeLibraryPath [
-      pkgs.cudaPackages.cudatoolkit
-      pkgs.cudaPackages.cuda_cudart
+      cudaPkgs.cudatoolkit
+      cudaPkgs.cuda_cudart
     ]}";
   };
 

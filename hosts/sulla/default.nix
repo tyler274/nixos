@@ -342,10 +342,11 @@ in
       zenith-nvidia
       gwe
       nut
-      cudaPackages.cudatoolkit
-      cudaPackages.cudnn
-      cudaPackages.libcutensor
-      cudaPackages.tensorrt
+      # Pin CUDA 13.2 (matches NVIDIA cuda-samples upstream target).
+      cudaPackages_13_2.cudatoolkit
+      cudaPackages_13_2.cudnn
+      cudaPackages_13_2.libcutensor
+      cudaPackages_13_2.tensorrt
     ];
   };
 

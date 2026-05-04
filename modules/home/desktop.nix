@@ -41,6 +41,9 @@
     stable-pkgs.telegram-desktop
 
     gcc
+    cmake
+    gnumake
+    pkg-config
     freetype
     llvmPackages_19.bintools
     mold
