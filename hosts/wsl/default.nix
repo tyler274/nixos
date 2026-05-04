@@ -30,6 +30,7 @@ in
 {
   imports = [
     ../../modules/nixos/common.nix
+    ../../modules/nixos/cuda.nix
     ./hardware-configuration.nix
   ];
 
@@ -59,7 +60,7 @@ in
 
   users.users.luluco = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
   };
 
   home-manager.users.luluco = { ... }: {
