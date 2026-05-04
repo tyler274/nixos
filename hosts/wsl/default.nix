@@ -30,8 +30,11 @@ in
 {
   imports = [
     ../../modules/nixos/common.nix
+    ../../modules/nixos/cuda.nix
     ./hardware-configuration.nix
   ];
+
+  networking.hostName = "eula";
 
   wsl = {
     enable = true;
@@ -43,11 +46,21 @@ in
         src = "${bashWrapper}/bin/bash";
       }
     ];
+
+    # Re-register the WSLInterop binfmt entry on every activation. Without
+    # this, running Windows .exe files (Cursor.exe, notepad.exe, code.exe,
+    # explorer.exe, etc.) from inside WSL fails with
+    # "cannot execute binary file: Exec format error" whenever any other
+    # NixOS module touches boot.binfmt.registrations.
+    interop = {
+      register = true;
+      includePath = true;
+    };
   };
 
   users.users.luluco = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
   };
 
   home-manager.users.luluco = { ... }: {
