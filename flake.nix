@@ -57,7 +57,7 @@
       nixosConfigurations = {
         Sulla = mkHost ./hosts/sulla [ ];
 
-        nixos-wsl = mkHost ./hosts/wsl [
+        eula = mkHost ./hosts/wsl [
           nixos-wsl.nixosModules.default
         ];
 
