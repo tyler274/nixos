@@ -78,15 +78,9 @@
     enableDefaultConfig = false;
     matchBlocks."*" = {
       addKeysToAgent = "yes";
-      forwardAgent = false;
-      compression = false;
-      serverAliveInterval = 0;
-      serverAliveCountMax = 3;
-      hashKnownHosts = false;
-      userKnownHostsFile = "~/.ssh/known_hosts";
-      controlMaster = "no";
+      controlMaster = "auto";
       controlPath = "~/.ssh/master-%r@%n:%p";
-      controlPersist = "no";
+      controlPersist = "10m";
     };
   };
 
