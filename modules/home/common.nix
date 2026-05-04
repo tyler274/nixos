@@ -23,6 +23,7 @@
     hydra-check
     aha
     lm_sensors
+    gh
   ];
 
   programs.bash = {
