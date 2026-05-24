@@ -3,11 +3,15 @@
 let
   cfg = config.zfsHome;
 
-  managedUsers = lib.filterAttrs (_: u:
-    u.isNormalUser && lib.hasPrefix "/home/" u.home
-  ) config.users.users;
-
   datasetFor = name: "${cfg.poolName}/nixos/home/${name}";
+
+  # Build a name→home attrset from the explicit users list to avoid
+  # reading config.users.users inside fileSystems, which causes an
+  # infinite recursion through: fileSystems → boot.supportedFilesystems
+  # → services.rpcbind.enable (nfs.nix) → users.users → fileSystems.
+  managedUsers = lib.genAttrs cfg.users (name: {
+    home = "/home/${name}";
+  });
 in
 {
   options.zfsHome = {
@@ -24,15 +28,28 @@ in
       default     = "500G";
       description = "Quota applied to each newly created user dataset.";
     };
+
+    users = lib.mkOption {
+      type        = lib.types.listOf lib.types.str;
+      default     = [];
+      description = ''
+        Usernames to manage ZFS home datasets for. Each user is expected
+        to have their home directory under /home/<username>.
+
+        This must be set explicitly rather than auto-detected from
+        users.users to avoid an infinite recursion in the NixOS module
+        system (fileSystems → boot.supportedFilesystems → rpcbind →
+        users.users → fileSystems).
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
     # Derive one fileSystems entry per managed user at evaluation time so
     # systemd knows about the mount before any user session starts.
-    fileSystems = lib.mapAttrs' (_: u:
-      let username = lib.last (lib.splitString "/" u.home); in
+    fileSystems = lib.mapAttrs' (name: u:
       lib.nameValuePair u.home {
-        device  = datasetFor username;
+        device  = datasetFor name;
         fsType  = "zfs";
         options = [ "zfsutil" "X-mount.mkdir" ];
       }

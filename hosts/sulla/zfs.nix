@@ -49,6 +49,7 @@
     enable = true;
     poolName = "rpool";
     defaultQuota = "500G";
+    users = [ "luluco" ];
   };
 
   users.users.root.initialHashedPassword = "$6$vb/z0RxvkSqBDVlE$GuJFN90Karj9Ao9uQ/4vBdzMrZImnZeTHhQpQ6Smskrhj.udjK0irW89rtsnVicAlNb5re.vloBp7EDFyTxKx.";
