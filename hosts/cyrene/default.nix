@@ -25,7 +25,8 @@ in
     };
   };
 
-  nixpkgs.config.cudaSupport = true;
+  # Temporarily disabled for initial install — re-enable after first boot and run nixos-rebuild switch
+  # nixpkgs.config.cudaSupport = true;
 
   nix.settings.system-features = [
     "kvm"
