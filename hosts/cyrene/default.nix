@@ -70,8 +70,7 @@ in
   ];
 
   swapDevices = [
-    { device = "/dev/disk/by-uuid/94e48780-db14-4388-9fe0-42f9b5639d61"; }
-    { device = "/dev/disk/by-uuid/2c2f46cd-1f7a-4859-b021-e14e2786f7b5"; }
+    { device = "/dev/zvol/rpool/swap"; }
   ];
 
   zramSwap = {
