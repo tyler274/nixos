@@ -63,7 +63,7 @@
 
     blender
     krita
-    cura
+    stable-pkgs.cura
     obs-studio
     reaper
 
