@@ -3,7 +3,7 @@
 {
   boot.supportedFilesystems = [ "zfs" "ntfs" ];
   boot.zfs.forceImportRoot = false;
-  boot.zfs.requestEncryptionCredentials = "prompt";
+  boot.zfs.requestEncryptionCredentials = [ "prompt" ];
   networking.hostId = "48cd5bc1";
 
   boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
