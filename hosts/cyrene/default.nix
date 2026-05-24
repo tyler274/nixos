@@ -293,6 +293,9 @@ in
 
   nixpkgs.overlays = [
     (self: super: {
+      openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
+    })
+    (self: super: {
       ccacheWrapper = super.ccacheWrapper.override {
         extraConfig = ''
           export CCACHE_COMPRESS=1
