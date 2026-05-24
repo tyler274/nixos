@@ -53,7 +53,7 @@
         inherit system;
         specialArgs = { inherit inputs; };
         modules = [
-          ({ ... }: { nixpkgs.overlays = [ p`k`gsOverlay ]; })
+          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
           home-manager.nixosModules.home-manager
           hostPath
         ] ++ extraModules;
