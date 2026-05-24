@@ -259,16 +259,17 @@ in
     };
   };
 
-  programs.ccache = {
-    enable = true;
-    packageNames = [
-      "ffmpeg"
-      "blender"
-      "chromium"
-      "opencv"
-      "libreoffice"
-    ];
-  };
+  # Temporarily disabled for initial install — re-enable after first boot
+  # programs.ccache = {
+  #   enable = true;
+  #   packageNames = [
+  #     "ffmpeg"
+  #     "blender"
+  #     "chromium"
+  #     "opencv"
+  #     "libreoffice"
+  #   ];
+  # };
 
   virtualisation = {
     waydroid.enable = true;
