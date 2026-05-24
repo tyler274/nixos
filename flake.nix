@@ -1,5 +1,5 @@
 {
-  description = "Multi-host NixOS flake (Sulla, nixos-wsl, Laptop) with Home Manager as the primary user surface";
+  description = "Multi-host NixOS flake (Cyrene, nixos-wsl, Laptop) with Home Manager as the primary user surface";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -17,6 +17,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -27,6 +32,7 @@
     , nixos-hardware
     , nixos-wsl
     , home-manager
+    , lanzaboote
     , ...
     }@inputs:
     let
@@ -47,7 +53,7 @@
         inherit system;
         specialArgs = { inherit inputs; };
         modules = [
-          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
+          ({ ... }: { nixpkgs.overlays = [ p`k`gsOverlay ]; })
           home-manager.nixosModules.home-manager
           hostPath
         ] ++ extraModules;
@@ -55,13 +61,22 @@
     in
     {
       nixosConfigurations = {
-        Sulla = mkHost ./hosts/sulla [ ];
+        Cyrene = mkHost ./hosts/cyrene [
+          lanzaboote.nixosModules.lanzaboote
+        ];
 
         eula = mkHost ./hosts/wsl [
           nixos-wsl.nixosModules.default
         ];
 
         Laptop = mkHost ./hosts/laptop [ ];
+      };
+
+      devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
+        packages = with nixpkgs.legacyPackages.${system}; [
+          gptfdisk
+          umount
+        ];
       };
     };
 }

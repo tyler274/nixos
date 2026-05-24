@@ -15,14 +15,14 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 │       ├── common.nix              bash, git, ssh, direnv, starship, htop, CLI tools, xdg
 │       └── desktop.nix             GUI apps, dev toolchain, wayland wrappers, mimeApps
 └── hosts/
-    ├── sulla/                      Zen 3 + NVIDIA workstation, ZFS root, UPS, homelab
+    ├── cyrene/                     Zen 3 + NVIDIA workstation, ZFS root, UPS, homelab
     ├── wsl/                        WSL2 dev box (Cursor IDE remote)
     └── laptop/                     placeholder for a future portable machine
 ```
 
 ## Hosts
 
-- **Sulla** — AMD Zen 3, NVIDIA RTX (production driver, CUDA), ZFS rpool/bpool, mirrored EFI ESPs, sanoid + syncoid to rsync.net, NUT/UPS, Postgres, Jellyfin, UniFi controller, Plasma 6 desktop.
+- **Cyrene** — AMD Zen 3, NVIDIA RTX (production driver, CUDA), ZFS rpool (encrypted, lanzaboote Secure Boot), sanoid + syncoid to rsync.net, NUT/UPS, Postgres, Jellyfin, UniFi controller, Plasma 6 desktop.
 - **nixos-wsl** — NixOS-WSL on Windows. Carries the bash wrapper + nix-ld + `wsl.{wrapBinSh,extraBin}` block that Cursor IDE's remote server depends on. No desktop, no system services.
 - **Laptop** — placeholder. Imports the desktop stack but is gated behind real hardware-configuration before it can build. Replace `networking.hostName` and `hardware-configuration.nix` after first install.
 
@@ -31,7 +31,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 From the repo root on each machine (or via the `nrs` / `nrl` aliases that Home Manager installs):
 
 ```bash
-sudo nixos-rebuild switch --flake ~/code/nixos#Sulla
+sudo nixos-rebuild switch --flake ~/code/nixos#Cyrene
 sudo nixos-rebuild switch --flake ~/code/nixos#nixos-wsl
 sudo nixos-rebuild switch --flake ~/code/nixos#Laptop
 ```

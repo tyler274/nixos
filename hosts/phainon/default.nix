@@ -10,6 +10,7 @@ in
   imports = [
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop-common.nix
+    ../../modules/nixos/zfs-home.nix
     ./hardware-configuration.nix
     ./zfs.nix
   ];
@@ -128,15 +129,19 @@ in
   services.sanoid = {
     enable = true;
     interval = "hourly";
+
+    # Home: longer retention; recursive covers all per-user sub-datasets
+    # automatically — no per-user entry needed when new users are added.
     datasets."rpool/nixos/home" = {
       autoprune = true;
       autosnap = true;
       hourly = 36;
       daily = 30;
-      monthly = 3;
+      monthly = 6;
       yearly = 1;
       recursive = true;
     };
+
     datasets."rpool/nixos/root" = {
       autoprune = true;
       autosnap = true;
@@ -144,8 +149,8 @@ in
       daily = 14;
       monthly = 0;
       yearly = 0;
-      recursive = true;
     };
+
     datasets."rpool/nixos/var" = {
       autoprune = true;
       autosnap = true;
