@@ -16,7 +16,7 @@ in
 {
   boot.supportedFilesystems = [ "zfs" "ntfs" ];
   boot.zfs.forceImportRoot = false;
-  boot.zfs.requestEncryptionCredentials = [ "prompt" ];
+  boot.zfs.requestEncryptionCredentials = [ "rpool" ];
   networking.hostId = "48cd5bc1";
 
   

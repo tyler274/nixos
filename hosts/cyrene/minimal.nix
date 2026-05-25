@@ -32,7 +32,7 @@
 
   hardware.enableRedistributableFirmware = true;
 
-  environment.systemPackages = with pkgs; [ git ];
+  environment.systemPackages = with pkgs; [ git sbctl ];
 
   users = {
     users = {
