@@ -65,6 +65,10 @@
           lanzaboote.nixosModules.lanzaboote
         ];
 
+        CyreneMinimal = mkHost ./hosts/cyrene/minimal.nix [
+          lanzaboote.nixosModules.lanzaboote
+        ];
+
         eula = mkHost ./hosts/wsl [
           nixos-wsl.nixosModules.default
         ];
