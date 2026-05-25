@@ -296,6 +296,11 @@ in
       openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
     })
     (self: super: {
+      llvmPackages = super.llvmPackages // {
+        bintools = super.lib.lowPrio super.llvmPackages.bintools;
+      };
+    })
+    (self: super: {
       ccacheWrapper = super.ccacheWrapper.override {
         extraConfig = ''
           export CCACHE_COMPRESS=1
