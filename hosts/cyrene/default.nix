@@ -299,6 +299,9 @@ in
       llvmPackages = super.llvmPackages // {
         bintools = super.lib.lowPrio super.llvmPackages.bintools;
       };
+      llvmPackages_19 = super.llvmPackages_19 // {
+        bintools = super.lib.lowPrio super.llvmPackages_19.bintools;
+      };
     })
     (self: super: {
       ccacheWrapper = super.ccacheWrapper.override {
