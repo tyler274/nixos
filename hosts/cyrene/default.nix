@@ -296,12 +296,8 @@ in
       openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
     })
     (self: super: {
-      llvmPackages = super.llvmPackages // {
-        bintools = super.lib.lowPrio super.llvmPackages.bintools;
-      };
-      llvmPackages_19 = super.llvmPackages_19 // {
-        bintools = super.lib.lowPrio super.llvmPackages_19.bintools;
-      };
+      binutils = super.lib.hiPrio super.binutils;
+      binutils-unwrapped = super.lib.hiPrio super.binutils-unwrapped;
     })
     (self: super: {
       ccacheWrapper = super.ccacheWrapper.override {
