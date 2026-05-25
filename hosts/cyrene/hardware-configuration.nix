@@ -14,11 +14,11 @@
   boot.extraModulePackages = [ ];
 
   # ESP — fill in the PARTUUID after running:
-  #   sgdisk -n1:1M:+2G -t1:EF00 /dev/sde && sgdisk -i 1 /dev/sde
+  #   sgdisk -n1:1M:+2G -t1:EF00 /dev/sde && sgdisk -i 1 /dev/sda
   # or:
-  #   ls -la /dev/disk/by-partuuid/ | grep sde1
+  #   ls -la /dev/disk/by-partuuid/ | grep sda1
   fileSystems."/boot" =
-    { device = "/dev/disk/by-partuuid/12b18840-2408-42ae-9a3e-2dea6e060d28";
+    { device = "/dev/disk/by-partuuid/7d0fc4b3-13dd-48b9-8618-27313118c545";
       fsType = "vfat";
       options = [ "umask=0077" ];
     };
