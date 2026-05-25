@@ -360,10 +360,11 @@ in
       gwe
       nut
       # Pin CUDA 13.2 (matches NVIDIA cuda-samples upstream target).
-      cudaPackages_13_2.cudatoolkit
-      cudaPackages_13_2.cudnn
-      cudaPackages_13_2.libcutensor
-      cudaPackages_13_2.tensorrt
+      # Re-enable after uncommenting nixpkgs.config.cudaSupport = true above.
+      # cudaPackages_13_2.cudatoolkit
+      # cudaPackages_13_2.cudnn
+      # cudaPackages_13_2.libcutensor
+      # cudaPackages_13_2.tensorrt
     ];
   };
 
