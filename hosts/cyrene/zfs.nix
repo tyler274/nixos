@@ -15,7 +15,9 @@ let
 in
 {
   boot.supportedFilesystems = [ "zfs" "ntfs" ];
-  boot.zfs.forceImportRoot = false;
+  boot.kernelParams = [ "console=tty1" ];
+  # disable this after install is done
+  boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
   networking.hostId = "48cd5bc1";
 
@@ -66,5 +68,5 @@ in
     users = [ "phainon" ];
   };
 
-  users.users.root.initialHashedPassword = "$6$vb/z0RxvkSqBDVlE$GuJFN90Karj9Ao9uQ/4vBdzMrZImnZeTHhQpQ6Smskrhj.udjK0irW89rtsnVicAlNb5re.vloBp7EDFyTxKx.";
+  users.users.root.initialHashedPassword = "$6$31uKiv3HbrCU2pbC$D9qnquW32p.8cZH5yz.7j5ExFywS.6j2gii.bqZIRDj551HI2WO5yUiMsUUg0nP.KAXWtSEOj0.VWsXt0uAqt1";
 }
