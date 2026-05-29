@@ -84,6 +84,7 @@
     kdePackages.ksshaskpass
     kdePackages.qtstyleplugin-kvantum
     kdePackages.yakuake
+    kdePackages.plasma-browser-integration
 
     opensnitch-ui
     metasploit
