@@ -40,6 +40,7 @@
     git
     nix-index
     sbctl
+    mullvad-vpn
   ];
 
   home-manager = {
