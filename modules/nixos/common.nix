@@ -39,6 +39,7 @@
     curl
     git
     nix-index
+    sbctl
   ];
 
   home-manager = {

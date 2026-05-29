@@ -364,6 +364,9 @@ in
       # cudaPackages_13_2.libcutensor
       # cudaPackages_13_2.tensorrt
     ];
+    home.sessionVariables = {
+      SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
+    };
   };
 
   system.stateVersion = "25.11";
