@@ -26,7 +26,7 @@ in
   };
 
   # Temporarily disabled for initial install — re-enable after first boot and run nixos-rebuild switch
-  # nixpkgs.config.cudaSupport = true;
+  nixpkgs.config.cudaSupport = true;
 
   nix.settings.system-features = [
     "kvm"
@@ -260,7 +260,7 @@ in
   };
 
   # Temporarily disabled for initial install — re-enable after first boot
-  # programs.ccache = {
+  #programs.ccache = {
   #   enable = true;
   #   packageNames = [
   #     "ffmpeg"
@@ -269,7 +269,7 @@ in
   #     "opencv"
   #     "libreoffice"
   #   ];
-  # };
+  #};
 
   virtualisation = {
     waydroid.enable = true;
@@ -355,6 +355,8 @@ in
       zenith-nvidia
       gwe
       nut
+      #notion-app
+      code-cursor-fhs
       # Pin CUDA 13.2 (matches NVIDIA cuda-samples upstream target).
       # Re-enable after uncommenting nixpkgs.config.cudaSupport = true above.
       # cudaPackages_13_2.cudatoolkit
