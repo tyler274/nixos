@@ -45,7 +45,7 @@
     gnumake
     pkg-config
     freetype
-    llvmPackages_19.bintools
+    #llvmPackages_19.bintools
     mold
     rustup
     dotnet-sdk_9

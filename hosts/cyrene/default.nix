@@ -199,12 +199,12 @@ in
     '';
   };
 
-  services.unifi = {
-    enable = true;
-    unifiPackage = pkgs.unifi;
-    mongodbPackage = pkgs.mongodb-7_0;
-    openFirewall = true;
-  };
+  #services.unifi = {
+  #  enable = true;
+  #  unifiPackage = pkgs.unifi;
+  #  mongodbPackage = pkgs.mongodb-7_0;
+  #  openFirewall = true;
+  #};
 
   services.jellyfin.enable = true;
 
@@ -364,5 +364,5 @@ in
     ];
   };
 
-  system.stateVersion = "22.11";
+  system.stateVersion = "25.11";
 }
