@@ -92,9 +92,9 @@ in
     };
 
     nvidia = {
-      package = config.boot.kernelPackages.nvidiaPackages.production;
+      package = config.boot.kernelPackages.nvidiaPackages.latest;
       modesetting.enable = true;
-      open = false;
+      open = true;
     };
 
     nvidia-container-toolkit.enable = true;
