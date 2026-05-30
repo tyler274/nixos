@@ -270,6 +270,7 @@ in
   #     "libreoffice"
   #   ];
   #};
+  programs.chromium.enablePlasmaBrowserIntegration = true;
 
   virtualisation = {
     waydroid.enable = true;
