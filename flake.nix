@@ -1,29 +1,24 @@
 {
   description = "Multi-host NixOS flake (Cyrene, nixos-wsl, Laptop) with Home Manager as the primary user surface";
 
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
-    nixpkgs-staging.url = "github:nixos/nixpkgs/staging";
-
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
+inputs = {
+    nixpkgs.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-unstable&shallow=1";
+    nixpkgs-stable.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-25.11&shallow=1";
+    nixpkgs-staging.url = "git+https://github.com/nixos/nixpkgs.git?ref=staging&shallow=1";
+    nixos-hardware.url = "git+https://github.com/NixOS/nixos-hardware.git?ref=master&shallow=1";
     nixos-wsl = {
-      url = "github:nix-community/NixOS-WSL/main";
+      url = "git+https://github.com/nix-community/NixOS-WSL.git?ref=main&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "git+https://github.com/nix-community/home-manager.git&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     lanzaboote = {
-      url = "github:nix-community/lanzaboote";
+      url = "git+https://github.com/nix-community/lanzaboote.git&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
   outputs =
     { self
     , nixpkgs
