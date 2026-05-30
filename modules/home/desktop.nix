@@ -1,9 +1,13 @@
 { config, pkgs, lib, ... }:
 
 {
+  programs.firefox = {
+    enable = true;
+    nativeMessagingHosts = [ pkgs.kdePackages.plasma-browser-integration ];
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
+  };
+  programs.thunderbird.enable = true;
   home.packages = with pkgs; [
-    firefox
-    thunderbird
     signal-desktop
     discord
     (pkgs.writeShellApplication {
@@ -77,7 +81,7 @@
     chiaki
     protonup-qt
 
-    libreoffice-qt
+    #libreoffice-qt
     kdePackages.ark
     qbittorrent
 

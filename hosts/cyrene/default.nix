@@ -68,6 +68,25 @@ in
     "sysv"
     "ufs"
   ];
+  
+  boot.kernel.sysctl = {
+    # ZFS manages its own page cache via the ARC; a high swappiness
+    # causes the kernel to race against ZFS for the same pages and
+    # makes OOM situations much worse. 10 is the standard ZFS recommendation.
+    "vm.swappiness" = 10;
+    # Tell the kernel to start reclaiming memory earlier (at 3% free)
+    # rather than waiting until it is nearly exhausted.
+    "vm.min_free_kbytes" = 2097152; # 2 GiB
+  };
+
+  services.earlyoom = {
+    enable = true;
+    # Kill when free RAM drops below 5% (~3.2 GiB) or free swap below 10%.
+    freeMemThreshold = 5;
+    freeSwapThreshold = 10;
+    # Prefer killing nix build workers over other processes.
+    extraArgs = [ "-p" "nix" ];
+  };
 
   swapDevices = [
     { device = "/dev/zvol/rpool/swap"; }
@@ -76,6 +95,7 @@ in
   zramSwap = {
     enable = true;
     algorithm = "zstd";
+    memoryPercent = 75; # was default 50%; gives ~48 GiB compressed swap
   };
 
   hardware = {
