@@ -276,7 +276,8 @@ in
     waydroid.enable = true;
     incus = {
       enable = true;
-      bucketSupport = false;
+      # Option removed
+      #bucketSupport = false;
     };
     lxc = {
       enable = true;
