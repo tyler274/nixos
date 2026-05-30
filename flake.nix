@@ -1,7 +1,7 @@
 {
   description = "Multi-host NixOS flake (Cyrene, nixos-wsl, Laptop) with Home Manager as the primary user surface";
 
-inputs = {
+  inputs = {
     nixpkgs.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-unstable&shallow=1";
     nixpkgs-stable.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-25.11&shallow=1";
     nixpkgs-staging.url = "git+https://github.com/nixos/nixpkgs.git?ref=staging&shallow=1";
@@ -11,14 +11,15 @@ inputs = {
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      url = "git+https://github.com/nix-community/home-manager.git&shallow=1";
+      url = "git+https://github.com/nix-community/home-manager.git?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     lanzaboote = {
-      url = "git+https://github.com/nix-community/lanzaboote.git&shallow=1";
+      url = "git+https://github.com/nix-community/lanzaboote.git?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
+
   outputs =
     { self
     , nixpkgs
