@@ -67,7 +67,8 @@
 
     blender
     krita
-    stable-pkgs.cura
+    # Unmaintained and removed from nixpkgs
+    #stable-pkgs.cura
     obs-studio
     reaper
 
