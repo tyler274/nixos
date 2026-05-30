@@ -76,11 +76,11 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks."*" = {
-      addKeysToAgent = "yes";
-      controlMaster = "auto";
-      controlPath = "~/.ssh/master-%r@%n:%p";
-      controlPersist = "10m";
+    settings = {
+      AddKeysToAgent = "yes";
+      ControlMaster = "auto";
+      ControlPath = "~/.ssh/master-%r@%n:%p";
+      ControlPersist = "10m";
     };
   };
 
