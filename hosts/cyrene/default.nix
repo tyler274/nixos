@@ -291,6 +291,7 @@ in
   #   ];
   #};
   programs.chromium.enablePlasmaBrowserIntegration = true;
+  programs.gamescope.enable = true;
 
   virtualisation = {
     waydroid.enable = true;
