@@ -364,9 +364,10 @@ in
       # cudaPackages_13_2.cudnn
       # cudaPackages_13_2.libcutensor
       # cudaPackages_13_2.tensorrt
+      openssl
     ];
     home.sessionVariables = {
-      SSH_AUTH_SOCK = "$HOME/.bitwarden-ssh-agent.sock";
+      SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
     };
   };
 
