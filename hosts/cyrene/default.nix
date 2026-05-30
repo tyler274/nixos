@@ -386,6 +386,8 @@ in
       # cudaPackages_13_2.libcutensor
       # cudaPackages_13_2.tensorrt
       openssl
+      cemu
+      dolphin-emu
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
