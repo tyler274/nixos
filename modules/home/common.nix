@@ -72,15 +72,16 @@
     enableBashIntegration = true;
     nix-direnv.enable = true;
   };
-
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
     settings = {
-      AddKeysToAgent = "yes";
-      ControlMaster = "auto";
-      ControlPath = "~/.ssh/master-%r@%n:%p";
-      ControlPersist = "10m";
+      "*" = {
+        AddKeysToAgent = "yes";
+        ControlMaster = "auto";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "10m";
+      };
     };
   };
 
