@@ -18,6 +18,13 @@
       url = "git+https://github.com/nix-community/lanzaboote.git?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Enables a certain anime game launcher
+    aagl = {
+      aagl.url = "github:ezKEa/aagl-gtk-on-nix";
+      # Or, if you follow Nixkgs release 25.05:
+      # aagl.url = "github:ezKEa/aagl-gtk-on-nix/release-25.05";
+      aagl.inputs.nixpkgs.follows = "nixpkgs"; # Name of nixpkgs input you want to use
+    };
   };
 
   outputs =
