@@ -13,7 +13,7 @@ in
     ../../modules/nixos/zfs-home.nix
     ./hardware-configuration.nix
     ./zfs.nix
-    aagl.nixosModules.default
+    inputs.aagl.nixosModules.default
   ];
 
   networking = {
