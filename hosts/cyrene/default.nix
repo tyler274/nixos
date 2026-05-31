@@ -85,7 +85,7 @@ in
     freeMemThreshold = 5;
     freeSwapThreshold = 10;
     # Prefer killing nix build workers over other processes.
-    extraArgs = [ "-p" "nix" ];
+    extraArgs = [ "--prefer" "^nix" ];
   };
 
   swapDevices = [
