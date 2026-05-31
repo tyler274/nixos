@@ -292,6 +292,7 @@ in
   #};
   programs.chromium.enablePlasmaBrowserIntegration = true;
   programs.gamescope.enable = true;
+  programs.gamemode.enable = true;
 
   virtualisation = {
     waydroid.enable = true;
@@ -389,6 +390,7 @@ in
       openssl
       cemu
       dolphin-emu
+      wine
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
