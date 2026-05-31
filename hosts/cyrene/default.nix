@@ -93,10 +93,17 @@ in
     { device = "/dev/zvol/rpool/swap"; }
   ];
 
-  zramSwap = {
+  #zramSwap = {
+  #  enable = true;
+  #  algorithm = "zstd";
+  #  memoryPercent = 75; # was default 50%; gives ~48 GiB compressed swap
+  #};
+
+  boot.zswap = {
     enable = true;
-    algorithm = "zstd";
-    memoryPercent = 75; # was default 50%; gives ~48 GiB compressed swap
+    compressor = "zstd";
+    zpool = "zsmalloc";
+    maxPoolPercent = 25;
   };
 
   hardware = {
@@ -406,6 +413,7 @@ in
       wine
       capacities
       kubectl
+      hydra-check
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
