@@ -414,6 +414,7 @@ in
       capacities
       kubectl
       hydra-check
+      galaxy-buds-client
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";

@@ -126,4 +126,10 @@
       }
     '';
   };
+  
+  fonts.packages = with pkgs; [
+    noto-fonts          # Noto Sans, Noto Serif, Noto Sans Mono (Latin + many scripts)
+    noto-fonts-cjk-sans # CJK sans-serif coverage
+    noto-fonts-emoji    # colour emoji
+  ];
 }

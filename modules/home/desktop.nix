@@ -116,4 +116,16 @@
       "image/jpeg" = [ "org.kde.gwenview.desktop" ];
     };
   };
+
+  programs.konsole = {
+    enable = true;
+    profiles."default" = {
+      font = {
+        name = "Noto Sans Mono";
+        size = 11;
+      };
+      colorScheme = "Breeze";
+    };
+    defaultProfile = "default";
+  };
 }
