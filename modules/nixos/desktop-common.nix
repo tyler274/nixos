@@ -83,9 +83,10 @@
   };
   
   # Allow native messaging host integrations to work
-  environment.etc."firejail/firefox.local".text = ''
-    ignore nodbus
-  '';
+  # Did not actually fix the problem unfortunately. 
+  #environment.etc."firejail/firefox.local".text = ''
+  #  ignore nodbus
+  #'';
 
   programs.steam = {
     enable = true;
