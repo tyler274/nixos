@@ -295,6 +295,10 @@ in
   programs.gamescope.enable = true;
   programs.gamemode.enable = true;
   
+  # For firefox browser integration. This and a lot of other things in the file need to be
+  # hoised into the modules files we import throughout other hosts. 
+  programs.firefox.nativeMessagingHosts.packages = [ pkgs.plasma-browser-integration ];
+  
   # Enable the anime game launchers
   programs.anime-game-launcher.enable = true; # Adds launcher and /etc/hosts rules
   programs.anime-games-launcher.enable = true;
