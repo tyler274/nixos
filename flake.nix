@@ -25,19 +25,17 @@
       # aagl.url = "github:ezKEa/aagl-gtk-on-nix/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs"; # Name of nixpkgs input you want to use
     };
+    # Declarative KDE management
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nixpkgs-stable
-    , nixpkgs-staging
-    , nixos-hardware
-    , nixos-wsl
-    , home-manager
-    , lanzaboote
-    , ...
-    }@inputs:
+    { self, nixpkgs, nixpkgs-stable, nixpkgs-staging, nixos-hardware,
+      nixos-wsl, home-manager, lanzaboote, plasma-manager, ... }@inputs:
     let
       system = "x86_64-linux";
 

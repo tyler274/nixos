@@ -122,7 +122,7 @@ in
     nvidia = {
       package = config.boot.kernelPackages.nvidiaPackages.latest;
       modesetting.enable = true;
-      open = true;
+      open = false;
     };
 
     nvidia-container-toolkit.enable = true;
