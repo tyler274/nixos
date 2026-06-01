@@ -41,6 +41,9 @@
     nix-index
     sbctl
     mullvad-vpn
+    exfatprogs
+    exfat
+    ntfs3g
   ];
 
   home-manager = {
