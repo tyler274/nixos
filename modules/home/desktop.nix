@@ -7,6 +7,7 @@
     configPath = "${config.xdg.configHome}/mozilla/firefox";
   };
   programs.thunderbird.enable = true;
+  
   home.packages = with pkgs; [
     signal-desktop
     discord
@@ -69,7 +70,7 @@
     krita
     # Unmaintained and removed from nixpkgs
     #stable-pkgs.cura
-    obs-studio
+    #obs-studio
     reaper
 
     vlc

@@ -58,6 +58,11 @@
   programs.kdeconnect.enable = true;
   programs.partition-manager.enable = true;
 
+  programs.obs-studio = {
+    enable = true;
+    enableVirtualCamera = true;
+  };
+
   programs.firejail = {
     enable = true;
     wrappedBinaries = {
