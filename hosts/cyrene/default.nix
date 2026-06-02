@@ -47,10 +47,14 @@
   programs.ccache.packageNames = [
     "ffmpeg"
     "blender"
-    # "chromium-bin"
+    "chromium"
+    "chromium-unwrapped"
     "opencv"
     # "libreoffice-qt"
-    # "electron"
+    "electron"
+    "electron-unwrapped"
+    "onnxruntime"
+    "kdepackages.qtwebengine"
   ];
   # programs.chromium.enablePlasmaBrowserIntegration = true;
   programs.gamescope.enable = true;
