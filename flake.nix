@@ -11,7 +11,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      url = "git+https://github.com/nix-community/home-manager.git?ref=release-26.05&shallow=1";
+      url = "git+https://github.com/nix-community/home-manager.git?ref=master&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     lanzaboote = {
@@ -21,9 +21,7 @@
     # Enables a certain anime game launcher
     aagl = {
       url = "github:ezKEa/aagl-gtk-on-nix";
-      # Or, if you follow Nixkgs release 25.05:
-      # aagl.url = "github:ezKEa/aagl-gtk-on-nix/release-25.05";
-      inputs.nixpkgs.follows = "nixpkgs"; # Name of nixpkgs input you want to use
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     # Declarative KDE management
     plasma-manager = {
