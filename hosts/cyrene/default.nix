@@ -330,11 +330,10 @@ in
   programs.ccache = {
     enable = true;
     packageNames = [
-      "ffmpeg-bin"
+      "ffmpeg"
       "blender"
       "chromium"
       "opencv"
-      "libreoffice"
       "libreoffice-qt"
       "firefox"
       "thunderbird"
@@ -430,7 +429,7 @@ in
       ../../modules/home/common.nix
       ../../modules/home/desktop.nix
     ];
-    home.stateVersion = "22.11";
+    home.stateVersion = "25.11";
 
     home.packages = with pkgs; [
       nvtopPackages.nvidia
@@ -454,6 +453,7 @@ in
       pods
       hydra-check
       galaxy-buds-client
+      calibre
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
