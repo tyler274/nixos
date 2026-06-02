@@ -107,7 +107,9 @@
     EDITOR = "vim";
     VISUAL = "vim";
     RUSTUP_HOME = "${config.home.homeDirectory}/.rustup";
-    CARGO_HOME = "${config.home.homeDirectory}/.cargo";
+    CARGO_HOME  = "${config.home.homeDirectory}/.cargo";
+    CC_LD  = "mold";
+    CXX_LD = "mold";
   };
 
   home.sessionPath = [
