@@ -49,6 +49,8 @@
   programs.ccache.packageNames = [
     "ffmpeg"
     "blender"
+    "firefox"
+    "firefox-unwrapped"
     "chromium"
     "chromium-unwrapped"
     "opencv"
