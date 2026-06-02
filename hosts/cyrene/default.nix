@@ -28,6 +28,10 @@ in
 
   # Temporarily disabled for initial install — re-enable after first boot and run nixos-rebuild switch
   nixpkgs.config.cudaSupport = true;
+  # Remove once Bitwarden releases a new version. 
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-39.8.10"
+  ];
 
   nix.settings.system-features = [
     "kvm"
