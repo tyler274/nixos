@@ -211,6 +211,10 @@ in
       source = "rpool/nixos";
       target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
     };
+    commands."rpool/nixos-local" = {
+      source = "rpool/nixos";
+      target = "local-backup/cyrene/rpool/nixos";
+    };
   };
 
   services.postgresql = {
