@@ -88,8 +88,9 @@
     chiaki
     protonup-qt
 
-    #libreoffice-qt
-    libreoffice-bin
+    libreoffice-qt
+    # Not available on x86_64-linux wow
+    # libreoffice-bin
     kdePackages.ark
     qbittorrent
 

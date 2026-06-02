@@ -335,6 +335,7 @@ in
       "chromium"
       "opencv"
       "libreoffice"
+      "libreoffice-qt"
       "firefox"
       "thunderbird"
     ];
