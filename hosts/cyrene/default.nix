@@ -95,6 +95,7 @@ in
 
   swapDevices = [
     { device = "/dev/zvol/rpool/swap"; }
+    { device = "/dev/disk/by-id/ata-Samsung_SSD_870_EVO_500GB_S6PXNM0T802521D"; randomEncryption.enable = true; }
   ];
 
   #zramSwap = {
