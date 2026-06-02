@@ -47,7 +47,7 @@
   programs.ccache.packageNames = [
     "ffmpeg"
     "blender"
-    "chromium"
+    "chromium-bin"
     "opencv"
     "libreoffice-qt"
     "electron"
