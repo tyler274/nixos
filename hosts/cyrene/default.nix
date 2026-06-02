@@ -55,7 +55,7 @@
     "electron-unwrapped"
     "kdePackages.qtwebengine"
     "qt6.qtwebengine"
-    "krita"
+    "kdepackages.krita"
     "onnxruntime"
   ];
   # programs.chromium.enablePlasmaBrowserIntegration = true;
