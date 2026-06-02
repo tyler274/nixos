@@ -56,6 +56,7 @@
     "kdePackages.qtwebengine"
     "qt6.qtwebengine"
     "krita"
+    "onnxruntime"
   ];
   # programs.chromium.enablePlasmaBrowserIntegration = true;
   programs.gamescope.enable = true;
