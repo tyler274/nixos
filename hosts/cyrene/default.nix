@@ -48,7 +48,7 @@
     "ffmpeg"
     "blender"
     # "chromium-bin"
-    # "opencv"
+    "opencv"
     # "libreoffice-qt"
     # "electron"
   ];
