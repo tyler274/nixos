@@ -120,13 +120,13 @@
 
   programs.konsole = {
     enable = true;
-    profiles."default" = {
-      font = {
-        name = "Noto Sans Mono";
-        size = 11;
-      };
-      colorScheme = "Breeze";
-    };
-    defaultProfile = "default";
+    #profiles."default" = {
+    #  font = {
+    #    name = "Noto Sans Mono";
+    #    size = 11;
+    #  };
+    #  colorScheme = "Breeze";
+    #};
+    #$defaultProfile = "default";
   };
 }

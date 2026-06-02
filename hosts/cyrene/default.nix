@@ -81,7 +81,7 @@ in
   };
 
   services.earlyoom = {
-    enable = true;
+    enable = false;
     # Kill when free RAM drops below 5% (~3.2 GiB) or free swap below 10%.
     freeMemThreshold = 5;
     freeSwapThreshold = 10;
