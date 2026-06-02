@@ -16,7 +16,7 @@
           config.programs.ccache.packageNames;
 
         withMold = pkg: pkg.overrideAttrs (old: {
-          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.mold-wrapped ];
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.mold ];
           NIX_CFLAGS_LINK = toString (old.NIX_CFLAGS_LINK or "") + " -fuse-ld=mold";
         });
       in
