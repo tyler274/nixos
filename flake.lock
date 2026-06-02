@@ -9,11 +9,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1780254165,
-        "narHash": "sha256-ZHcOuSk2nu0Cy4HabzADoiqi+bC6Li5uMuApf29Or04=",
+        "lastModified": 1780372639,
+        "narHash": "sha256-VFzXYHlIGwO4h4ovtnpZj9sX/Qu6+dlI00sXjHdwi2w=",
         "owner": "ezKEa",
         "repo": "aagl-gtk-on-nix",
-        "rev": "4d9e91601015351b8dc703deec8982b5a2d1170f",
+        "rev": "1ee1e8864a1fcfcc21a5fb5af4bd328b3c829f42",
         "type": "github"
       },
       "original": {
@@ -114,10 +114,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1780347968,
-        "narHash": "sha256-I8ibSDQx+E8cgw6k3UxX6Bm7awmGoKSTXc8Gt1Zbpp4=",
+        "lastModified": 1780408569,
+        "narHash": "sha256-s7Tv6FUQThRAvW8En8XVC6HMb0uiikzVccCcCo9u/Bg=",
         "ref": "master",
-        "rev": "d0af9b8bf3b4a1d449be7034bebc9f8f9fd6ee99",
+        "rev": "f384af1bec6423a0d4ba1855917ab948f64e5808",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -228,10 +228,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1780361958,
-        "narHash": "sha256-KF3uLgG4f2mwvEmLYFrDS+d0FZxlzoU15V1/j1ooVzA=",
+        "lastModified": 1780427757,
+        "narHash": "sha256-vZM0imQiTxNIJJ5LzfUm7qqIxVGmpN0j7yXEIFENJQE=",
         "ref": "staging",
-        "rev": "961166707caeeeff4bbd2d499581347463a26c23",
+        "rev": "5b2f924eeb5477badc751051f2860fd59b5c3263",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
