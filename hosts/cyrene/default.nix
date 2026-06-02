@@ -330,7 +330,7 @@ in
   programs.ccache = {
     enable = true;
     packageNames = [
-      "ffmpeg"
+      "ffmpeg-bin"
       "blender"
       "chromium"
       "opencv"
