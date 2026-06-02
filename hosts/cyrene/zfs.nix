@@ -19,6 +19,7 @@ in
   # disable this after install is done
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
+  boot.zfs.extraPools = [ "local-backup" ];
   networking.hostId = "48cd5bc1";
 
   
