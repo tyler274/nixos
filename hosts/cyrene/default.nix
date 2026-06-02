@@ -1,16 +1,12 @@
 { config, pkgs, lib, inputs, ... }:
 
-let
-  ups_vendorid = "0764";
-  ups_productid = "0501";
-  ups_product = "CP1500AVRLCDa";
-  ups_password = "buttsmcgeeeeee";
-in
 {
   imports = [
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop-common.nix
     ../../modules/nixos/zfs-home.nix
+    ../../modules/nixos/nvidia.nix
+    ../../modules/nixos/ccache.nix
     ./hardware-configuration.nix
     ./zfs.nix
     inputs.aagl.nixosModules.default
@@ -26,63 +22,18 @@ in
     };
   };
 
-  # Temporarily disabled for initial install — re-enable after first boot and run nixos-rebuild switch
-  nixpkgs.config.cudaSupport = true;
-  # Remove once Bitwarden releases a new version. 
+  # Remove once Bitwarden releases a new version.
   nixpkgs.config.permittedInsecurePackages = [
     "electron-39.8.10"
   ];
 
-  nix.settings.system-features = [
-    "kvm"
-    "nixos-test"
-    "benchmark"
-    "big-parallel"
-    "gccarch-znver3"
+  # Additional swap on the Samsung 870 EVO; encrypted with a fresh random
+  # key on every boot so no sensitive data is written to disk in plaintext.
+  swapDevices = [
+    { device = "/dev/disk/by-id/ata-Samsung_SSD_870_EVO_500GB_S6PXNM0T802521D"; randomEncryption.enable = true; }
   ];
-  nix.settings.extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
 
-  environment.memoryAllocator.provider = "libc";
-
-  boot.loader.grub.memtest86.enable = true;
-
-  boot.blacklistedKernelModules = [
-    "ax25"
-    "netrom"
-    "rose"
-
-    "adfs"
-    "affs"
-    "bfs"
-    "befs"
-    "cramfs"
-    "efs"
-    "erofs"
-    "exofs"
-    "freevxfs"
-    "f2fs"
-    "hfs"
-    "hpfs"
-    "jfs"
-    "minix"
-    "nilfs2"
-    "ntfs"
-    "omfs"
-    "qnx4"
-    "qnx6"
-    "sysv"
-    "ufs"
-  ];
-  
-  boot.kernel.sysctl = {
-    # ZFS manages its own page cache via the ARC; a high swappiness
-    # causes the kernel to race against ZFS for the same pages and
-    # makes OOM situations much worse. 10 is the standard ZFS recommendation.
-    "vm.swappiness" = 10;
-    # Tell the kernel to start reclaiming memory earlier (at 3% free)
-    # rather than waiting until it is nearly exhausted.
-    "vm.min_free_kbytes" = 2097152; # 2 GiB
-  };
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
 
   services.earlyoom = {
     enable = false;
@@ -93,256 +44,18 @@ in
     extraArgs = [ "--prefer" "^nix" ];
   };
 
-  swapDevices = [
-    { device = "/dev/zvol/rpool/swap"; }
-    { device = "/dev/disk/by-id/ata-Samsung_SSD_870_EVO_500GB_S6PXNM0T802521D"; randomEncryption.enable = true; }
+  programs.ccache.packageNames = [
+    "ffmpeg"
+    "blender"
+    "chromium"
+    "opencv"
+    "libreoffice-qt"
+    "electron"
   ];
-
-  #zramSwap = {
-  #  enable = true;
-  #  algorithm = "zstd";
-  #  memoryPercent = 75; # was default 50%; gives ~48 GiB compressed swap
-  #};
-
-  boot.zswap = {
-    enable = true;
-    compressor = "zstd";
-    zpool = "zsmalloc";
-    maxPoolPercent = 25;
-  };
-
-  hardware = {
-    enableRedistributableFirmware = true;
-
-    cpu = {
-      amd.updateMicrocode = true;
-      intel.updateMicrocode = true;
-    };
-
-    graphics = {
-      enable = true;
-      enable32Bit = true;
-    };
-
-    nvidia = {
-      package = config.boot.kernelPackages.nvidiaPackages.latest;
-      modesetting.enable = true;
-      open = false;
-    };
-
-    nvidia-container-toolkit.enable = true;
-  };
-
-  services.xserver.videoDrivers = lib.mkForce [ "nvidia" ];
-
-  services.openssh = {
-    enable = true;
-    settings = {
-      PermitRootLogin = "prohibit-password";
-      PasswordAuthentication = false;
-      X11Forwarding = true;
-    };
-    ports = [ 42069 ];
-  };
-
-  services.smartd.enable = true;
-  services.logrotate.enable = true;
-
-  services.zfs = {
-    autoScrub = {
-      enable = true;
-      interval = "daily";
-    };
-    trim = {
-      enable = true;
-      interval = "daily";
-    };
-  };
-
-  services.sanoid = {
-    enable = true;
-    interval = "hourly";
-
-    # Home: longer retention; recursive covers all per-user sub-datasets
-    # automatically — no per-user entry needed when new users are added.
-    datasets."rpool/nixos/home" = {
-      autoprune = true;
-      autosnap = true;
-      hourly = 36;
-      daily = 30;
-      monthly = 6;
-      yearly = 1;
-      recursive = true;
-    };
-
-    datasets."rpool/nixos/root" = {
-      autoprune = true;
-      autosnap = true;
-      hourly = 36;
-      daily = 14;
-      monthly = 0;
-      yearly = 0;
-    };
-
-    datasets."rpool/nixos/var" = {
-      autoprune = true;
-      autosnap = true;
-      hourly = 36;
-      daily = 14;
-      monthly = 0;
-      yearly = 0;
-      recursive = true;
-    };
-  };
-
-  # Prune snapshots on demand when the pool is getting full, independent of
-  # sanoid's hourly schedule. Sanoid's --prune-snapshots respects the retention
-  # counts defined above, so this is still a best-effort prune rather than a
-  # hard delete of everything.
-  # systemd.services.zfs-prune-on-pressure = {
-  #   description = "Prune ZFS snapshots when rpool usage exceeds threshold";
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     User = "root";
-  #   };
-  #   script = ''
-  #     USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
-  #     if [ "$USED" -ge 85 ]; then
-  #       echo "rpool at ''${USED}% capacity, pruning snapshots..."
-  #       ${pkgs.sanoid}/bin/sanoid --prune-snapshots --verbose
-  #     else
-  #       echo "rpool at ''${USED}%, no pruning needed."
-  #     fi
-  #   '';
-  # };
-
-  # systemd.timers.zfs-prune-on-pressure = {
-  #   wantedBy = [ "timers.target" ];
-  #   timerConfig = {
-  #     OnBootSec = "10min";
-  #     OnUnitActiveSec = "15min";
-  #     RandomizedDelaySec = "2min";
-  #   };
-  # };
-
-  services.syncoid = {
-    enable = true;
-    sshKey = "/etc/syncoid/.ssh/id_rsa";
-    localSourceAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
-    ];
-    localTargetAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
-    ];
-    commonArgs = [
-      ''--sshoption="UserKnownHostsFile=/etc/syncoid/.ssh/known_hosts"''
-      "--compress=zstd-fast"
-      "--recursive"
-      ''--sendoptions="w"''
-    ];
-    commands."rpool/nixos" = {
-      source = "rpool/nixos";
-      target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
-    };
-    commands."rpool/nixos-local" = {
-      source = "rpool/nixos";
-      target = "local-backup/cyrene/rpool/nixos";
-    };
-  };
-
-  services.postgresql = {
-    enable = true;
-    package = pkgs.postgresql;
-    enableTCPIP = true;
-    authentication = lib.mkOverride 10 ''
-      local all all trust
-      host all all 127.0.0.1/32 trust
-      host all all ::1/128 trust
-    '';
-    initialScript = pkgs.writeText "backend-initScript" ''
-      CREATE DATABASE msf;
-    '';
-  };
-
-  #services.unifi = {
-  #  enable = true;
-  #  unifiPackage = pkgs.unifi;
-  #  mongodbPackage = pkgs.mongodb-7_0;
-  #  openFirewall = true;
-  #};
-
-  services.jellyfin.enable = true;
-
-  services.udev.extraRules = ''
-    SUBSYSTEM=="usb", ATTRS{idVendor}=="${ups_vendorid}", ATTRS{idProduct}=="${ups_productid}", MODE="664", GROUP="nut", OWNER="nut"
-  '';
-
-  power.ups = {
-    enable = true;
-    mode = "standalone";
-
-    ups.cyberpower = {
-      driver = "usbhid-ups";
-      port = "auto";
-      description = "CP1500 AVR UPS";
-      directives = [
-        "vendorid = ${ups_vendorid}"
-        "productid = ${ups_productid}"
-        "product = ${ups_product}"
-      ];
-      maxStartDelay = null;
-    };
-
-    upsd.listen = [
-      { address = "127.0.0.1"; port = 3493; }
-      { address = "::1"; port = 3493; }
-    ];
-
-    users.upsmon = {
-      passwordFile = "${pkgs.writeText "upsmon-password" ups_password}";
-      upsmon = "primary";
-    };
-
-    upsmon = {
-      monitor.cyberpower = {
-        system = "cyberpower@localhost";
-        powerValue = 1;
-        user = "upsmon";
-        type = "primary";
-      };
-      settings = {
-        MINSUPPLIES = 1;
-        SHUTDOWNCMD = "\"${pkgs.systemd}/bin/shutdown -h 0\"";
-        POLLFREQ = 5;
-        POLLFREQALERT = 5;
-        HOSTSYNC = 15;
-        DEADTIME = 15;
-        RBWARNTIME = 43200;
-        NOCOMMWARNTIME = 300;
-        FINALDELAY = 5;
-      };
-    };
-  };
-
-  # Temporarily disabled for initial install — re-enable after first boot
-  programs.ccache = {
-    enable = true;
-    packageNames = [
-      "ffmpeg"
-      "blender"
-      "chromium"
-      "opencv"
-      "libreoffice-qt"
-      "firefox"
-      "thunderbird"
-    ];
-  };
   programs.chromium.enablePlasmaBrowserIntegration = true;
   programs.gamescope.enable = true;
   programs.gamemode.enable = true;
-  
+
   # Enable the anime game launchers
   programs.anime-game-launcher.enable = true; # Adds launcher and /etc/hosts rules
   programs.anime-games-launcher.enable = true;
@@ -350,27 +63,6 @@ in
   programs.honkers-launcher.enable = true;
   programs.wavey-launcher.enable = true;
   programs.sleepy-launcher.enable = true;
-
-  virtualisation = {
-    waydroid.enable = true;
-    incus = {
-      enable = true;
-      # Option removed
-      #bucketSupport = false;
-    };
-    lxc = {
-      enable = true;
-      lxcfs.enable = true;
-    };
-    docker = {
-      enable = true;
-      storageDriver = "zfs";
-      rootless = {
-        enable = true;
-        setSocketVariable = true;
-      };
-    };
-  };
 
   nixpkgs.overlays = [
     (self: super: {
@@ -380,48 +72,11 @@ in
       binutils = super.lib.hiPrio super.binutils;
       binutils-unwrapped = super.lib.hiPrio super.binutils-unwrapped;
     })
-    (self: super: {
-      ccacheWrapper = super.ccacheWrapper.override {
-        extraConfig = ''
-          export CCACHE_COMPRESS=1
-          export CCACHE_DIR="${config.programs.ccache.cacheDir}"
-          export CCACHE_UMASK=007
-          if [ ! -d "$CCACHE_DIR" ]; then
-            echo "====="
-            echo "Directory '$CCACHE_DIR' does not exist"
-            echo "Please create it with:"
-            echo "  sudo mkdir -m0770 '$CCACHE_DIR'"
-            echo "  sudo chown root:nixbld '$CCACHE_DIR'"
-            echo "====="
-            exit 1
-          fi
-          if [ ! -w "$CCACHE_DIR" ]; then
-            echo "====="
-            echo "Directory '$CCACHE_DIR' is not accessible for user $(whoami)"
-            echo "Please verify its access permissions"
-            echo "====="
-            exit 1
-          fi
-        '';
-      };
-    })
   ];
 
-  users = {
-    users = {
-      nut = {
-        isSystemUser = true;
-        group = "nut";
-        home = "/var/lib/nut";
-        createHome = true;
-      };
-
-      luluco = {
-        isNormalUser = true;
-        extraGroups = [ "wheel" "networkmanager" "scanner" "lp" "docker" ];
-      };
-    };
-    groups.nut = { };
+  users.users.luluco = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" "scanner" "lp" "docker" ];
   };
 
   home-manager.users.luluco = { ... }: {

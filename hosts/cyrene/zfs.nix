@@ -16,13 +16,11 @@ in
 {
   boot.supportedFilesystems = [ "zfs" "ntfs" ];
   boot.kernelParams = [ "console=tty1" ];
-  # disable this after install is done
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
   boot.zfs.extraPools = [ "local-backup" ];
   networking.hostId = "48cd5bc1";
 
-  
   # Note this might jump back and forth as kernels are added or removed.
   boot.kernelPackages = latestKernelPackage;
 
@@ -40,6 +38,27 @@ in
     # sbctl stores the Secure Boot PKI here.  Back this directory up offline.
     pkiBundle = "/etc/secureboot";
   };
+
+  boot.kernel.sysctl = {
+    # ZFS manages its own page cache via the ARC; a high swappiness
+    # causes the kernel to race against ZFS for the same pages and
+    # makes OOM situations much worse. 10 is the standard ZFS recommendation.
+    "vm.swappiness" = 10;
+    # Tell the kernel to start reclaiming memory earlier (at 3% free)
+    # rather than waiting until it is nearly exhausted.
+    "vm.min_free_kbytes" = 2097152; # 2 GiB
+  };
+
+  boot.zswap = {
+    enable = true;
+    compressor = "zstd";
+    zpool = "zsmalloc";
+    maxPoolPercent = 25;
+  };
+
+  swapDevices = [
+    { device = "/dev/zvol/rpool/swap"; }
+  ];
 
   services.zfs = {
     autoScrub = {
@@ -62,11 +81,103 @@ in
     '';
   };
 
+  services.sanoid = {
+    enable = true;
+    interval = "hourly";
+
+    # Home: longer retention; recursive covers all per-user sub-datasets
+    # automatically — no per-user entry needed when new users are added.
+    datasets."rpool/nixos/home" = {
+      autoprune = true;
+      autosnap = true;
+      hourly = 36;
+      daily = 30;
+      monthly = 6;
+      yearly = 1;
+      recursive = true;
+    };
+
+    datasets."rpool/nixos/root" = {
+      autoprune = true;
+      autosnap = true;
+      hourly = 36;
+      daily = 14;
+      monthly = 0;
+      yearly = 0;
+    };
+
+    datasets."rpool/nixos/var" = {
+      autoprune = true;
+      autosnap = true;
+      hourly = 36;
+      daily = 14;
+      monthly = 0;
+      yearly = 0;
+      recursive = true;
+    };
+  };
+
+  services.syncoid = {
+    enable = true;
+    sshKey = "/etc/syncoid/.ssh/id_rsa";
+    localSourceAllow = [
+      "change-key" "compression" "create" "mount" "mountpoint"
+      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+    ];
+    localTargetAllow = [
+      "change-key" "compression" "create" "mount" "mountpoint"
+      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+    ];
+    commonArgs = [
+      ''--sshoption="UserKnownHostsFile=/etc/syncoid/.ssh/known_hosts"''
+      "--compress=zstd-fast"
+      "--recursive"
+      ''--sendoptions="w"''
+    ];
+    commands."rpool/nixos" = {
+      source = "rpool/nixos";
+      target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
+    };
+    commands."rpool/nixos-local" = {
+      source = "rpool/nixos";
+      target = "local-backup/cyrene/rpool/nixos";
+    };
+  };
+
+  # Prune snapshots on demand when the pool is getting full, independent of
+  # sanoid's hourly schedule. Sanoid's --prune-snapshots respects the retention
+  # counts defined above, so this is still a best-effort prune rather than a
+  # hard delete of everything.
+  # systemd.services.zfs-prune-on-pressure = {
+  #   description = "Prune ZFS snapshots when rpool usage exceeds threshold";
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     User = "root";
+  #   };
+  #   script = ''
+  #     USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
+  #     if [ "$USED" -ge 85 ]; then
+  #       echo "rpool at ''${USED}% capacity, pruning snapshots..."
+  #       ${pkgs.sanoid}/bin/sanoid --prune-snapshots --verbose
+  #     else
+  #       echo "rpool at ''${USED}%, no pruning needed."
+  #     fi
+  #   '';
+  # };
+  # systemd.timers.zfs-prune-on-pressure = {
+  #   wantedBy = [ "timers.target" ];
+  #   timerConfig = {
+  #     OnBootSec = "10min";
+  #     OnUnitActiveSec = "15min";
+  #     RandomizedDelaySec = "2min";
+  #   };
+  # };
+
   zfsHome = {
     enable = true;
     poolName = "rpool";
     defaultQuota = "500G";
-    users = [ "phainon" ];
+    users = [ "luluco" ];
   };
 
   users.users.root.initialHashedPassword = "$6$31uKiv3HbrCU2pbC$D9qnquW32p.8cZH5yz.7j5ExFywS.6j2gii.bqZIRDj551HI2WO5yUiMsUUg0nP.KAXWtSEOj0.VWsXt0uAqt1";
