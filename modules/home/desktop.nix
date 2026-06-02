@@ -5,8 +5,13 @@
     enable = true;
     nativeMessagingHosts = [ pkgs.kdePackages.plasma-browser-integration ];
     configPath = "${config.xdg.configHome}/mozilla/firefox";
+    package = pkgs.firefox-bin;
   };
-  programs.thunderbird.enable = true;
+  programs.thunderbird = {
+    enable = true;
+    package = pkgs.thunderbird-bin;
+  };
+  
   
   home.packages = with pkgs; [
     signal-desktop
@@ -84,6 +89,7 @@
     protonup-qt
 
     #libreoffice-qt
+    libreoffice-bin
     kdePackages.ark
     qbittorrent
 
