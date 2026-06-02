@@ -195,6 +195,36 @@ in
     };
   };
 
+  # Prune snapshots on demand when the pool is getting full, independent of
+  # sanoid's hourly schedule. Sanoid's --prune-snapshots respects the retention
+  # counts defined above, so this is still a best-effort prune rather than a
+  # hard delete of everything.
+  # systemd.services.zfs-prune-on-pressure = {
+  #   description = "Prune ZFS snapshots when rpool usage exceeds threshold";
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     User = "root";
+  #   };
+  #   script = ''
+  #     USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
+  #     if [ "$USED" -ge 85 ]; then
+  #       echo "rpool at ''${USED}% capacity, pruning snapshots..."
+  #       ${pkgs.sanoid}/bin/sanoid --prune-snapshots --verbose
+  #     else
+  #       echo "rpool at ''${USED}%, no pruning needed."
+  #     fi
+  #   '';
+  # };
+
+  # systemd.timers.zfs-prune-on-pressure = {
+  #   wantedBy = [ "timers.target" ];
+  #   timerConfig = {
+  #     OnBootSec = "10min";
+  #     OnUnitActiveSec = "15min";
+  #     RandomizedDelaySec = "2min";
+  #   };
+  # };
+
   services.syncoid = {
     enable = true;
     sshKey = "/etc/syncoid/.ssh/id_rsa";
@@ -422,6 +452,7 @@ in
       wine
       capacities
       kubectl
+      pods
       hydra-check
       galaxy-buds-client
     ];

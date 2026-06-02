@@ -38,6 +38,7 @@
     wget
     curl
     git
+    htop
     nix-index
     sbctl
     mullvad-vpn
