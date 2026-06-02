@@ -1,20 +1,24 @@
 { ... }:
 
 {
-  # Replace GNU ld / LLVM lld with mold for all nixpkgs builds.
+  # Use mold as the system linker for all nixpkgs builds.
   #
-  # CC_LD / CXX_LD tell GCC/Clang (>= 12) to invoke mold instead of their
-  # default linker. mold is added to extraBuildInputs so it is on PATH.
-  # We apply this to both the default GCC stdenv and clangStdenv rather than
-  # calling useMoldLinker, which has a brittle stdenv.cc.isClang check that
-  # breaks under stdenv compositions (e.g. ccache + mold).
+  # CC_LD / CXX_LD are build-time env vars (not stdenv constructor params),
+  # so they must be injected via a setup hook rather than stdenv.override
+  # args. The hook is placed in stdenv.extraBuildInputs so it is sourced
+  # automatically for every derivation built with that stdenv.
   nixpkgs.overlays = [
     (final: prev:
       let
+        moldHook = prev.makeSetupHook { name = "mold-linker-hook"; } (
+          prev.writeText "mold-linker-setup-hook.sh" ''
+            export CC_LD=mold
+            export CXX_LD=mold
+          ''
+        );
+
         withMold = stdenv: stdenv.override (old: {
-          extraBuildInputs = (old.extraBuildInputs or [ ]) ++ [ prev.mold ];
-          CC_LD = "mold";
-          CXX_LD = "mold";
+          extraBuildInputs = (old.extraBuildInputs or [ ]) ++ [ prev.mold moldHook ];
         });
       in {
         stdenv      = withMold prev.stdenv;
