@@ -75,6 +75,10 @@
         executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
         profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
       };
+      thunderbird = {
+        executable = "${lib.getBin pkgs.thunderbird-bin}/bin/thunderbird";
+        profile = "${pkgs.firejail}/etc/firejail/thunderbird-wayland.profile";
+      };
       microsoft-edge = {
         executable = "${pkgs.microsoft-edge}/bin/microsoft-edge";
         profile = "${pkgs.firejail}/etc/firejail/microsoft-edge.profile";
