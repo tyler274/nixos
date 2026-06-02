@@ -72,7 +72,7 @@
         extraArgs = [ "--env=LC_ALL=C" "--env=GTK_THEME=Adwaita:dark" ];
       };
       firefox = {
-        executable = "${lib.getBin pkgs.firefox}/bin/firefox";
+        executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
         profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
       };
       microsoft-edge = {
