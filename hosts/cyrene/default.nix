@@ -4,6 +4,7 @@
   imports = [
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop-common.nix
+    ../../modules/nixos/amd.nix
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
     ../../modules/nixos/ccache.nix
@@ -55,7 +56,7 @@
     "electron-unwrapped"
     "kdePackages.qtwebengine"
     "qt6.qtwebengine"
-    "kdepackages.krita"
+    "kdePackages.krita"
     "onnxruntime"
   ];
   # programs.chromium.enablePlasmaBrowserIntegration = true;
