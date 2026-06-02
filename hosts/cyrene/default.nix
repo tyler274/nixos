@@ -52,6 +52,7 @@
     "chromium"
     "chromium-unwrapped"
     "opencv"
+    "libreoffice"
     "libreoffice-fresh"
     "libreoffice-qt-fresh"
     "electron"
