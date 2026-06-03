@@ -11,11 +11,14 @@
           version = "git-${inputs.kwin-src.shortRev}";
           src = inputs.kwin-src;
 
-          # The three NixOS-specific patches (QPA wrapper, executable unwrapping,
-          # CAP_SYS_NICE ambient-set lowering) are written against the stable
-          # release tree and will not apply cleanly to master after the KWin 6.x
-          # source reorganisation.  Re-add them once ported to the new paths.
-          patches = [ ];
+          # Same NixOS-specific patches carried by nixpkgs (written against
+          # 6.6.5, the current unstable version).  Master is close enough that
+          # they should apply cleanly; drop any that conflict after a major bump.
+          patches = [
+            ./kwin-patches/0003-plugins-qpa-allow-using-nixos-wrapper.patch
+            ./kwin-patches/0001-NixOS-Unwrap-executable-name-for-.desktop-search.patch
+            ./kwin-patches/0001-Lower-CAP_SYS_NICE-from-the-ambient-set.patch
+          ];
         });
       });
     })
