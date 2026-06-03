@@ -44,7 +44,7 @@
   # detection. See: https://github.com/microsoft/mimalloc#secure-mode
   nixpkgs.overlays = [
     (final: prev: {
-      mimalloc = prev.mimalloc.override { secureBuild = true; };
+      mimalloc = prev.mimalloc.override { secureBuild = false; };
     })
   ];
 
