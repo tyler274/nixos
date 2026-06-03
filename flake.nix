@@ -23,6 +23,10 @@
       url = "github:ezKEa/aagl-gtk-on-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    kwin-src = {
+      url = "github:KDE/kwin/master";
+      flake = false;
+    };
     # Declarative KDE management
     plasma-manager = {
       url = "github:nix-community/plasma-manager";

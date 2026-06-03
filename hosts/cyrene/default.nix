@@ -6,6 +6,7 @@
     ../../modules/nixos/desktop-common.nix
     ../../modules/nixos/amd.nix
     ../../modules/nixos/mold.nix
+    ../../modules/nixos/kwin-git.nix
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
     ../../modules/nixos/ccache.nix

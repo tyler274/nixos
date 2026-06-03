@@ -129,6 +129,23 @@
         "url": "https://github.com/nix-community/home-manager.git"
       }
     },
+    "kwin-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780453197,
+        "narHash": "sha256-ACnAWcJ5h0eLS6UlENqrFmyQPP1MTfBGHP74VQN2EZQ=",
+        "owner": "KDE",
+        "repo": "kwin",
+        "rev": "91857d580c83c78eab8f70a7f433d4a8d17c00d1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "KDE",
+        "ref": "master",
+        "repo": "kwin",
+        "type": "github"
+      }
+    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -310,6 +327,7 @@
       "inputs": {
         "aagl": "aagl",
         "home-manager": "home-manager",
+        "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
