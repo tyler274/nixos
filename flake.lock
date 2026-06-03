@@ -245,10 +245,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1780475693,
-        "narHash": "sha256-yAwLS5Z5FbEtqtWEOnVSeEXrqfqUlYy8QMyXPQQkpu8=",
+        "lastModified": 1780491699,
+        "narHash": "sha256-yKG3gye+WehIvPVvT/R5dWhs22U2idYiD9/N9oEhSTc=",
         "ref": "staging",
-        "rev": "7b0a499a8d8e7fa612ca262dec8032732f689d75",
+        "rev": "a3cf0693b8de259c0ecb7ad7d2ab596fbffd7ffc",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
