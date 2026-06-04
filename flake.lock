@@ -226,6 +226,23 @@
         "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
       }
     },
+    "nixpkgs-plasma": {
+      "locked": {
+        "lastModified": 1779977725,
+        "narHash": "sha256-9QXOrgWOhuBR3awKkiFx2kyaFjxyoy0lE4PixkiGAAY=",
+        "ref": "plasma-6.7",
+        "rev": "16e0ec1ee1c145cb1b33ed2743eee9c3d811a5e6",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/K900/nixpkgs.git"
+      },
+      "original": {
+        "ref": "plasma-6.7",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/K900/nixpkgs.git"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1780453794,
@@ -332,6 +349,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_2",
+        "nixpkgs-plasma": "nixpkgs-plasma",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
         "plasma-manager": "plasma-manager"

@@ -6,7 +6,10 @@
     ../../modules/nixos/desktop-common.nix
     ../../modules/nixos/amd.nix
     ../../modules/nixos/mold.nix
-    ../../modules/nixos/kwin-git.nix
+    # Superseded by the Plasma 6.7 overlay (flake.nix): 6.7 rewrote the DRM
+    # color pipeline, so the manual KWin source patching is no longer needed
+    # and its 6.6-era patch would fail to apply against 6.7 sources.
+    # ../../modules/nixos/kwin-git.nix
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
     ../../modules/nixos/ccache.nix
