@@ -36,17 +36,17 @@
 
   security.rtkit.enable = true;
 
-  environment.memoryAllocator.provider = "libc";
+  environment.memoryAllocator.provider = "mimalloc";
 
   # Enable mimalloc's hardened build: randomises heap segment placement,
   # adds guard pages, and validates free-list integrity. Trades a small
   # amount of throughput for meaningful use-after-free/heap-overflow
   # detection. See: https://github.com/microsoft/mimalloc#secure-mode
-  #nixpkgs.overlays = [
-  #  (final: prev: {
-  #    mimalloc = prev.mimalloc.override { secureBuild = true; };
-  #  })
-  #];
+  nixpkgs.overlays = [
+    (final: prev: {
+      mimalloc = prev.mimalloc.override { secureBuild = true; };
+    })
+  ];
 
 
   programs = {
