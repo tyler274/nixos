@@ -28,11 +28,6 @@
     };
   };
 
-  # Remove once Bitwarden releases a new version.
-  nixpkgs.config.permittedInsecurePackages = [
-    "electron-39.8.10"
-  ];
-
   # Additional swap on the Samsung 870 EVO; encrypted with a fresh random
   # key on every boot so no sensitive data is written to disk in plaintext.
   swapDevices = [
@@ -99,6 +94,7 @@
     imports = [
       ../../modules/home/common.nix
       ../../modules/home/desktop.nix
+      ../../modules/home/plasma.nix
     ];
     home.stateVersion = "25.11";
 
@@ -107,7 +103,6 @@
       zenith-nvidia
       gwe
       nut
-      #notion-app
       code-cursor-fhs
       # Pin CUDA 13.2 (matches NVIDIA cuda-samples upstream target).
       # Re-enable after uncommenting nixpkgs.config.cudaSupport = true above.

@@ -29,6 +29,18 @@ in
       description = "Quota applied to each newly created user dataset.";
     };
 
+    primaryGroup = lib.mkOption {
+      type        = lib.types.str;
+      default     = "users";
+      description = "Primary group assigned to each newly created home directory.";
+    };
+
+    homeMode = lib.mkOption {
+      type        = lib.types.str;
+      default     = "700";
+      description = "Permission bits applied to each newly created home directory.";
+    };
+
     users = lib.mkOption {
       type        = lib.types.listOf lib.types.str;
       default     = [];
@@ -71,6 +83,10 @@ in
             && ${pkgs.zfs}/bin/zfs set \
               quota=${lib.escapeShellArg cfg.defaultQuota} \
               ${lib.escapeShellArg dataset} \
+            && chown ${lib.escapeShellArg name}:${lib.escapeShellArg cfg.primaryGroup} \
+              ${lib.escapeShellArg u.home} \
+            && chmod ${lib.escapeShellArg cfg.homeMode} \
+              ${lib.escapeShellArg u.home} \
             || true
           fi
         ''

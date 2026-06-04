@@ -136,9 +136,15 @@
     '';
   };
   
-  #fonts.packages = with pkgs; [
-  #  noto-fonts
-  #  noto-fonts-cjk-sans
-  #  noto-fonts-color-emoji
-  #];
+  # Remove once Bitwarden ships with a non-insecure Electron version.
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-39.8.10"
+  ];
+
+  fonts.packages = with pkgs; [
+    hack-font
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+  ];
 }

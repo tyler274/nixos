@@ -15,6 +15,7 @@
   networking = {
     hostName = "laptop";
     networkmanager.enable = true;
+    nftables.enable = true;
     firewall.enable = true;
   };
 
@@ -39,6 +40,7 @@
     imports = [
       ../../modules/home/common.nix
       ../../modules/home/desktop.nix
+      ../../modules/home/plasma.nix
     ];
     home.stateVersion = "25.11";
   };
