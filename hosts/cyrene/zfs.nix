@@ -56,9 +56,9 @@ in
     maxPoolPercent = 25;
   };
 
-  swapDevices = [
-    { device = "/dev/zvol/rpool/swap"; }
-  ];
+  #swapDevices = [
+  #  { device = "/dev/zvol/rpool/swap"; }
+  #];
 
   services.zfs = {
     autoScrub = {

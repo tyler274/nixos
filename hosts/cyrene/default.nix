@@ -47,24 +47,24 @@
     extraArgs = [ "--prefer" "^nix" ];
   };
 
-  programs.ccache.packageNames = [
-    "ffmpeg"
-    "blender"
-    "firefox"
-    "firefox-unwrapped"
-    "chromium"
-    "chromium-unwrapped"
-    "opencv"
-    "libreoffice"
-    "libreoffice-fresh"
-    "libreoffice-qt-fresh"
-    "electron"
-    "electron-unwrapped"
-    "kdePackages.qtwebengine"
-    "qt6.qtwebengine"
-    "kdePackages.krita"
-    "onnxruntime"
-  ];
+  #programs.ccache.packageNames = [
+  #  "ffmpeg"
+  #  "blender"
+  #  "firefox"
+  #  "firefox-unwrapped"
+  #  "chromium"
+  #  "chromium-unwrapped"
+  #  "opencv"
+  #  "libreoffice"
+  #  "libreoffice-fresh"
+  #  "libreoffice-qt-fresh"
+  #  "electron"
+  #  "electron-unwrapped"
+  #  "kdePackages.qtwebengine"
+  #  "qt6.qtwebengine"
+  #  "kdePackages.krita"
+  #  "onnxruntime"
+  #];
   # programs.chromium.enablePlasmaBrowserIntegration = true;
   programs.gamescope.enable = true;
   programs.gamemode.enable = true;
@@ -77,15 +77,15 @@
   programs.wavey-launcher.enable = true;
   programs.sleepy-launcher.enable = true;
 
-  nixpkgs.overlays = [
-    (self: super: {
-      openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
-    })
-    (self: super: {
-      binutils = super.lib.hiPrio super.binutils;
-      binutils-unwrapped = super.lib.hiPrio super.binutils-unwrapped;
-    })
-  ];
+  #nixpkgs.overlays = [
+  #  (self: super: {
+  #    openldap = super.openldap.overrideAttrs (_: { doCheck = false; });
+  #  })
+  #  (self: super: {
+  #    binutils = super.lib.hiPrio super.binutils;
+  #    binutils-unwrapped = super.lib.hiPrio super.binutils-unwrapped;
+  #  })
+  #];
 
   users.users.luluco = {
     isNormalUser = true;

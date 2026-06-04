@@ -1,0 +1,36 @@
+From 3293a6052b5c25b0e4105be4ec21f45cbbfa7dec Mon Sep 17 00:00:00 2001
+From: Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+Date: Wed, 28 May 2026 00:00:00 +0000
+Subject: [PATCH] libinput: Add guard around empty outputs when assigning devices
+
+Although kwin always persists a LogicalOutput this is not true for
+backend outputs.
+
+BUG: 520145
+---
+ src/backends/libinput/connection.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/backends/libinput/connection.cpp b/src/backends/libinput/connection.cpp
+index efd236b..a69c046 100644
+--- a/src/backends/libinput/connection.cpp
++++ b/src/backends/libinput/connection.cpp
+@@ -680,14 +680,16 @@
+             if (internalOutput) {
+                 // we have an internal id, so let's use that
+                 deviceOutput = internalOutput;
+-            } else {
++            } else if (outputs.size()) {
+                 // just take first screen, we have no clue
+                 deviceOutput = outputs.front();
+             }
+         }
+     }
+ 
+-    device->setOutput(deviceOutput);
++    if (deviceOutput) {
++        device->setOutput(deviceOutput);
++    }
+ 
+     // TODO: this is currently non-functional even on DRM. Needs orientation() override there.
+     device->setOrientation(Qt::PrimaryOrientation);
