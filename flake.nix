@@ -11,7 +11,7 @@
     # 6.7 rewrote the DRM color-management pipeline, fixing the KWin login
     # segfault in DrmAbstractColorOp::matchPipeline on NVIDIA 610+.
     # Drop this input (and the overlay) once nixos-unstable carries 6.7.0.
-    nixpkgs-plasma.url = "git+https://github.com/K900/nixpkgs.git?ref=plasma-6.7&shallow=1";
+    # nixpkgs-plasma.url = "git+https://github.com/K900/nixpkgs.git?ref=plasma-6.7&shallow=1";
     nixos-hardware.url = "git+https://github.com/NixOS/nixos-hardware.git?ref=master&shallow=1";
     nixos-wsl = {
       url = "git+https://github.com/nix-community/NixOS-WSL.git?ref=main&shallow=1";
@@ -64,19 +64,20 @@
       # only the Plasma set rebuilds. This is the real fix for the KWin DRM
       # color-pipeline crash; the nvidia-drm.color_pipeline=0 kernel param
       # remains as a defensive fallback.
-      plasma67Pkgs = import inputs.nixpkgs-plasma {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      kdeOverlay = final: prev: {
-        kdePackages = plasma67Pkgs.kdePackages;
-      };
+      # plasma67Pkgs = import inputs.nixpkgs-plasma {
+      #   inherit system;
+      #   config.allowUnfree = true;
+      # };
+      # kdeOverlay = final: prev: {
+      #   kdePackages = plasma67Pkgs.kdePackages;
+      # };
 
       mkHost = hostPath: extraModules: nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs; };
         modules = [
-          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
+          # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
+          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
           home-manager.nixosModules.home-manager
           hostPath
         ] ++ extraModules;
