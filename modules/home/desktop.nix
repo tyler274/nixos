@@ -29,7 +29,6 @@
     rustup
     dotnet-sdk_10
 
-    nixd
     nix-output-monitor
 
     #(appimage-run.override {

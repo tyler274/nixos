@@ -24,6 +24,13 @@
     aha
     lm_sensors
     gh
+    fastfetch
+
+    # Nix language tooling, available on every host so the Cursor/VS Code
+    # Nix IDE extension (see .vscode/settings.json) can launch the LSP and
+    # format on save regardless of whether the desktop module is imported.
+    nixd
+    nixfmt-rfc-style
   ];
 
   programs.bash = {
