@@ -37,12 +37,13 @@
     #})
     glib-networking
 
-    #blender
-    #krita
+    blender
+    krita
     # Unmaintained and removed from nixpkgs
     #stable-pkgs.cura
-    #obs-studio
+    obs-studio
     reaper
+    lycheeslicer
 
     vlc
     mpv
@@ -54,7 +55,7 @@
     chiaki
     protonup-qt
 
-    #libreoffice-qt-fresh
+    libreoffice-qt-fresh
     # Not available on x86_64-linux wow
     # libreoffice-bin
     kdePackages.ark
