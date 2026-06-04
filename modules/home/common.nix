@@ -40,6 +40,14 @@
       nfu = "nix flake update --flake ~/code/nixos";
     };
     bashrcExtra = ''
+      # home-manager's activation service (hm-setup-env) runs bash -el (login +
+      # errexit). As a login shell it sources .bashrc via .bash_profile. The
+      # auto-generated "[[ $- == *i* ]] || return" guard below returns $? of the
+      # failed test (1) which under set -e kills the whole activation before a
+      # single step runs. Placing our own guard first with an explicit "return 0"
+      # ensures non-interactive callers exit .bashrc cleanly.
+      [[ $- == *i* ]] || return 0
+
       source ${pkgs.nix-index}/etc/profile.d/command-not-found.sh 2>/dev/null || true
     '';
   };
