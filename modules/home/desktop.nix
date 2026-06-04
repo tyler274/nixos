@@ -16,37 +16,37 @@
   home.packages = with pkgs; [
     signal-desktop
     discord
-    (pkgs.writeShellApplication {
-      name = "discord-wayland";
-      text = "${pkgs.discord}/bin/discord --enable-features=WebRTCPipeWireCapturer --use-gl=desktop";
-    })
-    (pkgs.makeDesktopItem {
-      name = "DiscordWayland";
-      icon = "Discord";
-      exec = "discord-wayland";
-      desktopName = "DiscordWayland";
-    })
+    #(pkgs.writeShellApplication {
+    #  name = "discord-wayland";
+    #  text = "${pkgs.discord}/bin/discord --enable-features=WebRTCPipeWireCapturer --use-gl=desktop";
+    #})
+    #(pkgs.makeDesktopItem {
+    #  name = "DiscordWayland";
+    #  icon = "Discord";
+    #  exec = "discord-wayland";
+    #  desktopName = "DiscordWayland";
+    #})
     microsoft-edge
-    (pkgs.writeShellApplication {
-      name = "microsoft-edge-wayland";
-      text = "${pkgs.microsoft-edge}/bin/microsoft-edge --enable-features=WebRTCPipeWireCapturer,UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
-    })
-    (pkgs.makeDesktopItem {
-      name = "MicrosoftEdgeWayland";
-      exec = "microsoft-edge-wayland";
-      desktopName = "MicrosoftEdgeWayland";
-    })
+    #(pkgs.writeShellApplication {
+    #  name = "microsoft-edge-wayland";
+    #  text = "${pkgs.microsoft-edge}/bin/microsoft-edge --enable-features=WebRTCPipeWireCapturer,UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
+    #})
+    #(pkgs.makeDesktopItem {
+    #  name = "MicrosoftEdgeWayland";
+    #  exec = "microsoft-edge-wayland";
+    #  desktopName = "MicrosoftEdgeWayland";
+    #})
 
     bitwarden-desktop
-    (pkgs.writeShellApplication {
-      name = "bitwarden-wayland";
-      text = "${pkgs.bitwarden-desktop}/bin/bitwarden --use-gl=desktop";
-    })
-    (pkgs.makeDesktopItem {
-      name = "BitwardenWayland";
-      exec = "bitwarden-wayland";
-      desktopName = "BitwardenWayland";
-    })
+    #(pkgs.writeShellApplication {
+    #  name = "bitwarden-wayland";
+    #  text = "${pkgs.bitwarden-desktop}/bin/bitwarden --use-gl=desktop";
+    #})
+    #(pkgs.makeDesktopItem {
+    #  name = "BitwardenWayland";
+    #  exec = "bitwarden-wayland";
+    #  desktopName = "BitwardenWayland";
+    #})
 
     stable-pkgs.telegram-desktop
 
@@ -58,21 +58,21 @@
     #llvmPackages_19.bintools
     mold
     rustup
-    dotnet-sdk_9
-    python312
-    python312Packages.pip
-    vscode
+    dotnet-sdk_10
+    #python312
+    #python312Packages.pip
+    #vscode
 
     nixd
     nix-output-monitor
 
-    (appimage-run.override {
-      extraPkgs = pkgs: [ nss swt webkitgtk_4_1 glib-networking ];
-    })
+    #(appimage-run.override {
+    #  extraPkgs = pkgs: [ nss swt webkitgtk_4_1 glib-networking ];
+    #})
     glib-networking
 
-    blender
-    krita
+    #blender
+    #krita
     # Unmaintained and removed from nixpkgs
     #stable-pkgs.cura
     #obs-studio
@@ -88,7 +88,7 @@
     chiaki
     protonup-qt
 
-    libreoffice-qt-fresh
+    #libreoffice-qt-fresh
     # Not available on x86_64-linux wow
     # libreoffice-bin
     kdePackages.ark
