@@ -53,8 +53,8 @@
       # Show KRunner centred and floating rather than anchored to the top bar.
       "krunnerrc".General.FreeFloating = true;
 
-      # Place window close/min/max buttons on the left (macOS muscle memory).
-      "kwinrc"."org.kde.kdecoration2".ButtonsOnLeft = "XIA";
+      # Place window close/min/max buttons on the Right (Windows muscle memory).
+      "kwinrc"."org.kde.kdecoration2".ButtonsOnRight = "XIA";
     };
 
     panels = [
