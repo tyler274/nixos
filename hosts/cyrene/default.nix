@@ -122,7 +122,7 @@
       hydra-check
       galaxy-buds-client
       calibre
-      krita
+      #krita
     ];
     home.sessionVariables = {
       SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
