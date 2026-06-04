@@ -30,7 +30,7 @@
     # Nix IDE extension (see .vscode/settings.json) can launch the LSP and
     # format on save regardless of whether the desktop module is imported.
     nixd
-    nixfmt-rfc-style
+    nixfmt
   ];
 
   programs.bash = {
