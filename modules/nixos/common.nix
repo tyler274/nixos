@@ -45,7 +45,7 @@
 
   security.rtkit.enable = true;
 
-  environment.memoryAllocator.provider = "mimalloc";
+  environment.memoryAllocator.provider = "libc";
 
   # Enable mimalloc's hardened build: randomises heap segment placement,
   # adds guard pages, and validates free-list integrity. Trades a small
