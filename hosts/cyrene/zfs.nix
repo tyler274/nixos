@@ -56,12 +56,19 @@ in
   # snapshot) while still letting large builds (Firefox, LLVM, etc.) grow into
   # whatever pool space is free — a fixed-size tmpfs would kill those builds.
   # sync=disabled is safe for /tmp: the kernel's page cache is the durability
-  # guarantee here, not ZFS intent-log.  The dataset must be created once:
+  # guarantee here, not ZFS intent-log.
+  #
+  # The dataset must be created once (mountpoint=legacy is REQUIRED — without
+  # it ZFS auto-mounts the dataset itself and races the fileSystems entry below,
+  # causing a double-mount conflict on boot):
   #   sudo zfs create -o mountpoint=legacy \
   #                   -o com.sun:auto-snapshot=false \
   #                   -o sync=disabled \
   #                   rpool/nixos/tmp
   #   sudo chmod 1777 /tmp   # world-writable sticky bit
+  #
+  # Verify properties are set correctly:
+  #   zfs get mountpoint,com.sun:auto-snapshot,sync rpool/nixos/tmp
   fileSystems."/tmp" = {
     device = "rpool/nixos/tmp";
     fsType = "zfs";
