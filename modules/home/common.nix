@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   home.username = "luluco";
@@ -25,6 +30,7 @@
     lm_sensors
     gh
     fastfetch
+    ripgrep
 
     # Nix language tooling, available on every host so the Cursor/VS Code
     # Nix IDE extension (see .vscode/settings.json) can launch the LSP and
@@ -36,7 +42,10 @@
   programs.bash = {
     enable = true;
     enableCompletion = true;
-    historyControl = [ "ignoredups" "erasedups" ];
+    historyControl = [
+      "ignoredups"
+      "erasedups"
+    ];
     shellAliases = {
       ll = "ls -alh";
       la = "ls -A";
@@ -122,8 +131,8 @@
     EDITOR = "vim";
     VISUAL = "vim";
     RUSTUP_HOME = "${config.home.homeDirectory}/.rustup";
-    CARGO_HOME  = "${config.home.homeDirectory}/.cargo";
-    CC_LD  = "mold";
+    CARGO_HOME = "${config.home.homeDirectory}/.cargo";
+    CC_LD = "mold";
     CXX_LD = "mold";
   };
 

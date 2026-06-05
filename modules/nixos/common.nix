@@ -1,8 +1,17 @@
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 {
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     auto-optimise-store = true;
     substituters = [
       "https://cache.nixos.org"
@@ -48,7 +57,6 @@
   #  })
   #];
 
-
   programs = {
     nix-ld.enable = true;
     ssh.startAgent = true;
@@ -60,6 +68,7 @@
     curl
     git
     htop
+    ripgrep
     nix-index
     sbctl
     mullvad-vpn
@@ -150,8 +159,14 @@
     };
 
     upsd.listen = [
-      { address = "127.0.0.1"; port = 3493; }
-      { address = "::1"; port = 3493; }
+      {
+        address = "127.0.0.1";
+        port = 3493;
+      }
+      {
+        address = "::1";
+        port = 3493;
+      }
     ];
 
     users.upsmon = {
