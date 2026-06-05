@@ -169,14 +169,46 @@ in
       "--recursive"
       ''--sendoptions="w"''
     ];
-    commands."rpool/nixos" = {
-      source = "rpool/nixos";
-      target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
-    };
+    # Remote replication to rsync.net is pending SSH setup (the key at
+    # /etc/syncoid/.ssh/id_rsa does not exist yet and the host is unreachable).
+    # Leave it disabled until the key/known_hosts are provisioned, otherwise its
+    # ExecStopPost `zfs unallow` races the local job and revokes the shared
+    # rpool/nixos send/snapshot permissions mid-run ("permission denied").
+    # commands."rpool/nixos" = {
+    #   source = "rpool/nixos";
+    #   target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
+    # };
     commands."rpool/nixos-local" = {
       source = "rpool/nixos";
       target = "local-backup/cyrene/rpool/nixos";
     };
+  };
+
+  # The syncoid NixOS module only delegates ZFS permissions on the *target* if
+  # that dataset (or its parent) already exists; otherwise the zfs-allow
+  # pre-hook is a silently-ignored no-op and the actual `zfs receive` fails with
+  # "permission denied". The local-backup pool is only imported by this config
+  # (boot.zfs.extraPools), never provisioned, so create the container datasets
+  # that hold the backup before syncoid runs. canmount=off/mountpoint=none keeps
+  # these intermediate containers from mounting anywhere; the received
+  # rpool/nixos tree carries its own (raw, encrypted) properties.
+  systemd.services.syncoid-local-target-init = {
+    description = "Create local-backup container datasets for syncoid";
+    after = [ "zfs-import.target" ];
+    requiredBy = [ "syncoid-rpool-nixos-local.service" ];
+    before = [ "syncoid-rpool-nixos-local.service" ];
+    path = [ pkgs.zfs ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      for ds in local-backup/cyrene local-backup/cyrene/rpool; do
+        if ! zfs list -H "$ds" >/dev/null 2>&1; then
+          zfs create -o canmount=off -o mountpoint=none "$ds"
+        fi
+      done
+    '';
   };
 
   # Prune snapshots on demand when the pool is getting full, independent of
@@ -212,7 +244,10 @@ in
     enable = true;
     poolName = "rpool";
     defaultQuota = "500G";
-    users = [ "luluco" "phainon" ];
+    users = [
+      "luluco"
+      "phainon"
+    ];
   };
 
   users.users.root.initialHashedPassword = "$6$31uKiv3HbrCU2pbC$D9qnquW32p.8cZH5yz.7j5ExFywS.6j2gii.bqZIRDj551HI2WO5yUiMsUUg0nP.KAXWtSEOj0.VWsXt0uAqt1";
