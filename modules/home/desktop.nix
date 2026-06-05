@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.firefox = {
@@ -64,6 +69,7 @@
     kdePackages.qtstyleplugin-kvantum
     kdePackages.yakuake
     kdePackages.plasma-browser-integration
+    kdePackages.filelight
 
     opensnitch-ui
     metasploit
@@ -79,19 +85,19 @@
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html"               = [ "firefox.desktop" ];
-      "x-scheme-handler/http"   = [ "firefox.desktop" ];
-      "x-scheme-handler/https"  = [ "firefox.desktop" ];
-      "application/pdf"         = [ "firefox.desktop" ];
-      "video/mp4"               = [ "mpv.desktop" ];
-      "video/mkv"               = [ "mpv.desktop" ];
-      "audio/mpeg"              = [ "mpv.desktop" ];
-      "image/png"               = [ "org.kde.gwenview.desktop" ];
-      "image/jpeg"              = [ "org.kde.gwenview.desktop" ];
+      "text/html" = [ "firefox.desktop" ];
+      "x-scheme-handler/http" = [ "firefox.desktop" ];
+      "x-scheme-handler/https" = [ "firefox.desktop" ];
+      "application/pdf" = [ "firefox.desktop" ];
+      "video/mp4" = [ "mpv.desktop" ];
+      "video/mkv" = [ "mpv.desktop" ];
+      "audio/mpeg" = [ "mpv.desktop" ];
+      "image/png" = [ "org.kde.gwenview.desktop" ];
+      "image/jpeg" = [ "org.kde.gwenview.desktop" ];
       # Application-registered URI schemes — kept here so HM owns the full
       # file and KDE additions do not accumulate between rebuilds.
       "x-scheme-handler/capacities" = [ "capacities.desktop" ];
-      "x-scheme-handler/bitwarden"  = [ "bitwarden.desktop" ];
+      "x-scheme-handler/bitwarden" = [ "bitwarden.desktop" ];
     };
   };
   # Force-overwrite mimeapps.list on every activation so KDE's in-session
