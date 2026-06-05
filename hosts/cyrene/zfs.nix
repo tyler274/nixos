@@ -68,7 +68,12 @@ in
     options = [
       "zfsutil"
       "X-mount.mkdir"
+      "noatime"
+      "nodev"
+      "nosuid"
+      "mode=1777"
     ];
+    neededForBoot = true;
   };
 
   boot.kernel.sysctl = {
