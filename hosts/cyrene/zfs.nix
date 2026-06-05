@@ -268,6 +268,13 @@ in
         # rpool/nixos/tmp is a no-snapshot build-sandbox dataset; there is
         # nothing worth backing up there and it could be enormous mid-build.
         "--exclude-datasets=rpool/nixos/tmp"
+        # Game launcher and Steam datasets are large, constantly changing, and
+        # fully re-downloadable — not worth the backup storage cost.
+        "--exclude-datasets=rpool/nixos/home/luluco/anime-game-launcher"
+        "--exclude-datasets=rpool/nixos/home/luluco/honkers-railway-launcher"
+        "--exclude-datasets=rpool/nixos/home/luluco/sleepy-launcher"
+        "--exclude-datasets=rpool/nixos/home/luluco/steam"
+        "--exclude-datasets=rpool/nixos/home/luluco/wavey-launcher"
       ];
     };
   };
