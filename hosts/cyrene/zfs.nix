@@ -51,6 +51,26 @@ in
     pkiBundle = "/etc/secureboot";
   };
 
+  # Nix build sandboxes live in /tmp/nix-build-* on the host side. A dedicated
+  # ZFS dataset keeps them off rpool/nixos/root (and therefore out of every
+  # snapshot) while still letting large builds (Firefox, LLVM, etc.) grow into
+  # whatever pool space is free — a fixed-size tmpfs would kill those builds.
+  # sync=disabled is safe for /tmp: the kernel's page cache is the durability
+  # guarantee here, not ZFS intent-log.  The dataset must be created once:
+  #   sudo zfs create -o mountpoint=legacy \
+  #                   -o com.sun:auto-snapshot=false \
+  #                   -o sync=disabled \
+  #                   rpool/nixos/tmp
+  #   sudo chmod 1777 /tmp   # world-writable sticky bit
+  fileSystems."/tmp" = {
+    device = "rpool/nixos/tmp";
+    fsType = "zfs";
+    options = [
+      "zfsutil"
+      "X-mount.mkdir"
+    ];
+  };
+
   boot.kernel.sysctl = {
     # ZFS manages its own page cache via the ARC; a high swappiness
     # causes the kernel to race against ZFS for the same pages and
@@ -136,6 +156,11 @@ in
       autoprune = false;
     };
 
+    datasets."rpool/nixos/tmp" = {
+      autosnap = false;
+      autoprune = false;
+    };
+
     datasets."rpool/nixos/root" = {
       autoprune = true;
       autosnap = true;
@@ -217,7 +242,12 @@ in
       # cannot delete it between syncoid runs. Without this, sanoid could prune
       # the anchor snapshot and force a full resend on the next run. The hold is
       # released automatically after the next successful incremental send.
-      extraArgs = [ "--use-hold" ];
+      extraArgs = [
+        "--use-hold"
+        # rpool/nixos/tmp is a no-snapshot build-sandbox dataset; there is
+        # nothing worth backing up there and it could be enormous mid-build.
+        "--exclude-datasets=rpool/nixos/tmp"
+      ];
     };
   };
 
