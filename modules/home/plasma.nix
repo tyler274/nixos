@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   programs.plasma = {
@@ -27,17 +32,18 @@
       passwordRequiredDelay = 0;
     };
 
+    # We don't have any shortcuts enabled because I'm fine with default behavior.
     shortcuts = {
-      ksmserver."Lock Session" = [ "Screensaver" "Meta+Ctrl+Alt+L" ];
+      # ksmserver."Lock Session" = [ "Screensaver" "Meta+Ctrl+Alt+L" ];
       kwin = {
         # Overview / Expose for quick window switching.
-        "Expose"     = "Meta+,";
-        "Expose All" = "Meta+.";
+        # "Expose" = "Meta+,";
+        # "Expose All" = "Meta+.";
         # Vim-style directional focus switching.
-        "Switch Window Down"  = "Meta+J";
-        "Switch Window Left"  = "Meta+H";
-        "Switch Window Right" = "Meta+L";
-        "Switch Window Up"    = "Meta+K";
+        # "Switch Window Down"  = "Meta+J";
+        # "Switch Window Left"  = "Meta+H";
+        # "Switch Window Right" = "Meta+L";
+        # "Switch Window Up"    = "Meta+K";
       };
     };
 
@@ -47,8 +53,12 @@
       "baloofilerc"."Basic Settings"."Indexing-Enabled" = false;
 
       # Four virtual desktops laid out in a single horizontal row.
-      "kwinrc".Desktops.Number = { value = 4; };
-      "kwinrc".Desktops.Rows   = { value = 1; };
+      "kwinrc".Desktops.Number = {
+        value = 4;
+      };
+      "kwinrc".Desktops.Rows = {
+        value = 1;
+      };
 
       # Show KRunner centred and floating rather than anchored to the top bar.
       "krunnerrc".General.FreeFloating = true;
@@ -60,8 +70,8 @@
     panels = [
       {
         location = "bottom";
-        height   = 48;
-        widgets  = [
+        height = 48;
+        widgets = [
           {
             kickoff = {
               sortAlphabetically = true;
@@ -105,7 +115,7 @@
     enable = true;
     defaultProfile = "nix";
     profiles."nix" = {
-      name        = "nix";
+      name = "nix";
       colorScheme = "Breeze";
       font = {
         name = "Hack Nerd Font Mono";
