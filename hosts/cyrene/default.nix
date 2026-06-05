@@ -90,6 +90,16 @@
     extraGroups = [ "wheel" "networkmanager" "scanner" "lp" "docker" ];
   };
 
+  # Second account. NixOS users are declarative: without this block there is no
+  # phainon entry in /etc/passwd, so passwd/login/chown-by-name all fail even
+  # though the ZFS home dataset is already mounted at /home/phainon. mutableUsers
+  # defaults to true, so `passwd phainon` works after the next rebuild. Add
+  # "wheel" here if this account needs sudo.
+  users.users.phainon = {
+    isNormalUser = true;
+    extraGroups = [ "networkmanager" ];
+  };
+
   home-manager.users.luluco = { ... }: {
     imports = [
       ../../modules/home/common.nix
