@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   services.xserver = {
@@ -10,6 +15,7 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
+    wayland.compositor = "kwin";
   };
   services.desktopManager.plasma6.enable = true;
 
@@ -69,7 +75,10 @@
       signal-desktop = {
         executable = "${pkgs.signal-desktop}/bin/signal-desktop --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
         profile = "${pkgs.firejail}/etc/firejail/signal-desktop.profile";
-        extraArgs = [ "--env=LC_ALL=C" "--env=GTK_THEME=Adwaita:dark" ];
+        extraArgs = [
+          "--env=LC_ALL=C"
+          "--env=GTK_THEME=Adwaita:dark"
+        ];
       };
       firefox = {
         executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
@@ -90,9 +99,9 @@
       };
     };
   };
-  
+
   # Allow native messaging host integrations to work
-  # Did not actually fix the problem unfortunately. 
+  # Did not actually fix the problem unfortunately.
   #environment.etc."firejail/firefox.local".text = ''
   #  ignore nodbus
   #'';
@@ -135,7 +144,7 @@
       }
     '';
   };
-  
+
   # Remove once Bitwarden ships with a non-insecure Electron version.
   nixpkgs.config.permittedInsecurePackages = [
     "electron-39.8.10"
