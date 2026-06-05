@@ -82,7 +82,9 @@ in
       "noatime"
       "nodev"
       "nosuid"
-      "mode=1777"
+      # mode=1777 is a tmpfs-only option; mount.zfs rejects it and fails the
+      # mount. The sticky world-writable bit is set once on the dataset itself:
+      #   sudo chmod 1777 /tmp
     ];
     # neededForBoot must stay false (the default). Setting it true moves the
     # mount into stage 1 and generates a sysroot-tmp.mount unit that tries to
