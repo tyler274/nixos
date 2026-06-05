@@ -108,7 +108,7 @@
       name        = "nix";
       colorScheme = "Breeze";
       font = {
-        name = "Hack";
+        name = "Hack Nerd Font Mono";
         size = 11;
       };
     };

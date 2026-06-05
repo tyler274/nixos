@@ -142,7 +142,11 @@
   ];
 
   fonts.packages = with pkgs; [
-    hack-font
+    # Hack patched with Nerd Font glyphs (powerline + icon Private Use Area
+    # ranges) so terminals/starship/fastfetch render icons instead of tofu.
+    nerd-fonts.hack
+    # Catch-all icon fallback for any app whose font isn't Nerd-patched.
+    nerd-fonts.symbols-only
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
