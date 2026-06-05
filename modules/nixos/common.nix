@@ -7,6 +7,10 @@
 }:
 
 {
+  imports = [
+    ./hardening.nix
+  ];
+
   nix.settings = {
     experimental-features = [
       "nix-command"
@@ -30,6 +34,9 @@
       "big-parallel"
       "gccarch-znver3"
     ];
+    # Restrict Nix daemon access to the @users group (excludes system services
+    # that have no business evaluating Nix expressions).
+    allowed-users = [ "@users" ];
   };
 
   nix.gc = {
@@ -45,7 +52,7 @@
 
   security.rtkit.enable = true;
 
-  environment.memoryAllocator.provider = "libc";
+  environment.memoryAllocator.provider = "mimalloc";
 
   # Enable mimalloc's hardened build: randomises heap segment placement,
   # adds guard pages, and validates free-list integrity. Trades a small

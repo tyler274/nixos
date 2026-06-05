@@ -121,6 +121,10 @@
 
   security = {
     apparmor.enable = true;
+    # Terminate confined processes that lack an AppArmor profile rather than
+    # running them unconfined; prevents profile-less software from silently
+    # bypassing MAC enforcement.
+    apparmor.killUnconfinedConfinables = true;
     chromiumSuidSandbox.enable = true;
     pam.services.kwallet = {
       name = "kwallet";
