@@ -19,7 +19,11 @@ in
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
   boot.zfs.extraPools = [ "local-backup" ];
-  networking.hostId = "48cd5bc1";
+  # Unique per-host ZFS hostid. forceImportRoot above lets the root pool
+  # reconcile this on the next boot's forced import without an export (which is
+  # impossible for a live system root); see also local-backup, which needs a
+  # one-time `zpool import -f local-backup` after the id changes.
+  networking.hostId = "69e5e3ea";
 
   # Note this might jump back and forth as kernels are added or removed.
   boot.kernelPackages = latestKernelPackage;
