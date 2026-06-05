@@ -167,7 +167,10 @@ in
       ''--sshoption="UserKnownHostsFile=/etc/syncoid/.ssh/known_hosts"''
       "--compress=zstd-fast"
       "--recursive"
-      ''--sendoptions="w"''
+      # NOTE: do NOT put --sendoptions here. The NixOS syncoid module always
+      # appends its own `--sendoptions <value>` at the end of the command, so
+      # any --sendoptions in commonArgs would be silently overridden (Getopt
+      # last-value-wins). Set sendOptions per-command instead.
     ];
     # Remote replication to rsync.net is pending SSH setup (the key at
     # /etc/syncoid/.ssh/id_rsa does not exist yet and the host is unreachable).
@@ -177,10 +180,20 @@ in
     # commands."rpool/nixos" = {
     #   source = "rpool/nixos";
     #   target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
+    #   sendOptions = "w";
+    #   extraArgs = [ "--use-hold" ];
     # };
     commands."rpool/nixos-local" = {
       source = "rpool/nixos";
       target = "local-backup/cyrene/rpool/nixos";
+      # Raw send preserves the on-disk encrypted blocks; the local-backup pool
+      # never needs to hold or know the encryption key.
+      sendOptions = "w";
+      # Place a ZFS hold on the last-sent source snapshot so sanoid's autoprune
+      # cannot delete it between syncoid runs. Without this, sanoid could prune
+      # the anchor snapshot and force a full resend on the next run. The hold is
+      # released automatically after the next successful incremental send.
+      extraArgs = [ "--use-hold" ];
     };
   };
 
