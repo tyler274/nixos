@@ -75,6 +75,7 @@
     exfatprogs
     exfat
     ntfs3g
+    zfs-prune-snapshots
   ];
 
   boot.loader.grub.memtest86.enable = true;
