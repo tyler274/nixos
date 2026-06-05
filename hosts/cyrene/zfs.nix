@@ -23,6 +23,10 @@ in
     "zfs"
     "ntfs"
   ];
+  # ZFS must also be available in the initrd so the root pool is importable
+  # early in boot and any ZFS fileSystems entries (e.g. /tmp) can be mounted
+  # before userspace starts.
+  boot.initrd.supportedFilesystems = [ "zfs" ];
   boot.kernelParams = [ "console=tty1" ];
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
@@ -80,7 +84,10 @@ in
       "nosuid"
       "mode=1777"
     ];
-    neededForBoot = true;
+    # neededForBoot must stay false (the default). Setting it true moves the
+    # mount into stage 1 and generates a sysroot-tmp.mount unit that tries to
+    # mount rpool/nixos/tmp inside the initrd at /sysroot/tmp, before ZFS
+    # userland is ready — causing the /sysroot/tmp boot error.
   };
 
   boot.kernel.sysctl = {
