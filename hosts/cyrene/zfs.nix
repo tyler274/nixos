@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   zfsCompatibleKernelPackages = lib.filterAttrs (
@@ -14,7 +19,10 @@ let
   );
 in
 {
-  boot.supportedFilesystems = [ "zfs" "ntfs" ];
+  boot.supportedFilesystems = [
+    "zfs"
+    "ntfs"
+  ];
   boot.kernelParams = [ "console=tty1" ];
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
@@ -60,6 +68,9 @@ in
     maxPoolPercent = 25;
   };
 
+  # The ZVOL swap device is disabled because it was causing issues with the
+  # kernel. The ARC cache was not able to keep up with the swap requests, and
+  # the kernel was swapping out pages that were still in use.
   #swapDevices = [
   #  { device = "/dev/zvol/rpool/swap"; }
   #];
@@ -125,12 +136,32 @@ in
     enable = true;
     sshKey = "/etc/syncoid/.ssh/id_rsa";
     localSourceAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+      "change-key"
+      "compression"
+      "create"
+      "mount"
+      "mountpoint"
+      "receive"
+      "rollback"
+      "bookmark"
+      "hold"
+      "send"
+      "snapshot"
+      "destroy"
     ];
     localTargetAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+      "change-key"
+      "compression"
+      "create"
+      "mount"
+      "mountpoint"
+      "receive"
+      "rollback"
+      "bookmark"
+      "hold"
+      "send"
+      "snapshot"
+      "destroy"
     ];
     commonArgs = [
       ''--sshoption="UserKnownHostsFile=/etc/syncoid/.ssh/known_hosts"''
