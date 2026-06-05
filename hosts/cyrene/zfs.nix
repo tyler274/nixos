@@ -112,6 +112,15 @@ in
       recursive = true;
     };
 
+    # Steam game data is large, changes constantly, and is fully re-downloadable
+    # — snapshotting it wastes pool space without recovery value.
+    # The dataset itself is created imperatively (one-time migration below) with
+    # com.sun:auto-snapshot=false as a belt-and-suspenders guard alongside this.
+    datasets."rpool/nixos/home/luluco/steam" = {
+      autosnap = false;
+      autoprune = false;
+    };
+
     datasets."rpool/nixos/root" = {
       autoprune = true;
       autosnap = true;
