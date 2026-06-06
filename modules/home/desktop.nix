@@ -70,7 +70,6 @@
     # libreoffice-bin
     kdePackages.ark
     qbittorrent
-    jackett
 
     kdePackages.ksshaskpass
     kdePackages.qtstyleplugin-kvantum

@@ -64,6 +64,10 @@
   programs.kdeconnect.enable = true;
   programs.partition-manager.enable = true;
 
+  services.jackett = {
+    enable = true;
+  };
+
   programs.obs-studio = {
     enable = true;
     enableVirtualCamera = true;
