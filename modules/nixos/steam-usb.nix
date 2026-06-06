@@ -15,11 +15,10 @@
 #                    ROTA=0, kept explicit for clarity)
 #   space_cache=v2 — modern free-space tree, substantially faster than v1 on
 #                    large volumes; v1 is the kernel default before 6.x
-#   nofail         — USB drive may not be attached at boot; do not block the
-#                    boot sequence if it is absent
-#   x-systemd.automount         — mount on first access rather than at boot
-#   x-systemd.device-timeout=5s — give udev 5 s to find the device before the
-#                                  automount unit gives up
+#   nofail                      — USB drive may not be attached at boot; do not
+#                                  block the boot sequence if it is absent
+#   x-systemd.device-timeout=5s — give udev 5 s to find the device; after that
+#                                  nofail lets the mount unit finish as skipped
 #
 # TRIM is intentionally omitted: DISC-MAX=0 on this USB bridge means the kernel
 # cannot pass discard commands through to the NVMe controller, so discard=async
@@ -43,7 +42,6 @@
       "ssd"
       "space_cache=v2"
       "nofail"
-      "x-systemd.automount"
       "x-systemd.device-timeout=5s"
     ];
   };
