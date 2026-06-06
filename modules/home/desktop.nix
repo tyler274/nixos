@@ -115,4 +115,15 @@
   # edits (which turn the symlink into a plain file) cannot block future
   # switches when the .hm-backup slot is already occupied.
   xdg.configFile."mimeapps.list".force = true;
+
+  # Android development: pin the AVD home so avdmanager and the emulator
+  # always agree on where virtual devices live.  Without this the emulator
+  # searches $HOME/.android/avd but avdmanager may write to a different path,
+  # causing "Unknown AVD name" errors at boot time.
+  home.sessionVariables.ANDROID_AVD_HOME = "${config.home.homeDirectory}/.android/avd";
+
+  home.activation.createAndroidAvdDir =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run mkdir -p "${config.home.homeDirectory}/.android/avd"
+    '';
 }
