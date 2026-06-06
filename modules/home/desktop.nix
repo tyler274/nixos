@@ -86,6 +86,7 @@
     wayland
     betterdiscordctl
     rpcs3
+    shadps4
    
     androidsdk
     android-studio-full
