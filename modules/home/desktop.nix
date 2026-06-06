@@ -87,6 +87,7 @@
     betterdiscordctl
     rpcs3
     shadps4
+    shadps4-qtlauncher
    
     androidsdk
     android-studio-full
