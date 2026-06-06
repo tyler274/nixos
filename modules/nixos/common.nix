@@ -225,10 +225,14 @@
     docker = {
       enable = true;
       storageDriver = "zfs";
-      rootless = {
-        enable = true;
-        setSocketVariable = true;
-      };
+      # Rootless can't use the ZFS storage driver.
+      # https://github.com/openzfs/zfs/pull/18167 the fix has been merged,
+      # https://github.com/podman-container-tools/container-libs/issues/147
+      # but not released yet.
+      # rootless = {
+      #   enable = true;
+      #   setSocketVariable = true;
+      # };
     };
   };
 
