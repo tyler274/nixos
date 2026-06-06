@@ -120,6 +120,7 @@
   # always agree on where virtual devices live.  Without this the emulator
   # searches $HOME/.android/avd but avdmanager may write to a different path,
   # causing "Unknown AVD name" errors at boot time.
+  # TODO: Double check these are correct.
   home.sessionVariables.ANDROID_AVD_HOME = "${config.home.homeDirectory}/.android/avd";
 
   home.activation.createAndroidAvdDir =
