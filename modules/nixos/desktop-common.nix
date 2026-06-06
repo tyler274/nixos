@@ -68,6 +68,10 @@
     enable = true;
   };
 
+  services.flaresolverr = {
+    enable = true;
+  };
+
   programs.obs-studio = {
     enable = true;
     enableVirtualCamera = true;
