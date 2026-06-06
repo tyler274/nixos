@@ -114,10 +114,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1780593650,
-        "narHash": "sha256-CHo7k65YTL3HY+WQVedDTupji+LMgNlKCdrtRHZFAK4=",
+        "lastModified": 1780679734,
+        "narHash": "sha256-KmRNvpNOb7QEORa06bVgjW9kITcx0VhsI7w0vhmZyD8=",
         "ref": "master",
-        "rev": "447fd9ff62501dae7206dfe180ee89f8de27b7d5",
+        "rev": "b2b7db486e06e098711dc291bb25db82850e1d16",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -132,11 +132,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1780624210,
-        "narHash": "sha256-qU1fRSYikUYSYA0nkh6kVmH/LoqSx94p3Bb7XgvdExE=",
+        "lastModified": 1780668951,
+        "narHash": "sha256-lHO+jyVqFm9BHYp1+fLu3S94ShCaQmKR/D5BiozYpWQ=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "14f1aa5a018c17a914e45a79f01298acf04e42fd",
+        "rev": "b3cb730f01bdc069c52c27d8ad5654c3801e8bf5",
         "type": "github"
       },
       "original": {
@@ -170,6 +170,27 @@
         "url": "https://github.com/nix-community/lanzaboote.git"
       }
     },
+    "mini-diarium": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780704897,
+        "narHash": "sha256-0RgfO13f70AeXeZQIEe+DNes/gOi6UArM7PoGPcw6Wc=",
+        "owner": "tyler274",
+        "repo": "mini-diarium",
+        "rev": "6ffa706abd773b0a0a5a09315f3f3517f7f77496",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tyler274",
+        "ref": "nix-flake-packaging",
+        "repo": "mini-diarium",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -198,10 +219,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1780525334,
-        "narHash": "sha256-IsKkAEN/9x0MRIrZduykgLJxME8L70KNknC+3iII6Yo=",
+        "lastModified": 1780704078,
+        "narHash": "sha256-Ktgje3rXwJK3c7nhub8qYgIy/VCYNVrUmIVaaeDhe0E=",
         "ref": "main",
-        "rev": "cde346714cb46261648cac80c361dbd388f82f20",
+        "rev": "ad4c358ded144d26da517b999ddb51295770c419",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/NixOS-WSL.git"
@@ -245,10 +266,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1780628046,
-        "narHash": "sha256-qBHVnGbfHAH76M/VSFg3CZMoepSMLZdty2Go/0ZgZ8g=",
+        "lastModified": 1780695234,
+        "narHash": "sha256-jfuKJdtllILdiuY8Ohi2xOQ3lht4AnxSDonLLGhKalY=",
         "ref": "staging",
-        "rev": "76d39cada6465408f62754d3d388ca68f5eba0e9",
+        "rev": "2aaf860d65b728e0a0afb5a3d50bf78c19fc6b66",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -329,6 +350,7 @@
         "home-manager": "home-manager",
         "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
+        "mini-diarium": "mini-diarium",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_2",

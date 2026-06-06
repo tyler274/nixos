@@ -2,10 +2,16 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 
 {
+  imports = [ inputs.mini-diarium.homeModules.default ];
+
+  # Encrypted, local-first journaling app (packaged from the mini-diarium flake).
+  programs.mini-diarium.enable = true;
+
   programs.firefox = {
     enable = true;
     nativeMessagingHosts = [ pkgs.kdePackages.plasma-browser-integration ];
