@@ -13,6 +13,7 @@
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
     ../../modules/nixos/ccache.nix
+    ../../modules/nixos/steam-usb.nix
     ./hardware-configuration.nix
     ./zfs.nix
     inputs.aagl.nixosModules.default
