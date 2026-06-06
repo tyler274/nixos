@@ -86,6 +86,9 @@
     wayland
     betterdiscordctl
     rpcs3
+
+    android-studio-full
+    android-tools
   ];
 
   xdg.mimeApps = {
