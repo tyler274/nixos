@@ -82,6 +82,7 @@
     exfatprogs
     exfat
     ntfs3g
+    e2fsprogs
     zfs-prune-snapshots
   ];
 
