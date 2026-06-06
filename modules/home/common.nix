@@ -73,6 +73,7 @@
   programs.git = {
     enable = true;
     signing.format = null;
+    lfs.enable = false;
     settings = {
       user = {
         name = "tyler";
