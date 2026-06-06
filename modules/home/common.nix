@@ -97,6 +97,7 @@
     enableBashIntegration = true;
     nix-direnv.enable = true;
   };
+  
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
@@ -109,6 +110,23 @@
       };
     };
   };
+
+  # home-manager symlinks ~/.ssh/config into the Nix store (owned by nobody,
+  # mode 0444). Inside VSCode/Cursor's FHS user-namespace sandbox the kernel
+  # remaps store UIDs to nobody, so OpenSSH rejects the file as "Bad owner."
+  # The activation script below replaces the symlink with a real 0600 copy
+  # after every switch so SSH is happy inside and outside sandboxes.
+  # See: https://github.com/nix-community/home-manager/issues/322
+  home.file.".ssh/config".force = true;
+  home.activation.fixSshConfigPermissions =
+    lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      run install -d -m 0700 "$HOME/.ssh"
+      if [ -L "$HOME/.ssh/config" ]; then
+        src="$(readlink -f "$HOME/.ssh/config")"
+        run rm -f "$HOME/.ssh/config"
+        run install -m 0600 "$src" "$HOME/.ssh/config"
+      fi
+    '';
 
   programs.starship = {
     enable = true;
