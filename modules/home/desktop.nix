@@ -24,6 +24,12 @@
     package = pkgs.thunderbird-bin;
   };
 
+  services.ollama = {
+    enable = true;
+  };
+
+  services.nextjs-ollama-llm-ui.enable = true;
+
   home.packages = with pkgs; [
     signal-desktop
     discord
