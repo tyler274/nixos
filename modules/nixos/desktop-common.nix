@@ -120,6 +120,11 @@
     dedicatedServer.openFirewall = true;
   };
 
+  programs.ghidra = {
+    enable = true;
+    gdb = true;
+  };
+
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
