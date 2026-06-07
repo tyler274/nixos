@@ -38,11 +38,6 @@
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
 
-  services.ollama = {
-    enable = true;
-    package = pkgs.ollama-cuda;
-  };
-
   services.earlyoom = {
     enable = false;
     # Kill when free RAM drops below 5% (~3.2 GiB) or free swap below 10%.

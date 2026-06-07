@@ -72,13 +72,6 @@
     enable = true;
   };
 
-  services.ollama = {
-    enable = true;
-    package = pkgs.ollama-cuda;
-  };
-
-  services.nextjs-ollama-llm-ui.enable = true;
-
   programs.obs-studio = {
     enable = true;
     enableVirtualCamera = true;

@@ -3,7 +3,7 @@
 # variants so the rest of the system stays on the primary nixpkgs tree.
 # Drop this module once pkgs.ollama-cuda.version ≥ 0.30.5 on nixpkgs.
 
-{ config, inputs, ... }:
+{ config, inputs, pkgs, ... }:
 
 let
   inherit (config.nixpkgs.hostPlatform) system;
@@ -19,4 +19,11 @@ in
       inherit (stagingPkgs) ollama ollama-cuda ollama-cpu ollama-rocm ollama-vulkan;
     })
   ];
+
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+  };
+
+  services.nextjs-ollama-llm-ui.enable = true;
 }
