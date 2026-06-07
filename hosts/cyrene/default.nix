@@ -12,6 +12,7 @@
     # ../../modules/nixos/kwin-git.nix
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
+    ../../modules/nixos/ollama.nix
     ../../modules/nixos/ccache.nix
     ../../modules/nixos/steam-usb.nix
     ./hardware-configuration.nix
@@ -36,6 +37,11 @@
   ];
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
+
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+  };
 
   services.earlyoom = {
     enable = false;

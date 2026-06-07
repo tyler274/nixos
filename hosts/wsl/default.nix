@@ -31,6 +31,7 @@ in
   imports = [
     ../../modules/nixos/common.nix
     ../../modules/nixos/cuda.nix
+    ../../modules/nixos/ollama.nix
     ./hardware-configuration.nix
   ];
 
