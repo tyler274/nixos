@@ -79,6 +79,7 @@
 
     opensnitch-ui
     metasploit
+    armitage
     matrix-conduit
 
     liquidctl
@@ -94,7 +95,7 @@
     android-tools
 
     zed-editor
-    sublime4
+    #sublime4
   ];
 
   xdg.mimeApps = {
