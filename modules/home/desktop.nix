@@ -92,6 +92,9 @@
     androidsdk
     android-studio-full
     android-tools
+
+    zed-editor
+    sublime4
   ];
 
   xdg.mimeApps = {
