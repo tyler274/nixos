@@ -72,6 +72,12 @@
     enable = true;
   };
 
+  services.ollama = {
+    enable = true;
+  };
+
+  services.nextjs-ollama-llm-ui.enable = true;
+
   programs.obs-studio = {
     enable = true;
     enableVirtualCamera = true;
