@@ -37,6 +37,7 @@
     # format on save regardless of whether the desktop module is imported.
     nixd
     nixfmt
+    nil
   ];
 
   programs.bash = {

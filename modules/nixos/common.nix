@@ -69,6 +69,7 @@
     nix-ld.enable = true;
     ssh.startAgent = true;
     direnv.enable = true;
+    nh.enable = true;
   };
 
   environment.systemPackages = with pkgs; [
@@ -88,6 +89,7 @@
     zfs-prune-snapshots
     direnv
     nix-direnv
+    nix-output-monitor
   ];
 
   boot.loader.grub.memtest86.enable = true;
