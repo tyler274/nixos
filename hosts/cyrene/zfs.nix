@@ -92,6 +92,43 @@ in
     # userland is ready — causing the /sysroot/tmp boot error.
   };
 
+  # Docker's zfs storage driver creates one dataset per image/container layer as
+  # a child of whatever dataset holds /var/lib/docker. With the default data root
+  # that dataset was rpool/nixos/var/lib, so every layer landed under the
+  # snapshotted+replicated var tree and flooded sanoid, the generation-snapshot
+  # activation script (zfs snapshot -r rpool/nixos@...), and syncoid with
+  # hundreds of throwaway datasets and snapshots (they even got replicated to
+  # local-backup).
+  #
+  # Give docker a dedicated dataset that lives OUTSIDE rpool/nixos so none of
+  # those mechanisms can reach it:
+  #   * the generation snapshot is `-r rpool/nixos`           -> rpool/docker is excluded
+  #   * sanoid only configures the rpool/nixos/* trees        -> never sees it
+  #   * syncoid's source is rpool/nixos                       -> never replicates it
+  # rpool/docker is still encrypted (ZFS forces a child of an encrypted parent —
+  # here the rpool encryption root — to inherit its key) and is tagged
+  # com.sun:auto-snapshot=false for good measure.
+  #
+  # mountpoint=legacy on the dataset is REQUIRED for the same reason as /tmp
+  # above: without it ZFS would auto-mount rpool/docker itself and race this
+  # systemd mount (which, via RequiresMountsFor, correctly orders after the
+  # /var/lib mount). The dataset must be created once:
+  #   sudo zfs create -o mountpoint=legacy \
+  #                   -o com.sun:auto-snapshot=false \
+  #                   rpool/docker
+  # See the one-time docker-storage migration steps committed alongside this
+  # change for destroying the OLD per-layer datasets under rpool/nixos/var/lib
+  # (and their replicas on local-backup) before switching over.
+  fileSystems."/var/lib/docker" = {
+    device = "rpool/docker";
+    fsType = "zfs";
+    options = [
+      "zfsutil"
+      "X-mount.mkdir"
+      "noatime"
+    ];
+  };
+
   boot.kernel.sysctl = {
     # ZFS manages its own page cache via the ARC; a high swappiness
     # causes the kernel to race against ZFS for the same pages and
