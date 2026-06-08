@@ -9,16 +9,16 @@ let
   inherit (config.nixpkgs.hostPlatform) system;
 in
 {
-  nixpkgs.overlays = [
-    (final: prev: let
-      stagingPkgs = import inputs.nixpkgs-staging {
-        inherit system;
-        config = prev.config;
-      };
-    in {
-      inherit (stagingPkgs) ollama ollama-cuda ollama-cpu ollama-rocm ollama-vulkan;
-    })
-  ];
+ # nixpkgs.overlays = [
+ #   (final: prev: let
+ #     stagingPkgs = import inputs.nixpkgs-staging {
+ #       inherit system;
+ #       config = prev.config;
+ #     };
+ #   in {
+ #     inherit (stagingPkgs) ollama ollama-cuda ollama-cpu ollama-rocm ollama-vulkan;
+ #   })
+ # ];
 
   services.ollama = {
     enable = true;
