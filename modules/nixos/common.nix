@@ -68,6 +68,7 @@
   programs = {
     nix-ld.enable = true;
     ssh.startAgent = true;
+    direnv.enable = true;
   };
 
   environment.systemPackages = with pkgs; [
@@ -85,6 +86,8 @@
     ntfs3g
     e2fsprogs
     zfs-prune-snapshots
+    direnv
+    nix-direnv
   ];
 
   boot.loader.grub.memtest86.enable = true;
