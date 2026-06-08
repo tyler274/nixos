@@ -86,7 +86,7 @@
 
     wayland
     betterdiscordctl
-    rpcs3
+    #rpcs3
     shadps4
     shadps4-qtlauncher
    
