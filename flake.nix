@@ -111,6 +111,10 @@
         packages = with nixpkgs.legacyPackages.${system}; [
           gptfdisk
           umount
+          nixd
+          nil
+          nix-output-monitor
+          nh
         ];
       };
     };
