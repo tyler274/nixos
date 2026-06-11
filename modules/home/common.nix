@@ -12,6 +12,7 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
+    vscode-json-languageserver
     p7zip
     wireguard-tools
     smartmontools

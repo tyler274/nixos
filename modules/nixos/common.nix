@@ -167,8 +167,8 @@
       description = "CP1500 AVR UPS";
       directives = [
         "vendorid = 0764"
-        "productid = 0501"
-        "product = CP1500AVRLCDa"
+        "productid = 0601"
+        "product = CP1500PFCLCDa"
       ];
       maxStartDelay = null;
     };
