@@ -50,8 +50,18 @@
   };
 
   outputs =
-    { self, nixpkgs, nixpkgs-stable, nixpkgs-staging, nixos-hardware,
-      nixos-wsl, home-manager, lanzaboote, plasma-manager, ... }@inputs:
+    {
+      self,
+      nixpkgs,
+      nixpkgs-stable,
+      nixpkgs-staging,
+      nixos-hardware,
+      nixos-wsl,
+      home-manager,
+      lanzaboote,
+      plasma-manager,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
 
@@ -79,16 +89,19 @@
       #   kdePackages = plasma67Pkgs.kdePackages;
       # };
 
-      mkHost = hostPath: extraModules: nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit inputs; };
-        modules = [
-          # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
-          ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
-          home-manager.nixosModules.home-manager
-          hostPath
-        ] ++ extraModules;
-      };
+      mkHost =
+        hostPath: extraModules:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
+            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
+            home-manager.nixosModules.home-manager
+            hostPath
+          ]
+          ++ extraModules;
+        };
     in
     {
       nixosConfigurations = {

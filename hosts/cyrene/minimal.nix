@@ -6,7 +6,7 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/zfs-home.nix
     ./hardware-configuration.nix
-    ./zfs.nix
+    ./zfs
   ];
 
   networking = {
