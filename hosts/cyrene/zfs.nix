@@ -34,7 +34,8 @@ let
   gameHomeMounts = {
     "/home/luluco/.local/share/Steam" = "rpool/nixos/home/luluco/steam";
     "/home/luluco/.local/share/anime-game-launcher" = "rpool/nixos/home/luluco/anime-game-launcher";
-    "/home/luluco/.local/share/honkers-railway-launcher" = "rpool/nixos/home/luluco/honkers-railway-launcher";
+    "/home/luluco/.local/share/honkers-railway-launcher" =
+      "rpool/nixos/home/luluco/honkers-railway-launcher";
     "/home/luluco/.local/share/sleepy-launcher" = "rpool/nixos/home/luluco/sleepy-launcher";
     "/home/luluco/.local/share/wavey-launcher" = "rpool/nixos/home/luluco/wavey-launcher";
   };
@@ -112,7 +113,7 @@ in
     # lanzaboote replaces the systemd-boot install step with signed-UKI installs.
     systemd-boot = {
       enable = lib.mkForce false;
-      configurationLimit = 10;
+      configurationLimit = 20;
     };
   };
 
