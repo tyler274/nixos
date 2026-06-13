@@ -51,37 +51,69 @@ let
     ''
       dataset=${lib.escapeShellArg dataset}
       mount_point=${lib.escapeShellArg mountPoint}
-      if ! ${pkgs.zfs}/bin/zfs list -H -o name "$dataset" &>/dev/null; then
-        echo "zfs-game-home: creating $dataset"
-        ${pkgs.zfs}/bin/zfs create \
-          -o mountpoint="$mount_point" \
-          -o com.sun:auto-snapshot=false \
-          -o canmount=noauto \
-          "$dataset"
+      if mountpoint -q "$mount_point" 2>/dev/null; then
+        :
       else
-        ${pkgs.zfs}/bin/zfs set \
-          mountpoint="$mount_point" \
-          com.sun:auto-snapshot=false \
-          canmount=noauto \
-          "$dataset"
-      fi
-      if ${pkgs.zfs}/bin/zfs get -H -o value mounted "$dataset" 2>/dev/null | grep -qx yes; then
-        current=$(${pkgs.zfs}/bin/zfs get -H -o value mountpoint "$dataset")
-        if [ "$current" = "$mount_point" ]; then
-          :
+        if ! ${pkgs.zfs}/bin/zfs list -H -o name "$dataset" &>/dev/null; then
+          echo "zfs-game-home: creating $dataset"
+          ${pkgs.zfs}/bin/zfs create \
+            -o mountpoint="$mount_point" \
+            -o com.sun:auto-snapshot=false \
+            -o canmount=noauto \
+            "$dataset"
         else
-          ${pkgs.zfs}/bin/zfs umount "$dataset" 2>/dev/null || true
-          if ! ${pkgs.zfs}/bin/zfs mount "$dataset" 2>/dev/null; then
-            echo "zfs-game-home: failed to mount $dataset at $mount_point" >&2
-          fi
+          ${pkgs.zfs}/bin/zfs set \
+            mountpoint="$mount_point" \
+            com.sun:auto-snapshot=false \
+            canmount=noauto \
+            "$dataset"
         fi
-      else
         if ! ${pkgs.zfs}/bin/zfs mount "$dataset" 2>/dev/null; then
           echo "zfs-game-home: failed to mount $dataset at $mount_point" >&2
         fi
       fi
     ''
   ) (lib.attrNames gameHomeMounts);
+
+  # After datasets mount: fix ownership and seed the Steam client bootstrap
+  # (same tar Steam normally extracts on first launch). Launcher datasets stay
+  # empty until first run — they have no Nix-store payload, only user data.
+  gameHomeSeedScript =
+    let
+      mountPoints = lib.concatMapStringsSep " " lib.escapeShellArg (lib.attrNames gameHomeMounts);
+      steamBootstrapTar = "${pkgs.steam-unwrapped}/lib/steam/bootstraplinux_ubuntu12_32.tar.xz";
+    in
+    ''
+      game_user=luluco
+      game_group=users
+      home=/home/luluco
+
+      for mount_point in ${mountPoints}; do
+        if mountpoint -q "$mount_point" 2>/dev/null; then
+          chown "$game_user:$game_group" "$mount_point"
+          chmod 700 "$mount_point"
+        fi
+      done
+
+      ${lib.optionalString config.programs.steam.enable ''
+        steam_dir="$home/.local/share/Steam"
+        steam_config="$home/.steam"
+        steam_bootstrap=${lib.escapeShellArg steamBootstrapTar}
+
+        if mountpoint -q "$steam_dir" 2>/dev/null && [ ! -x "$steam_dir/steam.sh" ]; then
+          echo "zfs-game-home: seeding Steam bootstrap into $steam_dir"
+          tar xJf "$steam_bootstrap" -C "$steam_dir"
+          cp -f "$steam_bootstrap" "$steam_dir/bootstrap.tar.xz"
+          chown -R "$game_user:$game_group" "$steam_dir"
+        fi
+
+        if mountpoint -q "$steam_dir" 2>/dev/null && [ -x "$steam_dir/steam.sh" ]; then
+          mkdir -p "$steam_config"
+          ln -sfn "$steam_dir" "$steam_config/steam"
+          chown -R "$game_user:$game_group" "$steam_config"
+        fi
+      ''}
+    '';
 in
 {
   boot.supportedFilesystems = [
@@ -261,10 +293,16 @@ in
     '';
   };
 
-  # Set dataset properties on switch; actual mounts happen at boot via systemd.
+  # Set dataset properties on switch; mounts + seeding also run at boot.
   system.activationScripts.zfs-game-home-datasets = {
     deps = [ "zfs-home-datasets" ];
-    text = gameHomeMountScript;
+    text = ''
+      if [ -d /home/luluco ]; then
+        set +e
+        ${gameHomeMountScript}
+        ${gameHomeSeedScript}
+      fi
+    '';
   };
 
   systemd.services.zfs-game-home-mounts = {
@@ -275,6 +313,7 @@ in
     path = [
       pkgs.zfs
       pkgs.util-linux
+      pkgs.xz
     ];
     serviceConfig = {
       Type = "oneshot";
@@ -299,13 +338,14 @@ in
 
       for stale in "''${stale_mounts[@]}"; do
         if mountpoint -q "$stale" 2>/dev/null; then
-          ${pkgs.zfs}/bin/zfs umount "$stale" 2>/dev/null || umount "$stale" 2>/dev/null || true
+          umount "$stale" 2>/dev/null || true
         fi
         rmdir "$stale" 2>/dev/null || true
       done
 
       set +e
       ${gameHomeMountScript}
+      ${gameHomeSeedScript}
     '';
   };
 
