@@ -27,6 +27,18 @@ let
     yearly = 0;
   };
   nixosSnapshotRetentionDays = 7;
+
+  # Large, re-downloadable game data on dedicated datasets. Each child gets its
+  # own sanoid entry (autosnap=false) so sanoid's recursive home snapshots skip
+  # them; mountpoint=legacy + fileSystems below keeps them out of the home
+  # dataset while still living under /home/luluco.
+  gameHomeMounts = {
+    "/home/luluco/steam" = "rpool/nixos/home/luluco/steam";
+    "/home/luluco/anime-game-launcher" = "rpool/nixos/home/luluco/anime-game-launcher";
+    "/home/luluco/honkers-railway-launcher" = "rpool/nixos/home/luluco/honkers-railway-launcher";
+    "/home/luluco/sleepy-launcher" = "rpool/nixos/home/luluco/sleepy-launcher";
+    "/home/luluco/wavey-launcher" = "rpool/nixos/home/luluco/wavey-launcher";
+  };
 in
 {
   boot.supportedFilesystems = [
@@ -142,6 +154,33 @@ in
     ];
   };
 
+  # mountpoint=legacy on each dataset is set by zfs-game-home-datasets below.
+  fileSystems."/home/luluco/steam" = {
+    device = gameHomeMounts."/home/luluco/steam";
+    fsType = "zfs";
+    options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
+  };
+  fileSystems."/home/luluco/anime-game-launcher" = {
+    device = gameHomeMounts."/home/luluco/anime-game-launcher";
+    fsType = "zfs";
+    options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
+  };
+  fileSystems."/home/luluco/honkers-railway-launcher" = {
+    device = gameHomeMounts."/home/luluco/honkers-railway-launcher";
+    fsType = "zfs";
+    options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
+  };
+  fileSystems."/home/luluco/sleepy-launcher" = {
+    device = gameHomeMounts."/home/luluco/sleepy-launcher";
+    fsType = "zfs";
+    options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
+  };
+  fileSystems."/home/luluco/wavey-launcher" = {
+    device = gameHomeMounts."/home/luluco/wavey-launcher";
+    fsType = "zfs";
+    options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
+  };
+
   boot.kernel.sysctl = {
     # ZFS manages its own page cache via the ARC; a high swappiness
     # causes the kernel to race against ZFS for the same pages and
@@ -203,6 +242,37 @@ in
     '';
   };
 
+  # Ensure game datasets exist with mountpoint=legacy before systemd mounts the
+  # fileSystems entries above. Idempotent on existing datasets.
+  system.activationScripts.zfs-game-home-datasets = {
+    deps = [ "zfs-home-datasets" ];
+    text = lib.concatMapStrings (
+      mountPoint: let
+        dataset = gameHomeMounts.${mountPoint};
+      in
+      ''
+        if ${pkgs.zfs}/bin/zfs list -H -o name ${lib.escapeShellArg dataset} &>/dev/null; then
+          ${pkgs.zfs}/bin/zfs set \
+            mountpoint=legacy \
+            com.sun:auto-snapshot=false \
+            canmount=noauto \
+            ${lib.escapeShellArg dataset}
+        else
+          echo "zfs-game-home: creating ${dataset}"
+          ${pkgs.zfs}/bin/zfs create \
+            -o mountpoint=legacy \
+            -o com.sun:auto-snapshot=false \
+            -o canmount=noauto \
+            ${lib.escapeShellArg dataset}
+        fi
+        if [ -d ${lib.escapeShellArg mountPoint} ]; then
+          chown luluco:users ${lib.escapeShellArg mountPoint} || true
+          chmod 700 ${lib.escapeShellArg mountPoint} || true
+        fi
+      ''
+    ) (lib.attrNames gameHomeMounts);
+  };
+
   services.sanoid = {
     enable = true;
     interval = "hourly";
@@ -217,8 +287,8 @@ in
     };
 
     # Game data: large, constantly changing, fully re-downloadable.
-    # Each lives on its own dataset (com.sun:auto-snapshot=false + this entry)
-    # so the recursive home snapshot doesn't bloat the pool with game binaries.
+    # Each lives on its own dataset with a sanoid entry (autosnap=false) so
+    # sanoid's recursive home snapshots skip it; see gameHomeMounts + fileSystems.
     datasets."rpool/nixos/home/luluco/steam" = {
       autosnap = false;
       autoprune = false;
