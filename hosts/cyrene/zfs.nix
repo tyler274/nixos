@@ -111,6 +111,11 @@ let
         '';
     in
     ''
+      export PATH=${lib.makeBinPath [
+        pkgs.gnutar
+        pkgs.xz
+        pkgs.coreutils
+      ]}:''${PATH:-}
       game_user=luluco
       game_group=users
       home=/home/luluco
