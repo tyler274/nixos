@@ -91,6 +91,12 @@ let
     let
       mountPoints = lib.attrNames gameHomeMounts;
       steamBootstrapTar = "${pkgs.steam-unwrapped}/lib/steam/bootstraplinux_ubuntu12_32.tar.xz";
+      tar = lib.getExe pkgs.gnutar;
+      cp = lib.getExe' pkgs.coreutils "cp";
+      chown = lib.getExe' pkgs.coreutils "chown";
+      chmod = lib.getExe' pkgs.coreutils "chmod";
+      mkdir = lib.getExe' pkgs.coreutils "mkdir";
+      ln = lib.getExe' pkgs.coreutils "ln";
       seedForMount = mountPoint:
         let
           dataset = gameHomeMounts.${mountPoint};
@@ -99,8 +105,8 @@ let
           mount_point=${lib.escapeShellArg mountPoint}
           dataset=${lib.escapeShellArg dataset}
           if game_dataset_mounted "$dataset"; then
-            chown "$game_user:$game_group" "$mount_point"
-            chmod 700 "$mount_point"
+            ${chown} "$game_user:$game_group" "$mount_point"
+            ${chmod} 700 "$mount_point"
           fi
         '';
     in
@@ -119,15 +125,15 @@ let
 
         if game_dataset_mounted "$steam_dataset" && [ ! -x "$steam_dir/steam.sh" ]; then
           echo "zfs-game-home: seeding Steam bootstrap into $steam_dir"
-          tar xJf "$steam_bootstrap" -C "$steam_dir"
-          cp -f "$steam_bootstrap" "$steam_dir/bootstrap.tar.xz"
-          chown -R "$game_user:$game_group" "$steam_dir"
+          ${tar} xJf "$steam_bootstrap" -C "$steam_dir"
+          ${cp} -f "$steam_bootstrap" "$steam_dir/bootstrap.tar.xz"
+          ${chown} -R "$game_user:$game_group" "$steam_dir"
         fi
 
         if game_dataset_mounted "$steam_dataset" && [ -x "$steam_dir/steam.sh" ]; then
-          mkdir -p "$steam_config"
-          ln -sfn "$steam_dir" "$steam_config/steam"
-          chown -R "$game_user:$game_group" "$steam_config"
+          ${mkdir} -p "$steam_config"
+          ${ln} -sfn "$steam_dir" "$steam_config/steam"
+          ${chown} -R "$game_user:$game_group" "$steam_config"
         fi
       ''}
     '';
@@ -331,7 +337,9 @@ in
     path = [
       pkgs.zfs
       pkgs.util-linux
+      pkgs.gnutar
       pkgs.xz
+      pkgs.coreutils
     ];
     serviceConfig = {
       Type = "oneshot";
