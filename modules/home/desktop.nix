@@ -24,6 +24,17 @@
     package = pkgs.thunderbird-bin;
   };
 
+  programs.halloy = {
+    enable = true;
+    settings = {
+      "servers.libera" = {
+        nickname = config.home.username;
+        server = "irc.libera.chat";
+        channels = [ "#gssapi" ];
+      };
+    };
+  };
+
   home.packages = with pkgs; [
     signal-desktop
     discord
@@ -89,7 +100,7 @@
     #rpcs3
     shadps4
     shadps4-qtlauncher
-   
+
     androidsdk
     android-studio-full
     android-tools
@@ -128,8 +139,7 @@
   # TODO: Double check these are correct.
   home.sessionVariables.ANDROID_AVD_HOME = "${config.home.homeDirectory}/.android/avd";
 
-  home.activation.createAndroidAvdDir =
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run mkdir -p "${config.home.homeDirectory}/.android/avd"
-    '';
+  home.activation.createAndroidAvdDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "${config.home.homeDirectory}/.android/avd"
+  '';
 }
