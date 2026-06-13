@@ -39,13 +39,48 @@ let
     "/home/luluco/.local/share/wavey-launcher" = "rpool/nixos/home/luluco/wavey-launcher";
   };
 
-  gameHomeMountOptions = [
-    "zfsutil"
-    "X-mount.mkdir"
-    "noatime"
-    # Do not wedge boot if a dataset is mid-migration or properties are stale.
-    "nofail"
-  ];
+  # Nested ZFS datasets under /home/luluco must mount via `zfs mount` after the
+  # home dataset is up. fileSystems + mountpoint=legacy races the parent mount
+  # and fails when the mountpoint directory is non-empty.
+  gameHomeMountScript = lib.concatMapStrings (
+    mountPoint:
+    let
+      dataset = gameHomeMounts.${mountPoint};
+    in
+    ''
+      dataset=${lib.escapeShellArg dataset}
+      mount_point=${lib.escapeShellArg mountPoint}
+      if ! ${pkgs.zfs}/bin/zfs list -H -o name "$dataset" &>/dev/null; then
+        echo "zfs-game-home: creating $dataset"
+        ${pkgs.zfs}/bin/zfs create \
+          -o mountpoint="$mount_point" \
+          -o com.sun:auto-snapshot=false \
+          -o canmount=noauto \
+          "$dataset"
+      else
+        ${pkgs.zfs}/bin/zfs set \
+          mountpoint="$mount_point" \
+          com.sun:auto-snapshot=false \
+          canmount=noauto \
+          "$dataset"
+      fi
+      if ${pkgs.zfs}/bin/zfs get -H -o value mounted "$dataset" 2>/dev/null | grep -qx yes; then
+        current=$(${pkgs.zfs}/bin/zfs get -H -o value mountpoint "$dataset")
+        if [ "$current" = "$mount_point" ]; then
+          :
+        else
+          ${pkgs.zfs}/bin/zfs umount "$dataset" 2>/dev/null || true
+          if ! ${pkgs.zfs}/bin/zfs mount "$dataset" 2>/dev/null; then
+            echo "zfs-game-home: failed to mount $dataset at $mount_point" >&2
+          fi
+        fi
+      else
+        if ! ${pkgs.zfs}/bin/zfs mount "$dataset" 2>/dev/null; then
+          echo "zfs-game-home: failed to mount $dataset at $mount_point" >&2
+        fi
+      fi
+    ''
+  ) (lib.attrNames gameHomeMounts);
 in
 {
   boot.supportedFilesystems = [
@@ -161,33 +196,8 @@ in
     ];
   };
 
-  # mountpoint=legacy on each dataset is set by zfs-game-home-datasets below.
-  # neededForBoot must stay false (default): these mount after /home/luluco.
-  fileSystems."/home/luluco/.local/share/Steam" = {
-    device = gameHomeMounts."/home/luluco/.local/share/Steam";
-    fsType = "zfs";
-    options = gameHomeMountOptions;
-  };
-  fileSystems."/home/luluco/.local/share/anime-game-launcher" = {
-    device = gameHomeMounts."/home/luluco/.local/share/anime-game-launcher";
-    fsType = "zfs";
-    options = gameHomeMountOptions;
-  };
-  fileSystems."/home/luluco/.local/share/honkers-railway-launcher" = {
-    device = gameHomeMounts."/home/luluco/.local/share/honkers-railway-launcher";
-    fsType = "zfs";
-    options = gameHomeMountOptions;
-  };
-  fileSystems."/home/luluco/.local/share/sleepy-launcher" = {
-    device = gameHomeMounts."/home/luluco/.local/share/sleepy-launcher";
-    fsType = "zfs";
-    options = gameHomeMountOptions;
-  };
-  fileSystems."/home/luluco/.local/share/wavey-launcher" = {
-    device = gameHomeMounts."/home/luluco/.local/share/wavey-launcher";
-    fsType = "zfs";
-    options = gameHomeMountOptions;
-  };
+  # Game datasets mount via zfs-game-home-mounts.service after /home/luluco.
+  # Do not add fileSystems entries here — nested children race the home mount.
 
   boot.kernel.sysctl = {
     # ZFS manages its own page cache via the ARC; a high swappiness
@@ -250,12 +260,30 @@ in
     '';
   };
 
-  # Ensure game datasets exist with mountpoint=legacy before systemd mounts the
-  # fileSystems entries above. Idempotent on existing datasets.
+  # Set dataset properties on switch; actual mounts happen at boot via systemd.
   system.activationScripts.zfs-game-home-datasets = {
     deps = [ "zfs-home-datasets" ];
-    text = ''
+    text = gameHomeMountScript;
+  };
+
+  systemd.services.zfs-game-home-mounts = {
+    description = "Mount game launcher ZFS datasets under ~/.local/share";
+    after = [ "zfs-import.target" ];
+    requires = [ "zfs-import.target" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [
+      pkgs.zfs
+      pkgs.util-linux
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      RequiresMountsFor = "/home/luluco";
+    };
+    script = ''
+      set -e
       home=/home/luluco
+      share="$home/.local/share"
       stale_mounts=(
         "$home/steam"
         "$home/anime-game-launcher"
@@ -264,56 +292,20 @@ in
         "$home/wavey-launcher"
       )
 
-      if [ -d "$home" ]; then
-        ${pkgs.util-linux}/bin/mkdir -p "$home/.local/share"
-        chown luluco:users "$home/.local" "$home/.local/share" || true
-        chmod 755 "$home/.local" "$home/.local/share" || true
+      mkdir -p "$share"
+      chown luluco:users "$home/.local" "$share" || true
+      chmod 755 "$home/.local" "$share" || true
 
-        for stale in "''${stale_mounts[@]}"; do
-          if ${pkgs.util-linux}/bin/mountpoint -q "$stale" 2>/dev/null; then
-            ${pkgs.zfs}/bin/zfs umount "$stale" 2>/dev/null || \
-              ${pkgs.util-linux}/bin/umount "$stale" 2>/dev/null || true
-          fi
-          if [ -d "$stale" ]; then
-            rmdir "$stale" 2>/dev/null || true
-          fi
-        done
-      fi
-    ''
-    + lib.concatMapStrings (
-      mountPoint:
-      let
-        dataset = gameHomeMounts.${mountPoint};
-      in
-      ''
-        dataset=${lib.escapeShellArg dataset}
-        mount_point=${lib.escapeShellArg mountPoint}
-        if ${pkgs.zfs}/bin/zfs list -H -o name "$dataset" &>/dev/null; then
-          if ${pkgs.zfs}/bin/zfs get -H -o value mounted "$dataset" 2>/dev/null | grep -qx yes; then
-            ${pkgs.zfs}/bin/zfs umount "$dataset" 2>/dev/null || true
-          fi
-          ${pkgs.zfs}/bin/zfs set \
-            mountpoint=legacy \
-            com.sun:auto-snapshot=false \
-            canmount=noauto \
-            "$dataset"
-        else
-          echo "zfs-game-home: creating $dataset"
-          ${pkgs.zfs}/bin/zfs create \
-            -o mountpoint=legacy \
-            -o com.sun:auto-snapshot=false \
-            -o canmount=noauto \
-            "$dataset"
+      for stale in "''${stale_mounts[@]}"; do
+        if mountpoint -q "$stale" 2>/dev/null; then
+          ${pkgs.zfs}/bin/zfs umount "$stale" 2>/dev/null || umount "$stale" 2>/dev/null || true
         fi
-        if [ -d /home/luluco ]; then
-          parent=$(${pkgs.coreutils}/bin/dirname "$mount_point")
-          ${pkgs.util-linux}/bin/mkdir -p "$parent" "$mount_point"
-          chown luluco:users "$parent" "$mount_point" || true
-          chmod 755 "$parent" || true
-          chmod 700 "$mount_point" || true
-        fi
-      ''
-    ) (lib.attrNames gameHomeMounts);
+        rmdir "$stale" 2>/dev/null || true
+      done
+
+      set +e
+      ${gameHomeMountScript}
+    '';
   };
 
   services.sanoid = {
