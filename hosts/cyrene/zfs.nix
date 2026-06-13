@@ -33,11 +33,11 @@ let
   # them; mountpoint=legacy + fileSystems below keeps them out of the home
   # dataset while still living under /home/luluco.
   gameHomeMounts = {
-    "/home/luluco/steam" = "rpool/nixos/home/luluco/steam";
-    "/home/luluco/anime-game-launcher" = "rpool/nixos/home/luluco/anime-game-launcher";
-    "/home/luluco/honkers-railway-launcher" = "rpool/nixos/home/luluco/honkers-railway-launcher";
-    "/home/luluco/sleepy-launcher" = "rpool/nixos/home/luluco/sleepy-launcher";
-    "/home/luluco/wavey-launcher" = "rpool/nixos/home/luluco/wavey-launcher";
+    "/home/luluco/.local/share/steam" = "rpool/nixos/home/luluco/steam";
+    "/home/luluco/.local/share/anime-game-launcher" = "rpool/nixos/home/luluco/anime-game-launcher";
+    "/home/luluco/.local/share/honkers-railway-launcher" = "rpool/nixos/home/luluco/honkers-railway-launcher";
+    "/home/luluco/.local/share/sleepy-launcher" = "rpool/nixos/home/luluco/sleepy-launcher";
+    "/home/luluco/.local/share/wavey-launcher" = "rpool/nixos/home/luluco/wavey-launcher";
   };
 in
 {
@@ -155,28 +155,28 @@ in
   };
 
   # mountpoint=legacy on each dataset is set by zfs-game-home-datasets below.
-  fileSystems."/home/luluco/steam" = {
-    device = gameHomeMounts."/home/luluco/steam";
+  fileSystems."/home/luluco/.local/share/steam" = {
+    device = gameHomeMounts."/home/luluco/.local/share/steam";
     fsType = "zfs";
     options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
   };
-  fileSystems."/home/luluco/anime-game-launcher" = {
-    device = gameHomeMounts."/home/luluco/anime-game-launcher";
+  fileSystems."/home/luluco/.local/share/anime-game-launcher" = {
+    device = gameHomeMounts."/home/luluco/.local/share/anime-game-launcher";
     fsType = "zfs";
     options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
   };
-  fileSystems."/home/luluco/honkers-railway-launcher" = {
-    device = gameHomeMounts."/home/luluco/honkers-railway-launcher";
+  fileSystems."/home/luluco/.local/share/honkers-railway-launcher" = {
+    device = gameHomeMounts."/home/luluco/.local/share/honkers-railway-launcher";
     fsType = "zfs";
     options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
   };
-  fileSystems."/home/luluco/sleepy-launcher" = {
-    device = gameHomeMounts."/home/luluco/sleepy-launcher";
+  fileSystems."/home/luluco/.local/share/sleepy-launcher" = {
+    device = gameHomeMounts."/home/luluco/.local/share/sleepy-launcher";
     fsType = "zfs";
     options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
   };
   fileSystems."/home/luluco/wavey-launcher" = {
-    device = gameHomeMounts."/home/luluco/wavey-launcher";
+    device = gameHomeMounts."/home/luluco/.local/share/wavey-launcher";
     fsType = "zfs";
     options = [ "zfsutil" "X-mount.mkdir" "noatime" ];
   };
