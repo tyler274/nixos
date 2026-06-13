@@ -17,6 +17,16 @@ let
       builtins.attrValues zfsCompatibleKernelPackages
     )
   );
+
+  # Roughly a week of sanoid-managed snapshots. nixos generation snapshots
+  # (@nixos-*) are pruned separately in zfs-generation-snapshot below.
+  snapshotRetention = {
+    hourly = 72;
+    daily = 7;
+    monthly = 0;
+    yearly = 0;
+  };
+  nixosSnapshotRetentionDays = 7;
 in
 {
   boot.supportedFilesystems = [
@@ -46,7 +56,10 @@ in
       canTouchEfiVariables = true;
     };
     # lanzaboote replaces the systemd-boot install step with signed-UKI installs.
-    systemd-boot.enable = lib.mkForce false;
+    systemd-boot = {
+      enable = lib.mkForce false;
+      configurationLimit = 10;
+    };
   };
 
   boot.lanzaboote = {
@@ -148,7 +161,10 @@ in
 
   # The ZVOL swap device is disabled because it was causing issues with the
   # kernel. The ARC cache was not able to keep up with the swap requests, and
-  # the kernel was swapping out pages that were still in use.
+  # the kernel was swapping out pages that were still in use. Swap now lives on
+  # the Samsung 870 EVO (see default.nix). Reclaim the unused zvol once:
+  #   swapon --show | grep -q rpool/swap && echo "still in use" && exit 1
+  #   sudo zfs destroy rpool/swap
   #swapDevices = [
   #  { device = "/dev/zvol/rpool/swap"; }
   #];
@@ -169,8 +185,21 @@ in
   system.activationScripts.zfs-generation-snapshot = {
     supportsDryActivation = false;
     text = ''
-      ts=$(date +%Y%m%d-%H%M%S)
+      ts=$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S)
       ${pkgs.zfs}/bin/zfs snapshot -r rpool/nixos@nixos-$ts 2>/dev/null || true
+
+      cutoff=$(${pkgs.coreutils}/bin/date -d "${toString nixosSnapshotRetentionDays} days ago" +%Y%m%d)
+      while IFS= read -r snap; do
+        case "$snap" in
+          *@nixos-*)
+            snap_date=''${snap##*@nixos-}
+            snap_date=''${snap_date%%-*}
+            if [ "''${#snap_date}" -eq 8 ] && [ "$snap_date" -lt "$cutoff" ]; then
+              ${pkgs.zfs}/bin/zfs destroy "$snap" 2>/dev/null || true
+            fi
+            ;;
+        esac
+      done < <(${pkgs.zfs}/bin/zfs list -H -t snapshot -o name -r rpool/nixos 2>/dev/null)
     '';
   };
 
@@ -183,10 +212,7 @@ in
     datasets."rpool/nixos/home" = {
       autoprune = true;
       autosnap = true;
-      hourly = 36;
-      daily = 30;
-      monthly = 6;
-      yearly = 1;
+      inherit (snapshotRetention) hourly daily monthly yearly;
       recursive = true;
     };
 
@@ -222,19 +248,13 @@ in
     datasets."rpool/nixos/root" = {
       autoprune = true;
       autosnap = true;
-      hourly = 36;
-      daily = 14;
-      monthly = 0;
-      yearly = 0;
+      inherit (snapshotRetention) hourly daily monthly yearly;
     };
 
     datasets."rpool/nixos/var" = {
       autoprune = true;
       autosnap = true;
-      hourly = 36;
-      daily = 14;
-      monthly = 0;
-      yearly = 0;
+      inherit (snapshotRetention) hourly daily monthly yearly;
       recursive = true;
     };
   };
@@ -286,6 +306,15 @@ in
     # Leave it disabled until the key/known_hosts are provisioned, otherwise its
     # ExecStopPost `zfs unallow` races the local job and revokes the shared
     # rpool/nixos send/snapshot permissions mid-run ("permission denied").
+    #
+    # If local-backup replication is broken (pool full, stale syncoid holds, or
+    # a diverged incremental chain), recover with:
+    #   sudo zfs holds -r rpool/nixos
+    #   sudo zfs release syncoid <snapshot>   # repeat for each stale hold
+    #   sudo sanoid --prune-snapshots --verbose
+    #   sudo zfs destroy -r local-backup/cyrene/rpool/nixos
+    #   sudo systemctl start syncoid-local-target-init.service
+    #   sudo systemctl start syncoid-rpool-nixos-local.service
     # commands."rpool/nixos" = {
     #   source = "rpool/nixos";
     #   target = "syncoid@zh2883b.rsync.net:data1/Cyrene/rpool/nixos";
@@ -357,34 +386,32 @@ in
     '';
   };
 
-  # Prune snapshots on demand when the pool is getting full, independent of
-  # sanoid's hourly schedule. Sanoid's --prune-snapshots respects the retention
-  # counts defined above, so this is still a best-effort prune rather than a
-  # hard delete of everything.
-  # systemd.services.zfs-prune-on-pressure = {
-  #   description = "Prune ZFS snapshots when rpool usage exceeds threshold";
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     User = "root";
-  #   };
-  #   script = ''
-  #     USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
-  #     if [ "$USED" -ge 85 ]; then
-  #       echo "rpool at ''${USED}% capacity, pruning snapshots..."
-  #       ${pkgs.sanoid}/bin/sanoid --prune-snapshots --verbose
-  #     else
-  #       echo "rpool at ''${USED}%, no pruning needed."
-  #     fi
-  #   '';
-  # };
-  # systemd.timers.zfs-prune-on-pressure = {
-  #   wantedBy = [ "timers.target" ];
-  #   timerConfig = {
-  #     OnBootSec = "10min";
-  #     OnUnitActiveSec = "15min";
-  #     RandomizedDelaySec = "2min";
-  #   };
-  # };
+  # Prune sanoid-managed snapshots when rpool is nearly full, without waiting
+  # for the hourly sanoid timer.
+  systemd.services.zfs-prune-on-pressure = {
+    description = "Prune ZFS snapshots when rpool usage exceeds threshold";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+    };
+    script = ''
+      USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
+      if [ "$USED" -ge 85 ]; then
+        echo "rpool at ''${USED}% capacity, pruning snapshots..."
+        ${pkgs.sanoid}/bin/sanoid --prune-snapshots --verbose
+      else
+        echo "rpool at ''${USED}%, no pruning needed."
+      fi
+    '';
+  };
+  systemd.timers.zfs-prune-on-pressure = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "10min";
+      OnUnitActiveSec = "15min";
+      RandomizedDelaySec = "2min";
+    };
+  };
 
   zfsHome = {
     enable = true;

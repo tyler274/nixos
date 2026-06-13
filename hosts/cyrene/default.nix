@@ -20,6 +20,12 @@
     inputs.aagl.nixosModules.default
   ];
 
+  # Tighter retention than modules/nixos/common.nix (30d) — rpool is space-constrained.
+  nix.gc = {
+    dates = lib.mkForce "daily";
+    options = lib.mkForce "--delete-older-than 7d";
+  };
+
   networking = {
     hostName = "Cyrene";
     networkmanager.enable = true;
