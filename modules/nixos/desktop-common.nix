@@ -109,6 +109,10 @@
         executable = "${pkgs.fractal}/bin/fractal";
         profile = "${pkgs.firejail}/etc/firejail/fractal.profile";
       };
+      halloy = {
+        executable = "${pkgs.halloy}/bin/halloy";
+        profile = "${pkgs.firejail}/etc/firejail/halloy.profile";
+      };
     };
   };
 
