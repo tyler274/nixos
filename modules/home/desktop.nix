@@ -27,10 +27,12 @@
   programs.halloy = {
     enable = true;
     settings = {
-      "servers.libera" = {
-        nickname = config.home.username;
-        server = "irc.libera.chat";
-        channels = [ "#gssapi" ];
+      servers = {
+        libera = {
+          nickname = config.home.username;
+          server = "irc.libera.chat";
+          channels = [ "#gssapi" ];
+        };
       };
     };
   };
