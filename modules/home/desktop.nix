@@ -42,6 +42,7 @@
   home.packages = with pkgs; [
     signal-desktop
     discord
+    fractal
     microsoft-edge
     bitwarden-desktop
     stable-pkgs.telegram-desktop

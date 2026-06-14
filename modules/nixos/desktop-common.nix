@@ -105,6 +105,10 @@
           "--ozone-platform=wayland"
         ];
       };
+      fractal = {
+        executable = "${pkgs.fractal}/bin/fractal";
+        profile = "${pkgs.firejail}/etc/firejail/fractal.profile";
+      };
     };
   };
 
