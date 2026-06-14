@@ -112,6 +112,7 @@
 
     zed-editor
     #sublime4
+    imhex
   ];
 
   xdg.mimeApps = {
