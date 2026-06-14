@@ -20,11 +20,10 @@
     inputs.aagl.nixosModules.default
   ];
 
-  # Tighter retention than modules/nixos/common.nix (30d) — rpool is space-constrained.
-  nix.gc = {
-    dates = lib.mkForce "daily";
-    options = lib.mkForce "--delete-older-than 7d";
-  };
+  # Run GC daily (more frequently than the default weekly) given rpool space pressure.
+  # Retention window matches common.nix (30d) so Nix generations and ZFS
+  # generation snapshots share the same 30-day horizon.
+  nix.gc.dates = lib.mkForce "daily";
 
   networking = {
     hostName = "Cyrene";

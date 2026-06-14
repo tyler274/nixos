@@ -12,15 +12,16 @@ let
   };
 in
 {
-  # Roughly a week of sanoid-managed snapshots. nixos generation snapshots
-  # (@nixos-*) are pruned separately in maintenance.nix.
+  # 30 days of snapshots, matching the nix.gc --delete-older-than 30d window so
+  # every live Nix generation has a corresponding ZFS checkpoint available.
+  # nixos generation snapshots (@nixos-*) are pruned separately in maintenance.nix.
   snapshotRetention = {
     hourly = 72;
-    daily = 7;
+    daily = 30;
     monthly = 0;
     yearly = 0;
   };
-  nixosSnapshotRetentionDays = 7;
+  nixosSnapshotRetentionDays = 30;
 
   inherit gameHomeMounts;
   gameHomeDatasets = lib.unique (lib.attrValues gameHomeMounts);
