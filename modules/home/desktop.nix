@@ -37,6 +37,8 @@
     };
   };
 
+  programs.nheko.enable = true;
+
   home.packages = with pkgs; [
     signal-desktop
     discord
@@ -109,6 +111,8 @@
 
     zed-editor
     #sublime4
+
+    fractal
   ];
 
   xdg.mimeApps = {
