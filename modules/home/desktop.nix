@@ -37,7 +37,7 @@
     };
   };
 
-  programs.nheko.enable = true;
+  #programs.nheko.enable = true;
 
   home.packages = with pkgs; [
     signal-desktop
