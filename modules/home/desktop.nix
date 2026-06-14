@@ -112,8 +112,6 @@
 
     zed-editor
     #sublime4
-
-    fractal
   ];
 
   xdg.mimeApps = {
