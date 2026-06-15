@@ -6,6 +6,27 @@
   ...
 }:
 
+let
+  # Bitwarden login item name for the Libera NickServ password.
+  liberaBitwardenItem = "libera.chat";
+
+  halloyLiberaBitwardenPassword = pkgs.writeShellScript "halloy-libera-bitwarden-password" ''
+    set -euo pipefail
+
+    export PATH=${lib.makeBinPath [ pkgs.bitwarden-cli pkgs.jq ]}:''${PATH:-}
+
+    item=${lib.escapeShellArg liberaBitwardenItem}
+    status_json=$(${pkgs.bitwarden-cli}/bin/bw status --raw 2>/dev/null || echo '{"status":"unauthenticated"}')
+    vault_status=$(${pkgs.jq}/bin/jq -r '.status // "unauthenticated"' <<< "$status_json")
+
+    if [[ "$vault_status" != "unlocked" ]]; then
+      exit 1
+    fi
+
+    ${pkgs.bitwarden-cli}/bin/bw get password "$item" --nointeraction 2>/dev/null | tr -d '\n'
+  '';
+in
+
 {
   imports = [ inputs.mini-diarium.homeModules.default ];
 
@@ -31,7 +52,18 @@
         libera = {
           nickname = config.home.username;
           server = "irc.libera.chat";
+          use_tls = true;
           channels = [ "#gssapi" ];
+          sasl = {
+            plain = {
+              # Bitwarden item "libera.chat"; SASL username is the registered IRC nick.
+              username = config.home.username;
+              # Fetched via bitwarden-cli when the vault is already unlocked.
+              # Requires a one-time `bw login`; no unlock prompts are shown.
+              password_command = "${halloyLiberaBitwardenPassword}";
+              disconnect_on_failure = true;
+            };
+          };
         };
       };
     };
@@ -45,6 +77,7 @@
     fractal
     microsoft-edge
     bitwarden-desktop
+    bitwarden-cli
     stable-pkgs.telegram-desktop
 
     gcc

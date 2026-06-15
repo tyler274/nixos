@@ -77,6 +77,13 @@
     enableVirtualCamera = true;
   };
 
+  # Allow Halloy's SASL password_command to run bw under firejail.
+  environment.etc."firejail/halloy.local".text = ''
+    ignore disable-shell.inc
+    noblacklist ''${HOME}/.config/Bitwarden CLI
+    noblacklist ''${HOME}/.config/Bitwarden
+  '';
+
   programs.firejail = {
     enable = true;
     wrappedBinaries = {
