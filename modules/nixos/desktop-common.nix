@@ -5,11 +5,13 @@
   ...
 }:
 
-let
-  liberaBitwarden = import ../lib/halloy-libera-bitwarden.nix { inherit pkgs lib; };
-in
-
 {
+  imports = [
+    ./bitwarden.nix
+  ];
+
+  bitwarden.enable = true;
+
   services.xserver = {
     enable = true;
     xkb.layout = "us";
@@ -80,9 +82,6 @@ in
     enable = true;
     enableVirtualCamera = true;
   };
-
-  # Allow Halloy's SASL password_command to run bw under firejail.
-  environment.etc."firejail/halloy.local".text = liberaBitwarden.firejailLocal;
 
   programs.firejail = {
     enable = true;

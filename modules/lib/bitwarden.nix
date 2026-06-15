@@ -1,11 +1,11 @@
-# Immutable Bitwarden-backed SASL password helper for Halloy + firejail overrides.
+# Bitwarden CLI password helper and related firejail policy fragments.
 { pkgs, lib, item ? "libera.chat" }:
 let
   bwBin = "${pkgs.bitwarden-cli}/bin/bw";
   jqBin = "${pkgs.jq}/bin/jq";
   readlinkBin = "${pkgs.coreutils}/bin/readlink";
 
-  passwordScript = pkgs.runCommand "halloy-libera-bitwarden-password" { } ''
+  passwordScript = pkgs.runCommand "bitwarden-get-password-script" { } ''
     cat > $out <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -52,8 +52,8 @@ EOF
     chmod 0555 $out
   '';
 
+  # Lets sandboxed apps (e.g. Halloy under firejail) invoke the helper and bw.
   firejailLocal = ''
-    # Halloy runs password_command via sh; only allow the Nix store helper below.
     ignore disable-shell.inc
     noblacklist ''${HOME}/.config/Bitwarden CLI
     noblacklist ''${HOME}/.config/Bitwarden

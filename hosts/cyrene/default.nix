@@ -139,9 +139,6 @@
       calibre
       #krita
     ];
-    home.sessionVariables = {
-      SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
-    };
   };
 
   system.stateVersion = "25.11";
