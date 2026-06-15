@@ -9,6 +9,7 @@
 {
   imports = [
     ./hardening.nix
+    ./dns-over-tls.nix
   ];
 
   nix.settings = {
