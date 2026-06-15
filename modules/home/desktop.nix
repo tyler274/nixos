@@ -7,24 +7,7 @@
 }:
 
 let
-  # Bitwarden login item name for the Libera NickServ password.
-  liberaBitwardenItem = "libera.chat";
-
-  halloyLiberaBitwardenPassword = pkgs.writeShellScript "halloy-libera-bitwarden-password" ''
-    set -euo pipefail
-
-    export PATH=${lib.makeBinPath [ pkgs.bitwarden-cli pkgs.jq ]}:''${PATH:-}
-
-    item=${lib.escapeShellArg liberaBitwardenItem}
-    status_json=$(${pkgs.bitwarden-cli}/bin/bw status --raw 2>/dev/null || echo '{"status":"unauthenticated"}')
-    vault_status=$(${pkgs.jq}/bin/jq -r '.status // "unauthenticated"' <<< "$status_json")
-
-    if [[ "$vault_status" != "unlocked" ]]; then
-      exit 1
-    fi
-
-    ${pkgs.bitwarden-cli}/bin/bw get password "$item" --nointeraction 2>/dev/null | tr -d '\n'
-  '';
+  liberaBitwarden = import ../lib/halloy-libera-bitwarden.nix { inherit pkgs lib; };
 in
 
 {
@@ -60,7 +43,7 @@ in
               username = config.home.username;
               # Fetched via bitwarden-cli when the vault is already unlocked.
               # Requires a one-time `bw login`; no unlock prompts are shown.
-              password_command = "${halloyLiberaBitwardenPassword}";
+              password_command = "${liberaBitwarden.passwordScript}";
               disconnect_on_failure = true;
             };
           };
@@ -180,5 +163,24 @@ in
 
   home.activation.createAndroidAvdDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p "${config.home.homeDirectory}/.android/avd"
+  '';
+
+  # Halloy server settings (including password_command) are managed in Nix.
+  # Refuse activation if config.toml was edited to point at another helper, and
+  # make the file read-only so other local users cannot retarget it.
+  home.activation.secureHalloyConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    config_dir="${config.xdg.configHome}/halloy"
+    config_file="$config_dir/config.toml"
+    expected_cmd='${liberaBitwarden.passwordScript}'
+
+    run install -d -m 0700 "$config_dir"
+
+    if [ -f "$config_file" ]; then
+      if ! ${pkgs.gnugrep}/bin/grep -Fq "$expected_cmd" "$config_file"; then
+        echo "error: $config_file password_command does not match the Nix store helper" >&2
+        exit 1
+      fi
+      run chmod 0444 "$config_file"
+    fi
   '';
 }
