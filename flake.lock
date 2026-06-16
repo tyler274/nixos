@@ -114,10 +114,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1781557312,
-        "narHash": "sha256-QOIRYSUFSq7L5mY3dZymaVhcnne3tPgoR9riB0WocjA=",
+        "lastModified": 1781615165,
+        "narHash": "sha256-CFF4fNNfr2GZSx1xJhBNBi7VMj8OtOqZGOV+fiBSbzw=",
         "ref": "master",
-        "rev": "c03e4752899e55705dfa63979abd885c582a5c48",
+        "rev": "34dd288e65012954cf7170658e0e6a61255b0327",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -132,11 +132,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781574113,
-        "narHash": "sha256-M+cPsktHmUBDIqjo14y7KxTHFypK6WfcRLLBmmBvzCE=",
+        "lastModified": 1781620799,
+        "narHash": "sha256-zSvEYb+F2nGUkJ+HD3ZplJuP+qOcbRnmFi/Be6yMBIg=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "cd9f14aef9f7590b908ce77a4e73a60c0f32b56b",
+        "rev": "9f9790e8db4e9d0f1890a6b3919e15dcfc73b026",
         "type": "github"
       },
       "original": {
@@ -196,10 +196,10 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1781168557,
-        "narHash": "sha256-LOnLQ2tpYF9gqIDDr3+j3DbpJJr/QCH6zPRT2GzEUOE=",
+        "lastModified": 1781622756,
+        "narHash": "sha256-JrPh4M6S7aPsEE9tOENuZrxC6o2szSLlK+t4+nLke9s=",
         "ref": "master",
-        "rev": "6358ff76821101c178e3ab4919a62799bfe3652e",
+        "rev": "08018c72174a4df5657f8d94178ac69fb9c243e5",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/NixOS/nixos-hardware.git"
@@ -266,10 +266,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1781571386,
-        "narHash": "sha256-MJc3wdPbL4fKQKtYJMmeg6vGig+xHFA18pQz7R4mPEY=",
+        "lastModified": 1781637278,
+        "narHash": "sha256-6HKZkx+IPKQjmUYsdVlctUrEzUTHwXcQR9McJSnbdqA=",
         "ref": "staging",
-        "rev": "2eaa7a755f68b6a1c548deaf430cf66112ec4c91",
+        "rev": "56d55fe668a839042cc942d54eaacfeae8e598ca",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
