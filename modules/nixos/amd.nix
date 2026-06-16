@@ -19,7 +19,7 @@
   # frequency/voltage decisions to the firmware (CPPC2), which is
   # significantly more efficient than the legacy ACPI cpufreq driver.
   # Alternatives: "guided" (OS hints, firmware decides), "passive" (OS drives cpufreq).
-  boot.kernelParams = [ "amd_pstate=guided" ];
+  boot.kernelParams = [ "amd_pstate=active" ];
 
   # power-profiles-daemon lets KDE's power widget set EPP profiles:
   #   performance  → EPP "performance"

@@ -14,7 +14,7 @@ umask 077
 expected_self=SCRIPT_PATH
 expected_bw=BW_PATH
 
-self=$(${readlinkBin} -f "${BASH_SOURCE[0]}")
+self=$(${readlinkBin} -f "''${BASH_SOURCE[0]}")
 if [[ "$self" != "$expected_self" ]]; then
   exit 1
 fi
