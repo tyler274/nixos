@@ -14,6 +14,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 │   │   │                           NUT/UPS, docker/incus/lxc/waydroid, HM wiring, kernel blacklist
 │   │   ├── desktop-common.nix      Plasma 6 (SDDM/Wayland), pipewire, bluetooth, printing/scanning,
 │   │   │                           firejail wrappers, steam, xdg portals, apparmor, fonts
+│   │   ├── bitwarden.nix           firejail halloy.local for Bitwarden CLI in sandboxed Halloy
 │   │   ├── amd.nix                 AMD microcode, kvm-amd, amd_pstate (EPP), power-profiles-daemon
 │   │   ├── nvidia.nix              proprietary NVIDIA driver, CUDA, container toolkit, color-pipeline fix
 │   │   ├── cuda.nix                WSL CUDA + docker NVIDIA runtime (uses the Windows-side driver)
@@ -22,8 +23,12 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 │   │   ├── zfs-home.nix            custom `zfsHome` option: per-user ZFS home datasets + mounts
 │   │   ├── kwin-git.nix            overlay that patches kdePackages.kwin
 │   │   └── kwin-patches/           patch files consumed by kwin-git.nix
+│   ├── lib/
+│   │   └── bitwarden.nix           hardened bw password helper + firejail fragments (Halloy/Libera)
 │   └── home/                       Home Manager modules (per-user surface)
 │       ├── common.nix              bash, git, ssh, direnv, starship, htop, nixd/nixfmt, CLI tools, xdg
+│       ├── bitwarden.nix           Bitwarden desktop + CLI, SSH agent, Libera item option
+│       ├── halloy.nix              Halloy + Libera SASL via Bitwarden password_command
 │       ├── desktop.nix             GUI apps, dev toolchain, wayland wrappers, mimeApps
 │       └── plasma.nix              plasma-manager: look & feel, kwin, screen locker, panels, konsole
 └── hosts/
@@ -96,6 +101,10 @@ Four things in [hosts/wsl/default.nix](hosts/wsl/default.nix) and [modules/nixos
 ## Editor tooling
 
 [.vscode/settings.json](.vscode/settings.json) points the Nix IDE extension at the `nixd` language server (installed via `modules/home/common.nix`) with `nixfmt` format-on-save, so Cursor/VS Code get LSP and formatting on any host that imports the home module.
+
+## Bitwarden + Halloy
+
+Libera IRC SASL passwords are fetched from Bitwarden at runtime (not stored in the Nix store). Desktop unlock does **not** unlock the CLI — see [docs/bitwarden-halloy.md](docs/bitwarden-halloy.md) for setup, security model, upstream CLI status, and open work (e.g. optional **bwbio** integration).
 
 ## Configuration philosophy
 

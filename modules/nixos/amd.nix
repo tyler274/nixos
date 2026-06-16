@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # AMD CPU microcode updates (security patches, errata fixes).
@@ -14,7 +19,7 @@
   # frequency/voltage decisions to the firmware (CPPC2), which is
   # significantly more efficient than the legacy ACPI cpufreq driver.
   # Alternatives: "guided" (OS hints, firmware decides), "passive" (OS drives cpufreq).
-  boot.kernelParams = [ "amd_pstate=active" ];
+  boot.kernelParams = [ "amd_pstate=guided" ];
 
   # power-profiles-daemon lets KDE's power widget set EPP profiles:
   #   performance  → EPP "performance"
@@ -22,4 +27,7 @@
   #   power-saver  → EPP "power"
   # Do not set powerManagement.cpuFreqGovernor alongside this; it would conflict.
   services.power-profiles-daemon.enable = true;
+
+  powerManagement.enable = true;
+  powerManagement.cpuFreqGovernor = "schedutil";
 }

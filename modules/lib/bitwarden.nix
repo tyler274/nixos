@@ -14,7 +14,7 @@ umask 077
 expected_self=SCRIPT_PATH
 expected_bw=BW_PATH
 
-self=$(READLINK_PATH -f "$0")
+self=$(${readlinkBin} -f "${BASH_SOURCE[0]}")
 if [[ "$self" != "$expected_self" ]]; then
   exit 1
 fi
@@ -25,12 +25,14 @@ fi
 
 export PATH=HELPER_PATH
 
-item=ITEM_NAME
+item='ITEM_NAME'
 status_json=$("$expected_bw" status --raw 2>/dev/null || echo '{"status":"unauthenticated"}')
-vault_status=$(JQ_PATH -r '.status // "unauthenticated"' <<< "$status_json")
+vault_status=$(${jqBin} -r '.status // "unauthenticated"' <<< "$status_json")
 
 if [[ "$vault_status" != "unlocked" ]]; then
-  exit 1
+  # Halloy runs password_command while loading config.toml; a non-zero exit
+  # fails the whole load. Return no password when the vault is unavailable.
+  exit 0
 fi
 
 "$expected_bw" get password "$item" --nointeraction 2>/dev/null | tr -d '\n'
@@ -46,7 +48,7 @@ EOF
         pkgs.jq
         pkgs.coreutils
       ]}|g" \
-      -e "s|ITEM_NAME|${lib.escapeShellArg item}|g" \
+      -e "s|ITEM_NAME|${item}|g" \
       -i $out
 
     chmod 0555 $out

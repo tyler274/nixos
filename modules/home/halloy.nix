@@ -20,9 +20,8 @@
               plain = {
                 # Bitwarden item from bitwarden.liberaItem; SASL username is the IRC nick.
                 username = config.home.username;
-                # Fetched via bitwarden-cli when the vault is already unlocked.
-                # Requires a one-time `bw login`; no unlock prompts are shown.
-                password_command = "${config.bitwarden.liberaPasswordScript}";
+                # Requires a one-time `bw login`. Reload config after unlocking the vault.
+                password_command = config.bitwarden.liberaPasswordCommand;
                 disconnect_on_failure = true;
               };
             };

@@ -32,10 +32,22 @@ in
       visible = false;
       description = "Nix store path to the Libera IRC password helper script.";
     };
+
+    liberaPasswordCommand = lib.mkOption {
+      type = lib.types.str;
+      internal = true;
+      visible = false;
+      description = ''
+        Shell command Halloy runs to fetch the Libera SASL password.
+        Invoked explicitly with bash because Halloy executes commands via sh -c.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
     bitwarden.liberaPasswordScript = bitwardenLib.passwordScript;
+    bitwarden.liberaPasswordCommand =
+      "${pkgs.bash}/bin/bash ${bitwardenLib.passwordScript}";
 
     home.packages = with pkgs; [
       bitwarden-desktop
