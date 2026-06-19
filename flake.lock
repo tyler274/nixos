@@ -114,10 +114,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1781810163,
-        "narHash": "sha256-dk8lIk0UnO8GD3e7e3HM1vSYXpbEDmhy67w7KztfdCg=",
+        "lastModified": 1781906751,
+        "narHash": "sha256-6Ld1PqmptFtFKblE+SynhRgyBApUWcmrISetWqWHeeo=",
         "ref": "master",
-        "rev": "c8f0b8ed441c95bfeaf33555e7631044bb09f384",
+        "rev": "37f21dfa5d27e71b75bacd9418b156f9265e312e",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -132,11 +132,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781786145,
-        "narHash": "sha256-h9YthWopcujjsZ0/qn0M3tP9qnxcz/WH9X0CBau7/YA=",
+        "lastModified": 1781876083,
+        "narHash": "sha256-D5sfFvmMGnF/WkqMzshFnpQvnC9NpLn/f7zjVJDPS7w=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "f9f4cb67ba8b0aa0555c9272e4429a8ae70e955f",
+        "rev": "ffdf99a2ecbf0990630f25f930c8148ab241bd44",
         "type": "github"
       },
       "original": {
@@ -266,10 +266,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1781830584,
-        "narHash": "sha256-UmknTxL2t58stiMFi5LmjTauRemVxWLb9CIsrvY18FY=",
+        "lastModified": 1781894141,
+        "narHash": "sha256-9CeBsvcyh4psuFURh4mm/Jmc409wOyHo5XhyOk23R3Y=",
         "ref": "staging",
-        "rev": "c2062a4892a52d6e7c22033292955b418db47d09",
+        "rev": "5fe3978ed5dfca82c061668d6ec624ee502932da",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
