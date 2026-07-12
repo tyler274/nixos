@@ -23,7 +23,9 @@
     device = "rpool/nixos/tmp";
     fsType = "zfs";
     options = [
-      "zfsutil"
+      # NO zfsutil here: mount.zfs refuses `-o zfsutil` on mountpoint=legacy
+      # datasets (mount_zfs.c), so combining them fails the mount at boot.
+      # Legacy datasets use plain `mount -t zfs`.
       "X-mount.mkdir"
       "noatime"
       "nodev"
@@ -69,7 +71,7 @@
     device = "rpool/docker";
     fsType = "zfs";
     options = [
-      "zfsutil"
+      # NO zfsutil — legacy dataset, same reason as /tmp above.
       "X-mount.mkdir"
       "noatime"
     ];
