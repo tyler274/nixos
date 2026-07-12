@@ -19,6 +19,15 @@ POOL="rpool"
 FLAKE_ATTR="CyreneMinimal"
 CMD="${1:-mount}"
 
+# install.sh now clones into /etc/nixos; older runs used /root/nixos.
+repo_dir() {
+  for d in /mnt/etc/nixos /mnt/root/nixos; do
+    [ -d "$d/.git" ] && { echo "$d"; return; }
+  done
+  echo "no repo clone found under /mnt/etc/nixos or /mnt/root/nixos" >&2
+  return 1
+}
+
 [ "$(id -u)" -eq 0 ] || { echo "run as root" >&2; exit 1; }
 
 case "$CMD" in
@@ -60,12 +69,13 @@ case "$CMD" in
     ;;
 
   pull)
-    git -C /mnt/root/nixos pull
-    git -C /mnt/root/nixos status --short
+    dir=$(repo_dir)
+    git -C "$dir" pull
+    git -C "$dir" status --short
     ;;
 
   install)
-    nixos-install --flake "/mnt/root/nixos#$FLAKE_ATTR" --no-root-passwd
+    nixos-install --flake "$(repo_dir)#$FLAKE_ATTR" --no-root-passwd
     ;;
 
   umount)

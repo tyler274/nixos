@@ -177,9 +177,13 @@ mkfs.vfat -F32 -n EFI2 "${DISK2}-part1"   # spare on the second mirror leg
 mount -o umask=0077 "${DISK1}-part1" /mnt/boot
 
 # ------------------------------------------------------------------ repo
-echo "--- cloning config repo"
-rm -rf /mnt/root/nixos
-git clone "$REPO_URL" /mnt/root/nixos
+# Clone straight into the installed system's /etc/nixos so the booted
+# machine carries its own config (git history included).
+REPO_DIR=/mnt/etc/nixos
+echo "--- cloning config repo into $REPO_DIR"
+mkdir -p /mnt/etc
+rm -rf "$REPO_DIR"
+git clone "$REPO_URL" "$REPO_DIR"
 
 # Patch the ESP PARTUUID in hardware-configuration.nix to DISK1-part1
 part1_name=$(basename "$(readlink -f "${DISK1}-part1")")
@@ -187,11 +191,11 @@ partuuid=$(lsblk -no PARTUUID "/dev/$part1_name")
 [ -n "$partuuid" ] || { echo "could not determine PARTUUID of ${DISK1}-part1" >&2; exit 1; }
 echo "    ESP PARTUUID: $partuuid"
 sed -i -E "s|/dev/disk/by-partuuid/[0-9a-fA-F-]+|/dev/disk/by-partuuid/$partuuid|" \
-  /mnt/root/nixos/hosts/cyrene/hardware-configuration.nix
-grep -n "by-partuuid" /mnt/root/nixos/hosts/cyrene/hardware-configuration.nix
+  "$REPO_DIR/hosts/cyrene/hardware-configuration.nix"
+grep -n "by-partuuid" "$REPO_DIR/hosts/cyrene/hardware-configuration.nix"
 
 if [ -n "$SSH_KEY" ]; then
-  cp "$SSH_KEY" /mnt/root/nixos/hosts/cyrene/authorized_keys
+  cp "$SSH_KEY" "$REPO_DIR/hosts/cyrene/authorized_keys"
   echo "    installed authorized_keys from $SSH_KEY"
 fi
 
@@ -210,12 +214,12 @@ fi
 # ------------------------------------------------------------------ install
 if [ "$RUN_INSTALL" -eq 1 ]; then
   echo "--- running nixos-install (#$FLAKE_ATTR)"
-  nixos-install --flake "/mnt/root/nixos#$FLAKE_ATTR" --no-root-passwd
+  nixos-install --flake "$REPO_DIR#$FLAKE_ATTR" --no-root-passwd
   echo
   echo "=== done — reboot when ready. Root password comes from initialHashedPassword;"
   echo "=== you'll be prompted for the rpool passphrase at boot."
 else
   echo
-  echo "=== setup complete. Review /mnt/root/nixos, then run:"
-  echo "    nixos-install --flake /mnt/root/nixos#$FLAKE_ATTR --no-root-passwd"
+  echo "=== setup complete. Review $REPO_DIR, then run:"
+  echo "    nixos-install --flake $REPO_DIR#$FLAKE_ATTR --no-root-passwd"
 fi
