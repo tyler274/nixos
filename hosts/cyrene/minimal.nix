@@ -19,6 +19,11 @@
   # a missing extraPool fails zfs-import at every boot of the bootstrap system.
   boot.zfs.extraPools = lib.mkForce [ ];
 
+  # During bootstrap the rpool/docker dataset may not exist yet (or may be in
+  # flux); don't let its mount unit drag the system into emergency mode.
+  # Option lists merge, so this appends to the options set in zfs/filesystems.nix.
+  fileSystems."/var/lib/docker".options = [ "nofail" ];
+
   networking = {
     hostName = "Cyrene";
     networkmanager.enable = true;
