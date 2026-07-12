@@ -1,11 +1,14 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p gptfdisk parted dosfstools nvme-cli sbctl git
 # Cyrene ZFS-on-root installer — run as root from the NixOS live ISO.
+# The nix-shell shebang above pulls in all required tools automatically;
+# no manual `nix-shell -p ...` needed.
 #
 # Usage:
-#   ./cyrene-zfs-install.sh <disk1-by-id> <disk2-by-id> [options]
+#   sudo ./install.sh <disk1-by-id> <disk2-by-id> [options]
 #
 # Example:
-#   ./cyrene-zfs-install.sh \
+#   sudo ./install.sh \
 #     /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_4TB_AAAA \
 #     /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_4TB_BBBB \
 #     --format-lba --install
@@ -59,7 +62,7 @@ case "$DISK2" in /dev/disk/by-id/*) ;; *) echo "use /dev/disk/by-id/ paths" >&2;
 [ -n "$SSH_KEY" ] && [ ! -f "$SSH_KEY" ] && { echo "ssh key not found: $SSH_KEY" >&2; exit 1; }
 
 for tool in sgdisk partprobe zpool zfs mkfs.vfat sbctl git; do
-  command -v "$tool" >/dev/null || { echo "missing tool: $tool (nix-shell -p gptfdisk dosfstools sbctl git)" >&2; exit 1; }
+  command -v "$tool" >/dev/null || { echo "missing tool: $tool (run via the nix-shell shebang: sudo ./install.sh ..., or: nix-shell -p gptfdisk parted dosfstools nvme-cli sbctl git)" >&2; exit 1; }
 done
 if [ "$FORMAT_LBA" -eq 1 ]; then
   command -v nvme >/dev/null || { echo "missing tool: nvme (nix-shell -p nvme-cli)" >&2; exit 1; }
