@@ -16,6 +16,7 @@
     ../../modules/nixos/ccache.nix
     ../../modules/nixos/steam-usb.nix
     ./hardware-configuration.nix
+    ./radios.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
