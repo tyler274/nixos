@@ -200,13 +200,23 @@ if [ -n "$SSH_KEY" ]; then
 fi
 
 # ------------------------------------------------------------------ secure boot
-echo "--- Secure Boot PKI (lanzaboote expects /etc/secureboot)"
+# lanzaboote's pkiBundle points straight at sbctl's own canonical key store
+# (/var/lib/sbctl on sbctl >=0.15) rather than a separate copy, so that
+# `sbctl enroll-keys`/`sbctl rotate-keys` on the installed system can never
+# drift from what lanzaboote actually signs with.
+echo "--- Secure Boot PKI (lanzaboote expects sbctl's own key store)"
 sbctl create-keys || true
-mkdir -p /mnt/etc/secureboot
+mkdir -p /mnt/var/lib
 if [ -d /var/lib/sbctl ]; then
-  cp -r /var/lib/sbctl/. /mnt/etc/secureboot/
+  mkdir -p /mnt/var/lib/sbctl
+  cp -r /var/lib/sbctl/. /mnt/var/lib/sbctl/
 elif [ -d /usr/share/secureboot ]; then
-  cp -r /usr/share/secureboot/. /mnt/etc/secureboot/
+  # Pre-0.15 sbctl on the live ISO: migrate its layout into the new location
+  # sbctl >=0.15 (on the installed system) expects, rather than copying the
+  # legacy tree as-is.
+  mkdir -p /mnt/var/lib/sbctl/keys
+  cp -r /usr/share/secureboot/keys/. /mnt/var/lib/sbctl/keys/ 2>/dev/null || \
+    cp -r /usr/share/secureboot/. /mnt/var/lib/sbctl/
 else
   echo "WARNING: sbctl key dir not found; create keys manually before install" >&2
 fi

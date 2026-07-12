@@ -49,8 +49,14 @@ in
 
   boot.lanzaboote = {
     enable = true;
-    # sbctl stores the Secure Boot PKI here.  Back this directory up offline.
-    pkiBundle = "/etc/secureboot";
+    # Point straight at sbctl's own canonical key store rather than a separate
+    # copy: sbctl >=0.15 moved from /usr/share/secureboot to /var/lib/sbctl,
+    # and `sbctl setup --migrate` only updates ITS OWN store — it has no idea
+    # about any other directory. Keeping pkiBundle in sync with wherever sbctl
+    # actually manages keys means `sbctl enroll-keys`/`sbctl rotate-keys` and
+    # what lanzaboote signs with can never drift apart again. Back this
+    # directory up offline.
+    pkiBundle = "/var/lib/sbctl";
   };
 
   boot.kernel.sysctl = {
