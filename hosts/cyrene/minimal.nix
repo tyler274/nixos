@@ -49,6 +49,13 @@
     ui.enable = lib.mkForce false;
   };
 
+  # Docker (zfs storage driver) is disabled during bootstrap: with the
+  # /var/lib/docker mount marked nofail above, a skipped mount would let
+  # dockerd plant its per-layer datasets on rpool/nixos/var/lib — the exact
+  # snapshot/replication flood rpool/docker exists to prevent. The full
+  # Cyrene config re-enables it once the pool layout is settled.
+  virtualisation.docker.enable = lib.mkForce false;
+
   hardware.enableRedistributableFirmware = true;
 
   environment.systemPackages = with pkgs; [ git sbctl ];
