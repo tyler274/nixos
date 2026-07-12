@@ -28,6 +28,18 @@ repo_dir() {
   return 1
 }
 
+# nixos-enter/nixos-install bind-mount the host's resolv.conf onto
+# $mnt/etc/resolv.conf. On an installed NixOS target that path is a symlink
+# (to /etc/static/... or the systemd-resolved stub) that dangles inside the
+# chroot, so the bind fails and DNS is dead. Replace it with a regular file
+# carrying the live ISO's resolvers before entering the chroot.
+fix_resolv() {
+  mkdir -p /mnt/etc
+  rm -f /mnt/etc/resolv.conf
+  cp -L /etc/resolv.conf /mnt/etc/resolv.conf 2>/dev/null \
+    || echo "nameserver 1.1.1.1" > /mnt/etc/resolv.conf
+}
+
 [ "$(id -u)" -eq 0 ] || { echo "run as root" >&2; exit 1; }
 
 case "$CMD" in
@@ -65,6 +77,7 @@ case "$CMD" in
     ;;
 
   enter)
+    fix_resolv
     exec nixos-enter --root /mnt
     ;;
 
@@ -75,6 +88,7 @@ case "$CMD" in
     ;;
 
   install)
+    fix_resolv
     nixos-install --flake "$(repo_dir)#$FLAKE_ATTR" --no-root-passwd
     ;;
 
