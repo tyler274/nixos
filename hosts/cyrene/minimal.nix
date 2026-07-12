@@ -6,8 +6,17 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/zfs-home.nix
     ./hardware-configuration.nix
-    ./zfs
+    # Deliberately NOT ./zfs (the whole dir): game-home.nix mounts datasets
+    # that only exist after the post-install step, and sanoid/syncoid assume
+    # the local-backup pool. Import only what a fresh install needs to boot.
+    ./zfs/boot.nix
+    ./zfs/filesystems.nix
+    ./zfs/home.nix
   ];
+
+  # boot.nix imports the local-backup pool, which is created post-install;
+  # a missing extraPool fails zfs-import at every boot of the bootstrap system.
+  boot.zfs.extraPools = lib.mkForce [ ];
 
   networking = {
     hostName = "Cyrene";
