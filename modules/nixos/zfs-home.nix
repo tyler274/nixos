@@ -76,8 +76,12 @@ in
         ''
           if ! ${pkgs.zfs}/bin/zfs list -H -o name ${lib.escapeShellArg dataset} &>/dev/null; then
             echo "zfs-home: creating ${dataset}"
+            # canmount=noauto: the systemd mount unit generated from fileSystems
+            # is the single mounter; letting zfs-mount.service also auto-mount
+            # the dataset races it and fails the boot-critical /home/<user>
+            # mount with "filesystem already mounted".
             ${pkgs.zfs}/bin/zfs create \
-              -o canmount=on \
+              -o canmount=noauto \
               -o mountpoint=${lib.escapeShellArg u.home} \
               ${lib.escapeShellArg dataset} \
             && ${pkgs.zfs}/bin/zfs set \
