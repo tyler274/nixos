@@ -79,6 +79,9 @@ read -r -p "Type YES to continue: " ans
 [ "$ans" = "YES" ] || { echo "aborted"; exit 1; }
 
 # ------------------------------------------------------------------ hostid
+# On the live ISO /etc/hostid may be a symlink into the read-only /nix/store;
+# zgenhostid writes through the symlink and fails with EROFS unless it's removed.
+rm -f /etc/hostid
 zgenhostid -f "$HOSTID"
 
 # ------------------------------------------------------------------ teardown
