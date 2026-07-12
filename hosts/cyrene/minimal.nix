@@ -25,9 +25,13 @@
     { device = "/dev/zvol/rpool/swap"; }
   ];
 
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
+  # No zramSwap here: ./zfs/boot.nix already enables boot.zswap, and zram +
+  # zswap are mutually exclusive (both compress swap pages in RAM).
+
+  # common.nix enables incus; not needed for the bootstrap install.
+  virtualisation.incus = {
+    enable = lib.mkForce false;
+    ui.enable = lib.mkForce false;
   };
 
   hardware.enableRedistributableFirmware = true;
