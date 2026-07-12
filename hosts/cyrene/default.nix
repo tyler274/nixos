@@ -108,6 +108,20 @@
     extraGroups = [ "networkmanager" ];
   };
 
+  # Modern Nix expects ~/.local/state/nix/profiles to already exist before it
+  # will write a profile generation into it, but nothing creates that
+  # directory ahead of time. On the very first home-manager activation for a
+  # user (e.g. this first switch from CyreneMinimal to the full Cyrene
+  # config), that leaves nothing there yet and activation aborts with
+  # "could not find suitable profile directory". Piggyback on the
+  # home-manager-<user> unit's own (correct) RequiresMountsFor=$HOME
+  # ordering so this runs after the ZFS home dataset is mounted, as the same
+  # user, before activation proper.
+  # https://github.com/nix-community/home-manager/issues/4403
+  systemd.services."home-manager-luluco".preStart = lib.mkBefore ''
+    mkdir -p "$HOME/.local/state/nix/profiles"
+  '';
+
   home-manager.users.luluco = { ... }: {
     imports = [
       ../../modules/home/common.nix
