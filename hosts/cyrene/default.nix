@@ -155,14 +155,14 @@
       # cudaPackages_13_2.libcutensor
       # cudaPackages_13_2.tensorrt
       openssl
-      cemu
-      dolphin-emu
+      #cemu
+      #dolphin-emu
       wine
       capacities
       kubectl
       pods
       hydra-check
-      galaxy-buds-client
+      #galaxy-buds-client
       calibre
       #krita
     ];
