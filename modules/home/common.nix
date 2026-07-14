@@ -83,7 +83,9 @@
     settings = {
       user = {
         name = "tyler";
-        email = "tyler274port@gmail.com";
+        # GitHub noreply address: pushes are rejected (GH007) when commits
+        # carry the real email while GitHub's email privacy is enabled.
+        email = "4147075+tyler274@users.noreply.github.com";
       };
       init.defaultBranch = "main";
       pull.rebase = true;
