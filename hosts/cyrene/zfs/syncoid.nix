@@ -6,7 +6,7 @@
 
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
-  inherit (cyreneZfs) gameHomeDatasets;
+  inherit (cyreneZfs) gameHomeDatasets localBackupAttached;
 
   gameDatasetSyncoidExcludes = map (dataset: "--exclude-datasets=${dataset}") gameHomeDatasets;
 in
@@ -73,37 +73,41 @@ in
     #   sendOptions = "w";
     #   extraArgs = [ "--use-hold" ];
     # };
-    commands."rpool/nixos-local" = {
-      source = "rpool/nixos";
-      target = "local-backup/cyrene/rpool/nixos";
-      # Raw send preserves the on-disk encrypted blocks; the local-backup pool
-      # never needs to hold or know the encryption key.
-      sendOptions = "w";
-      # Place a ZFS hold on the last-sent source snapshot so sanoid's autoprune
-      # cannot delete it between syncoid runs. Without this, sanoid could prune
-      # the anchor snapshot and force a full resend on the next run. The hold is
-      # released automatically after the next successful incremental send.
-      extraArgs = [
-        "--use-hold"
-        # rpool/nixos/tmp is a no-snapshot build-sandbox dataset; there is
-        # nothing worth backing up there and it could be enormous mid-build.
-        "--exclude-datasets=rpool/nixos/tmp"
-      ]
-      ++ gameDatasetSyncoidExcludes
-      ++ [
-        # Docker uses the ZFS storage driver (virtualisation.docker.storageDriver
-        # = "zfs") rooted at the rpool/nixos/var/lib dataset, so every image
-        # layer and container is an ephemeral child dataset there: 64-hex layer
-        # IDs, "<id>-init" container layers, and 25-char container IDs. Raw
-        # replication with --use-hold places a ZFS hold on each one's snapshot,
-        # which then blocks `docker rm`/`docker rmi` ("cannot destroy snapshot
-        # ... it's being held") until the next syncoid run. They are fully
-        # rebuildable, so skip them entirely. The regex matches any child of
-        # var/lib whose name is a 25+-char run of [a-z0-9] (all three docker
-        # dataset name forms) while still backing up the var/lib dataset itself
-        # and any normally-named child datasets.
-        "--exclude-datasets=rpool/nixos/var/lib/[a-z0-9]{25,}"
-      ];
+    # Gated on localBackupAttached (lib.nix): with the pool's disk detached the
+    # timer-driven replication would fail on every run.
+    commands = lib.optionalAttrs localBackupAttached {
+      "rpool/nixos-local" = {
+        source = "rpool/nixos";
+        target = "local-backup/cyrene/rpool/nixos";
+        # Raw send preserves the on-disk encrypted blocks; the local-backup pool
+        # never needs to hold or know the encryption key.
+        sendOptions = "w";
+        # Place a ZFS hold on the last-sent source snapshot so sanoid's autoprune
+        # cannot delete it between syncoid runs. Without this, sanoid could prune
+        # the anchor snapshot and force a full resend on the next run. The hold is
+        # released automatically after the next successful incremental send.
+        extraArgs = [
+          "--use-hold"
+          # rpool/nixos/tmp is a no-snapshot build-sandbox dataset; there is
+          # nothing worth backing up there and it could be enormous mid-build.
+          "--exclude-datasets=rpool/nixos/tmp"
+        ]
+        ++ gameDatasetSyncoidExcludes
+        ++ [
+          # Docker uses the ZFS storage driver (virtualisation.docker.storageDriver
+          # = "zfs") rooted at the rpool/nixos/var/lib dataset, so every image
+          # layer and container is an ephemeral child dataset there: 64-hex layer
+          # IDs, "<id>-init" container layers, and 25-char container IDs. Raw
+          # replication with --use-hold places a ZFS hold on each one's snapshot,
+          # which then blocks `docker rm`/`docker rmi` ("cannot destroy snapshot
+          # ... it's being held") until the next syncoid run. They are fully
+          # rebuildable, so skip them entirely. The regex matches any child of
+          # var/lib whose name is a 25+-char run of [a-z0-9] (all three docker
+          # dataset name forms) while still backing up the var/lib dataset itself
+          # and any normally-named child datasets.
+          "--exclude-datasets=rpool/nixos/var/lib/[a-z0-9]{25,}"
+        ];
+      };
     };
   };
 
@@ -115,7 +119,7 @@ in
   # that hold the backup before syncoid runs. canmount=off/mountpoint=none keeps
   # these intermediate containers from mounting anywhere; the received
   # rpool/nixos tree carries its own (raw, encrypted) properties.
-  systemd.services.syncoid-local-target-init = {
+  systemd.services.syncoid-local-target-init = lib.mkIf localBackupAttached {
     description = "Create local-backup container datasets for syncoid";
     after = [ "zfs-import.target" ];
     requiredBy = [ "syncoid-rpool-nixos-local.service" ];

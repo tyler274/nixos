@@ -25,4 +25,11 @@ in
 
   inherit gameHomeMounts;
   gameHomeDatasets = lib.unique (lib.attrValues gameHomeMounts);
+
+  # The local-backup pool's disk is currently detached. This gates the pool
+  # import (boot.nix) and the syncoid replication into it (syncoid.nix):
+  # importing a missing pool retries for 60s and stalls every boot. Flip back
+  # to true once the disk is reattached, then run once:
+  #   sudo zpool import -f local-backup
+  localBackupAttached = false;
 }

@@ -1,6 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
+  cyreneZfs = import ./lib.nix { inherit lib; };
   zfsCompatibleKernelPackages = lib.filterAttrs (
     name: kernelPackages:
     (builtins.match "linux_[0-9]+_[0-9]+" name) != null
@@ -25,7 +26,9 @@ in
   boot.kernelParams = [ "console=tty1" ];
   boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
-  boot.zfs.extraPools = [ "local-backup" ];
+  # Gated on localBackupAttached (see lib.nix): importing the pool while its
+  # disk is detached retries for 60s and stalls every boot.
+  boot.zfs.extraPools = lib.optionals cyreneZfs.localBackupAttached [ "local-backup" ];
   # Unique per-host ZFS hostid. forceImportRoot above lets the root pool
   # reconcile this on the next boot's forced import without an export (which is
   # impossible for a live system root); see also local-backup, which needs a
