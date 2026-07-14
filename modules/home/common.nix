@@ -111,6 +111,11 @@
         ControlPersist = "10m";
       };
     };
+    matchBlocks."github.com" = {
+      user = "git";
+      identityFile = "~/.ssh/id_ed25519";
+      identitiesOnly = true;
+    };
   };
 
   # home-manager symlinks ~/.ssh/config into the Nix store (owned by nobody,
