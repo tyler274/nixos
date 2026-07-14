@@ -1,10 +1,12 @@
 { ... }:
 
 {
-  # Nix build sandboxes live in /tmp/nix-build-* on the host side. A dedicated
-  # ZFS dataset keeps them off rpool/nixos/root (and therefore out of every
-  # snapshot) while still letting large builds (Firefox, LLVM, etc.) grow into
-  # whatever pool space is free — a fixed-size tmpfs would kill those builds.
+  # NOTE: Nix >= 2.24 moved daemon build sandboxes from /tmp to
+  # /nix/var/nix/builds, which now lives on the 980 PRO scratch partition
+  # (../scratch.nix) — this dataset no longer sees them. It still keeps
+  # everything ELSE that lands in /tmp off rpool/nixos/root (and therefore out
+  # of every snapshot) while letting large files grow into whatever pool space
+  # is free — a fixed-size tmpfs would kill those.
   # sync=disabled is safe for /tmp: the kernel's page cache is the durability
   # guarantee here, not ZFS intent-log.
   #

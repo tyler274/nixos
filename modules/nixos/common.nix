@@ -130,6 +130,9 @@
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
+      # PasswordAuthentication=false alone still leaves the PAM
+      # keyboard-interactive path open to password guessing; close it too.
+      KbdInteractiveAuthentication = false;
       X11Forwarding = true;
     };
     ports = [ 42069 ];

@@ -8,6 +8,7 @@
 {
   imports = [
     ./bitwarden.nix
+    ./clamav.nix
   ];
 
   bitwarden.enable = true;
@@ -58,11 +59,6 @@
   };
 
   services.opensnitch.enable = true;
-
-  services.clamav = {
-    daemon.enable = true;
-    updater.enable = true;
-  };
 
   services.mullvad-vpn.enable = true;
   services.fwupd.enable = true;

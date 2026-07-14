@@ -39,6 +39,10 @@
     nixd
     nixfmt
     nil
+
+    # MCP server exposing NixOS package/option search to AI assistants
+    # (wired into Cursor/clients via their MCP config, e.g. ~/.cursor/mcp.json).
+    mcp-nixos
   ];
 
   programs.bash = {
