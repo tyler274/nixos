@@ -111,6 +111,14 @@
     extraGroups = [ "networkmanager" ];
   };
 
+  # ~/.ssh ended up root-owned after the reinstall (root wrote into it before
+  # the user ever logged in), which made home-manager-luluco.service fail at
+  # boot: "ln: failed to create symbolic link '/home/luluco/.ssh/config':
+  # Permission denied". Applied at boot and on every activation.
+  systemd.tmpfiles.rules = [
+    "d /home/luluco/.ssh 0700 luluco users -"
+  ];
+
   # Modern Nix expects ~/.local/state/nix/profiles to already exist before it
   # will write a profile generation into it, but nothing creates that
   # directory ahead of time. On the very first home-manager activation for a

@@ -34,4 +34,18 @@ in
       "nofail"
     ];
   }) gameHomeMounts;
+
+  # X-mount.mkdir creates any missing mountpoint path components as root:root,
+  # and a freshly `zfs create`d dataset root is also root-owned. After a fresh
+  # install this left ~/.local, ~/.local/share and every game mountpoint
+  # unwritable by the user (Steam's bootstrap then dies with "Permission
+  # denied" extracting bootstraplinux_ubuntu12_32.tar.xz). These rules run at
+  # boot after local-fs.target and again during nixos-rebuild activation, so
+  # the mounted dataset roots (ownership persists in the dataset) and the
+  # intermediate directories on the home dataset always end up user-owned.
+  systemd.tmpfiles.rules = [
+    "d /home/luluco/.local 0755 luluco users -"
+    "d /home/luluco/.local/share 0755 luluco users -"
+  ]
+  ++ map (mountPoint: "d ${mountPoint} 0755 luluco users -") (lib.attrNames gameHomeMounts);
 }
