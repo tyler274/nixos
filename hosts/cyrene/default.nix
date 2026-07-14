@@ -36,10 +36,13 @@
     };
   };
 
-  # Additional swap on the Samsung 870 EVO; encrypted with a fresh random
-  # key on every boot so no sensitive data is written to disk in plaintext.
+  # Swap on the repurposed Samsung 980 PRO (whole disk; replaced the old
+  # 870 EVO). Encrypted with a fresh random key on every boot so no sensitive
+  # data is written to disk in plaintext. zswap (zfs/boot.nix) requires at
+  # least one physical swap device as its backing store, so this must stay
+  # non-empty.
   swapDevices = [
-    { device = "/dev/disk/by-id/ata-Samsung_SSD_870_EVO_500GB_S6PXNM0T802521D"; randomEncryption.enable = true; }
+    { device = "/dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA08502B"; randomEncryption.enable = true; }
   ];
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
