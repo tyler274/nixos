@@ -114,11 +114,13 @@
         ControlPath = "~/.ssh/master-%r@%n:%p";
         ControlPersist = "10m";
       };
-    };
-    matchBlocks."github.com" = {
-      user = "git";
-      identityFile = "~/.ssh/id_ed25519";
-      identitiesOnly = true;
+      # ssh_config is first-match-wins per option, so keep the specific host
+      # block ahead of the "*" catch-all in the generated file.
+      "github.com" = lib.hm.dag.entryBefore [ "*" ] {
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = "yes";
+      };
     };
   };
 
