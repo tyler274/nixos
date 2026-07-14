@@ -58,6 +58,12 @@
       Type = "oneshot";
       RemainAfterExit = true;
     };
+    # Without this, the service still runs when the T7 is absent (nofail lets
+    # boot continue past the failed mount): mkdir -p then creates the
+    # shadercache path on the root filesystem under the unmounted /mnt/steam,
+    # and chattr +C fails on ZFS ("Operation not supported"), failing the unit
+    # every boot. Skip cleanly unless the btrfs volume is actually mounted.
+    unitConfig.ConditionPathIsMountPoint = "/mnt/steam";
     script = ''
       dir=/mnt/steam/SteamLibrary/steamapps/shadercache
       ${pkgs.coreutils}/bin/mkdir -p "$dir"
