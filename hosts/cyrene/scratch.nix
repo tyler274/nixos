@@ -26,6 +26,12 @@
   #
   # The mapping is named "scratch" deliberately — no dash, so the systemd unit
   # is plain systemd-cryptsetup@scratch.service with no \x2d escaping needed.
+  #
+  # sector-size=4096 requires the partition SIZE to be a multiple of 8×512 B
+  # sectors, or systemd-cryptsetup fails at boot with "Device size is not
+  # aligned to requested sector size". sgdisk aligns partition starts only;
+  # the partition must be created with `sgdisk --align-end` (-I) so the end
+  # doesn't run to the disk's unaligned last usable sector.
   environment.etc.crypttab.text = ''
     scratch /dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA08502B-part2 /dev/urandom plain,cipher=aes-xts-plain64,size=512,sector-size=4096,discard,tmp=ext4
   '';
