@@ -63,7 +63,7 @@
   services.mullvad-vpn.enable = true;
   services.fwupd.enable = true;
 
-  programs.kdeconnect.enable = true;
+  programs.kdeconnect.enable = false;
   programs.partition-manager.enable = true;
 
   services.jackett = {
