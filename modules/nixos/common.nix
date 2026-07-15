@@ -226,10 +226,10 @@
 
   virtualisation = {
     waydroid.enable = true;
-    incus = {
-      enable = true;
-      ui.enable = true;
-    };
+    #incus = {
+    #  enable = true;
+    #  ui.enable = true;
+    #};
     lxc = {
       enable = true;
       lxcfs.enable = true;
