@@ -123,12 +123,39 @@
       # Application-registered URI schemes — kept here so HM owns the full
       # file and KDE additions do not accumulate between rebuilds.
       "x-scheme-handler/capacities" = [ "capacities.desktop" ];
+      # Lychee Slicer 7.6.2+ logs in via the browser and returns the session
+      # through a lycheeslicer:// redirect; without this handler login never
+      # completes (the nixpkgs desktop file registers no URL scheme).
+      "x-scheme-handler/lycheeslicer" = [ "lycheeslicer.desktop" ];
     };
   };
   # Force-overwrite mimeapps.list on every activation so KDE's in-session
   # edits (which turn the symlink into a plain file) cannot block future
   # switches when the .hm-backup slot is already occupied.
   xdg.configFile."mimeapps.list".force = true;
+
+  # The desktop file shipped by the nixpkgs lycheeslicer package
+  # ("Lychee Slicer.desktop") lacks %u and the lycheeslicer:// scheme, so it
+  # cannot receive the browser-login callback. Provide a corrected entry that
+  # the mimeapps handler above points at.
+  xdg.desktopEntries.lycheeslicer = {
+    name = "Lychee Slicer";
+    genericName = "Resin Slicer";
+    comment = "All-in-one 3D slicer for Resin and Filament";
+    exec = "lycheeslicer %u";
+    terminal = false;
+    categories = [ "Graphics" ];
+    mimeType = [
+      "model/stl"
+      "x-scheme-handler/lycheeslicer"
+    ];
+  };
+  # Shadow the package's own "Lychee Slicer.desktop" so the launcher only
+  # shows the corrected entry above.
+  xdg.desktopEntries."Lychee Slicer" = {
+    name = "LycheeSlicer";
+    noDisplay = true;
+  };
 
   # Android development: pin the AVD home so avdmanager and the emulator
   # always agree on where virtual devices live.  Without this the emulator
