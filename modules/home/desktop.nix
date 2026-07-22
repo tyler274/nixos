@@ -62,6 +62,7 @@
     obs-studio
     reaper
     lycheeslicer
+    cura-appimage
 
     vlc
     mpv
