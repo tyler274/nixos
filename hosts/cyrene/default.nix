@@ -15,7 +15,7 @@
     ../../modules/nixos/ollama.nix
     ../../modules/nixos/ccache.nix
     ../../modules/nixos/steam-usb.nix
-    ../../modules/nixos/xtool-studio.nix
+    ../../modules/nixos/xtool-studio
     ./hardware-configuration.nix
     ./radios.nix
     ./scratch.nix
