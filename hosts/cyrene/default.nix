@@ -16,6 +16,7 @@
     ../../modules/nixos/ccache.nix
     ../../modules/nixos/steam-usb.nix
     ../../modules/nixos/xtool-studio
+    ../../modules/nixos/chitubox
     ./hardware-configuration.nix
     ./radios.nix
     ./scratch.nix

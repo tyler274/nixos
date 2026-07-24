@@ -151,17 +151,40 @@ let
 
   # Fonts for the wineprefix (fixes the missing-glyph / blank-label UI).
   # Chromium/Electron on Windows renders all text via DirectWrite, and Wine's
-  # DirectWrite only enumerates C:\windows\Fonts — host fontconfig fonts are
-  # visible to Wine's GDI alone. A bare prefix therefore has almost no usable
-  # glyphs, and no CJK at all for Studio's Chinese strings. One flat directory
-  # of font files the launcher links into the prefix: corefonts gives real
-  # Arial/Verdana/Times (unfree but redistributable; allowUnfree is set
-  # repo-wide in common.nix), Liberation + DejaVu add free wide-coverage
-  # sans/serif/mono and symbol glyphs, Noto Sans CJK SC covers Chinese.
+  # DirectWrite builds its system font collection SOLELY from the registry key
+  #   HKLM\Software\Microsoft\Windows NT\CurrentVersion\Fonts
+  # (dlls/dwrite/main.c create_system_path_list, verified in wine 11.0) — it
+  # never scans C:\windows\Fonts, and host fontconfig fonts are visible to
+  # Wine's GDI alone. Each font therefore needs BOTH a link in
+  # C:\windows\Fonts (the stable path the registry values resolve against,
+  # plus GDI) and a value under that key (generated into wineRegistry below).
+  # Without the registry entries DirectWrite's only fonts are the handful Wine
+  # itself registers (Tahoma etc.), so Studio could render its own bundled
+  # webfonts (Inter, its "iconfont" icon face) and Tahoma but drew every other
+  # family as blank glyphless runs — blank buttons/dropdowns/inputs anywhere
+  # the CSS resolves to a system font, with Blink even failing to find a
+  # last-resort fallback ("remote_font_face_source.cc ... NOTREACHED" in the
+  # app log). Diagnosed live via --remote-debugging-port: canvas fillText
+  # painted 0 px for every farm family but 652 px for Wine's registered
+  # Tahoma, and registry-registering the farm fixed all of them.
+  #
+  # A bare prefix also has no CJK at all for Studio's Chinese strings.
+  # One flat directory
+  # of font files the launcher links into the prefix: Noto Sans is the primary
+  # UI face (see the FontSubstitutes below) with the rest of the Noto set for
+  # wide script coverage, Noto Color Emoji supplies emoji (CBDT/CBLC bitmap
+  # color tables — Chromium's Skia consumes those directly, so emoji render in
+  # color without any DirectWrite COLR support needed), corefonts gives real
+  # Arial/Verdana/Times for content that asks for them by name (unfree but
+  # redistributable; allowUnfree is set repo-wide in common.nix), Liberation +
+  # DejaVu add metric-compatible sans/serif/mono and monochrome symbol glyphs,
+  # Noto Sans CJK SC covers Chinese.
   wineFonts =
     pkgs.runCommand "xtool-studio-wine-fonts"
       {
         fontPackages = [
+          pkgs.noto-fonts
+          pkgs.noto-fonts-color-emoji
           pkgs.corefonts
           pkgs.liberation_ttf
           pkgs.dejavu_fonts
@@ -186,17 +209,27 @@ let
   #   first; the fallback keeps non-Wayland sessions working.
   #
   #   FontSubstitutes — map the Windows family names Studio/Chromium asks for
-  #   (Segoe UI is the Windows UI default; the YaHei/SimSun/PingFang set covers
-  #   the Chinese locale CSS stacks) onto fonts actually present in wineFonts.
-  wineRegistry = pkgs.writeText "xtool-studio-wine.reg" ''
+  #   onto fonts actually present in wineFonts. The Latin UI faces (Segoe UI is
+  #   the Windows UI default; MS Shell Dlg/Tahoma/Microsoft Sans Serif are the
+  #   GDI dialog defaults) all resolve to Noto Sans for a consistent, nicer
+  #   look; Segoe UI Emoji goes to Noto Color Emoji (Segoe UI Symbol stays on
+  #   DejaVu Sans — it is mostly non-emoji symbols like arrows and geometric
+  #   shapes, which Noto Color Emoji does not carry); the YaHei/SimSun/PingFang
+  #   set covers the Chinese locale CSS stacks.
+  wineRegistryBase = pkgs.writeText "xtool-studio-wine-base.reg" ''
     REGEDIT4
 
     [HKEY_CURRENT_USER\Software\Wine\Drivers]
     "Graphics"="wayland,x11"
 
     [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes]
-    "Segoe UI"="Arial"
-    "Segoe UI Semibold"="Arial"
+    "Segoe UI"="Noto Sans"
+    "Segoe UI Semibold"="Noto Sans"
+    "MS Shell Dlg"="Noto Sans"
+    "MS Shell Dlg 2"="Noto Sans"
+    "Tahoma"="Noto Sans"
+    "Microsoft Sans Serif"="Noto Sans"
+    "Segoe UI Emoji"="Noto Color Emoji"
     "Segoe UI Symbol"="DejaVu Sans"
     "Microsoft YaHei"="Noto Sans CJK SC"
     "Microsoft YaHei UI"="Noto Sans CJK SC"
@@ -204,6 +237,27 @@ let
     "NSimSun"="Noto Sans CJK SC"
     "SimHei"="Noto Sans CJK SC"
     "PingFang SC"="Noto Sans CJK SC"
+  '';
+
+  # Final .reg the launcher applies: the static rules above plus one
+  # HKLM ...\CurrentVersion\Fonts value per farm font, which is what makes the
+  # farm visible to DirectWrite at all (see the wineFonts note). Values are
+  # bare filenames — dwrite resolves those against C:\windows\fonts, where the
+  # launcher maintains the links — so they stay valid across farm rebuilds.
+  # Because this file embeds the wineFonts store path, any change to the font
+  # set yields a new .reg store path and the launcher's stamp check re-applies
+  # it automatically. regedit only adds/overwrites values; entries for fonts
+  # later dropped from the farm go stale, which is harmless (dwrite skips
+  # files it cannot open, with a WARN).
+  wineRegistry = pkgs.runCommand "xtool-studio-wine.reg" { } ''
+    {
+      cat ${wineRegistryBase}
+      printf '\n%s\n' '[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]'
+      for f in ${wineFonts}/*; do
+        b=$(basename "$f")
+        printf '"%s (TrueType)"="%s"\n' "''${b%.*}" "$b"
+      done
+    } >$out
   '';
 
   # The extracted Windows application tree (Electron app + native tools). Kept
@@ -268,8 +322,9 @@ let
     find "$fontdir" -maxdepth 1 -type l -lname '/nix/store/*' -delete
     ln -sft "$fontdir" ${wineFonts}/*
 
-    # Prefix registry (graphics driver + font substitutes; see wineRegistry
-    # above): re-applied only when its store path changes.
+    # Prefix registry (graphics driver + font substitutes + the DirectWrite
+    # font registration that makes the farm renderable at all; see
+    # wineRegistry above): re-applied only when its store path changes.
     if [ "$(cat "$stateHome/.wine-registry" 2>/dev/null || true)" != "${wineRegistry}" ]; then
       if wine regedit /S "${wineRegistry}" >/dev/null 2>&1; then
         printf '%s' '${wineRegistry}' >"$stateHome/.wine-registry"
