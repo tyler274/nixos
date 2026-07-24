@@ -9,10 +9,12 @@
 # left OFF because they break this specific workload; each is noted below so the
 # tradeoff is explicit rather than accidental.
 #
-# NB: assumes the default state dir ~/.local/share/xtool-studio (the launcher
-# honours XTOOL_STUDIO_HOME / XDG_DATA_HOME, but a firejail profile is static
-# and can only whitelist the default path); override via the .local include if
-# you relocate it. User overrides go in ~/.config/firejail/xtool-studio.local.
+# NB: assumes the default XDG dirs ~/.local/share/xtool-studio (data: the
+# wineprefix) and ~/.local/state/xtool-studio (state: log + stamps). The
+# launcher honours XTOOL_STUDIO_HOME / XDG_DATA_HOME / XDG_STATE_HOME, but a
+# firejail profile is static and can only whitelist the default paths; override
+# via the .local include if you relocate them. User overrides go in
+# ~/.config/firejail/xtool-studio.local.
 include xtool-studio.local
 
 # --- filesystem -----------------------------------------------------------
@@ -28,6 +30,8 @@ include disable-programs.inc
 # and the usual spots a user imports art from. Add more via the .local include.
 mkdir ${HOME}/.local/share/xtool-studio
 whitelist ${HOME}/.local/share/xtool-studio
+mkdir ${HOME}/.local/state/xtool-studio
+whitelist ${HOME}/.local/state/xtool-studio
 whitelist ${DOWNLOADS}
 whitelist ${DOCUMENTS}
 whitelist ${DESKTOP}

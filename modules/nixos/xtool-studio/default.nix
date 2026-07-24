@@ -66,9 +66,13 @@
 #   (m2-emulator.mjs) — run it on any host on the subnet and it
 #   answers the discovery handshake as a fake M2.
 #
-# State lives in ~/.local/share/xtool-studio/wine (a dedicated 64-bit
-# wineprefix); projects, logs, and materials end up under
-#   <prefix>/drive_c/users/<user>/AppData/Roaming/xTool Studio/
+# State follows the XDG base-dir spec:
+#   $XDG_DATA_HOME/xtool-studio/wine   the 64-bit wineprefix (data); projects
+#                                      and materials end up in its
+#                                      drive_c/users/<user>/AppData/Roaming/
+#   $XDG_STATE_HOME/xtool-studio/      the run log + apply-once stamps (state)
+# defaulting to ~/.local/share and ~/.local/state. XTOOL_STUDIO_HOME overrides
+# the data base for back-compat.
 #
 # The stdout/stderr redirect in the launcher is load-bearing, not cosmetic:
 #   Studio's Electron main process lazily creates process.stdout/stderr the
@@ -108,9 +112,10 @@
 #     - /nix/store + system config read-only, GPU userspace (/run/opengl-driver)
 #       + /dev/dri (and /dev/nvidia* under the proprietary driver) so accel
 #       doesn't silently fall back to CPU;
-#     - $HOME reduced to the writable state dir (~/.local/share/xtool-studio:
-#       prefix, log, projects) plus read-only Documents/Downloads/Pictures/
-#       Desktop/Projects + font dirs for importing artwork;
+#     - $HOME reduced to the writable XDG data + state dirs (the wineprefix
+#       under ~/.local/share/xtool-studio and log/stamps under
+#       ~/.local/state/xtool-studio) plus read-only Documents/Downloads/
+#       Pictures/Desktop/Projects + font dirs for importing artwork;
 #     - display transport: the Wayland socket (in XDG_RUNTIME_DIR) is the
 #       primary path — wine 11's winewayland.drv is preferred (see wineRegistry)
 #       since X11 is deprecated upstream — with the X11 socket + XAUTHORITY
@@ -121,7 +126,9 @@
 #   codegen both need it) and the inherited environment (clearing it breaks
 #   DISPLAY/session lookup for a marginal secrecy gain).
 #
-# Updating: bump version + url + hash. Current installer URL comes from
+# Updating: run `xtool-studio-update` (installed with this module; source in
+# ./update.sh) from the root of this repo — it rewrites version + url + hash
+# below in place. Current installer URL comes from
 #   https://api.xtool.com/efficacy/v1/data/type/atomm_studio_version/items
 # (the same endpoint the download page uses; the path contains a random UUID
 # so it cannot be derived from the version number).
@@ -227,10 +234,17 @@ let
 
   # Shared launcher preamble: prefix env, first-run wineboot, and font setup.
   # Under bubblewrap this runs before the sandbox (trusted nixpkgs wine writing
-  # only into $statedir); under firejail the whole launcher is already confined.
+  # only into the state/data dirs); under firejail the whole launcher is already
+  # confined.
+  #
+  # XDG split (see spec): the wineprefix is user *data* (it holds projects under
+  # AppData) so it lives in XDG_DATA_HOME; the log and the "have I applied this
+  # store path yet" stamps are *state* and live in XDG_STATE_HOME. Legacy
+  # XTOOL_STUDIO_HOME still overrides the data base for anyone who set it.
   launcherPreamble = ''
-    statedir="''${XTOOL_STUDIO_HOME:-''${XDG_DATA_HOME:-$HOME/.local/share}/xtool-studio}"
-    export WINEPREFIX="$statedir/wine"
+    dataHome="''${XTOOL_STUDIO_HOME:-''${XDG_DATA_HOME:-$HOME/.local/share}/xtool-studio}"
+    stateHome="''${XDG_STATE_HOME:-$HOME/.local/state}/xtool-studio"
+    export WINEPREFIX="$dataHome/wine"
     export WINEDEBUG="''${WINEDEBUG:--all}"
     # DLL overrides, ';'-joined:
     #   winemenubuilder.exe=d  don't scatter Start-menu .desktop files
@@ -241,7 +255,7 @@ let
     #     neither runtime is used; disabling them keeps first run offline-safe.
     export WINEDLLOVERRIDES="winemenubuilder.exe=d;mscoree=;mshtml=;''${WINEDLLOVERRIDES:-}"
 
-    mkdir -p "$statedir"
+    mkdir -p "$dataHome" "$stateHome"
     if [ ! -f "$WINEPREFIX/system.reg" ]; then
       wineboot -u >/dev/null 2>&1 || true
     fi
@@ -256,19 +270,51 @@ let
 
     # Prefix registry (graphics driver + font substitutes; see wineRegistry
     # above): re-applied only when its store path changes.
-    if [ "$(cat "$statedir/.wine-registry" 2>/dev/null || true)" != "${wineRegistry}" ]; then
+    if [ "$(cat "$stateHome/.wine-registry" 2>/dev/null || true)" != "${wineRegistry}" ]; then
       if wine regedit /S "${wineRegistry}" >/dev/null 2>&1; then
-        printf '%s' '${wineRegistry}' >"$statedir/.wine-registry"
+        printf '%s' '${wineRegistry}' >"$stateHome/.wine-registry"
       fi
     fi
+
+    # HiDPI: map a scale factor to Wine's LogPixels (96 = 100%, 144 = 150%,
+    # 192 = 200%). Chromium/Electron read the Windows system DPI, so this scales
+    # Studio's entire UI. Precedence: XTOOL_STUDIO_SCALE env override, then the
+    # programs.xtool-studio.scale option, then the desktop's GDK_SCALE hint;
+    # unset leaves Wine at its default. On Wayland winewayland.drv additionally
+    # honours the compositor's per-output scale.
+    scale="''${XTOOL_STUDIO_SCALE:-${lib.optionalString (cfg.scale != null) cfg.scale}}"
+    scale="''${scale:-''${GDK_SCALE:-}}"
+    if [ -n "$scale" ]; then
+      logpixels="$(awk -v s="$scale" 'BEGIN { printf "%d", (96 * s) + 0.5 }')"
+      if [ "$(cat "$stateHome/.logpixels" 2>/dev/null || true)" != "$logpixels" ]; then
+        if wine reg add 'HKCU\Control Panel\Desktop' /v LogPixels /t REG_DWORD \
+          /d "$logpixels" /f >/dev/null 2>&1; then
+          printf '%s' "$logpixels" >"$stateHome/.logpixels"
+        fi
+      fi
+    fi
+
+    # GPU workaround: Chromium's GPU compositor misbehaves under Wine (ANGLE ->
+    # wined3d), painting composited layers — button backgrounds/gradients and
+    # the labels drawn on them — as flat unlabeled rectangles while ordinary
+    # document text is fine. --disable-gpu-compositing rasterizes + composites
+    # the page on the CPU (WebGL/canvas stay GPU-backed, read back into the
+    # software frame), the least-invasive switch that fixes those blank layers.
+    # Override at runtime via XTOOL_STUDIO_GPU_FLAGS if needed — escalation
+    # path: "--disable-gpu", then "--disable-gpu --disable-software-rasterizer";
+    # set it to a single space to pass no GPU flag and retest full GPU.
+    read -ra gpu_flags <<<"''${XTOOL_STUDIO_GPU_FLAGS:---disable-gpu-compositing}"
   '';
 
   # stdio -> regular file is load-bearing, not cosmetic (see the EBADF note in
   # the header): whatever wraps it inherits these fds and hands them to the
   # child unchanged. Truncated each launch so it stays small but still captures
   # the most recent run for troubleshooting.
-  studioExe = ''wine "${xtool-studio-unwrapped}/xTool Studio.exe" --no-sandbox "$@"'';
-  redirect = ''>"$statedir/xtool-studio.log" 2>&1 </dev/null'';
+  #
+  # --no-sandbox: Chromium's Windows sandbox primitives don't exist under Wine.
+  # gpu_flags: see the GPU workaround note in launcherPreamble.
+  studioExe = ''wine "${xtool-studio-unwrapped}/xTool Studio.exe" --no-sandbox "''${gpu_flags[@]}" "$@"'';
+  redirect = ''>"$stateHome/xtool-studio.log" 2>&1 </dev/null'';
 
   # No-op / firejail path: run the app directly. When sandbox = "firejail" the
   # programs.firejail wrapper (below) confines this whole launcher externally.
@@ -291,6 +337,13 @@ let
       --die-with-parent
       --ro-bind /nix/store /nix/store
       --ro-bind /etc /etc
+      # DNS inside the sandbox: /etc/resolv.conf is a symlink chain ending in
+      # /run/systemd/resolve/stub-resolv.conf (systemd-resolved), and glibc NSS
+      # prefers the nscd socket at /run/nscd/socket (NixOS runs nscd/nsncd by
+      # default). Binding /etc alone leaves both dangling, so every hostname
+      # lookup fails and the app's cloud login times out.
+      --ro-bind-try /run/systemd/resolve /run/systemd/resolve
+      --ro-bind-try /run/nscd /run/nscd
       --proc /proc
       --dev /dev
       --ro-bind-try /sys /sys
@@ -306,7 +359,8 @@ let
       --tmpfs /tmp
       --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix
       --tmpfs "$HOME"
-      --bind "$statedir" "$statedir"
+      --bind "$dataHome" "$dataHome"
+      --bind "$stateHome" "$stateHome"
     )
 
     # Read-only access to the usual art/import folders (skipped when absent),
@@ -350,6 +404,25 @@ let
     name = "xtool-m2-emulator";
     runtimeInputs = [ pkgs.nodejs ];
     text = ''exec node ${./m2-emulator.mjs} "$@"'';
+  };
+
+  # Maintainer tool (see the Updating note in the header): queries xTool's
+  # version API for the newest Windows x64 installer, prefetches it, and
+  # rewrites version/url/hash above in place. Run it from the root of a
+  # checkout of this repo (or pass the module path as the first argument).
+  # writeShellApplication shellchecks the script at build time.
+  updater = pkgs.writeShellApplication {
+    name = "xtool-studio-update";
+    runtimeInputs = with pkgs; [
+      curl
+      jq
+      nix
+      coreutils
+      gnused
+      gawk
+      gnugrep
+    ];
+    text = builtins.readFile ./update.sh;
   };
 
   xtool-studio = pkgs.stdenvNoCC.mkDerivation {
@@ -429,6 +502,20 @@ in
     '';
   };
 
+  options.programs.xtool-studio.scale = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    example = "1.5";
+    description = ''
+      HiDPI scale factor for the Studio UI, as a multiplier of 100% (e.g.
+      "1.5" = 150%, "2" = 200%). Translated to Wine's LogPixels, which
+      Chromium/Electron read as the system DPI. `null` leaves Wine at its
+      default — on Wayland winewayland.drv follows the compositor's output
+      scale, so an explicit value is mainly needed on X11 or to override.
+      The `XTOOL_STUDIO_SCALE` environment variable overrides this at runtime.
+    '';
+  };
+
   config = {
     # The desktop file's bare `Exec=xtool-studio` resolves to `launcher` on
     # PATH. For "bubblewrap"/"none" that launcher is the whole story; for
@@ -437,6 +524,7 @@ in
     environment.systemPackages = [
       xtool-studio
       m2-emulator
+      updater
     ];
 
     programs.firejail = lib.mkIf (cfg.sandbox == "firejail") {
