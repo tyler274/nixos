@@ -242,20 +242,21 @@ let
   # Final .reg the launcher applies: the static rules above plus one
   # HKLM ...\CurrentVersion\Fonts value per farm font, which is what makes the
   # farm visible to DirectWrite at all (see the wineFonts note). Values are
-  # bare filenames — dwrite resolves those against C:\windows\fonts, where the
-  # launcher maintains the links — so they stay valid across farm rebuilds.
-  # Because this file embeds the wineFonts store path, any change to the font
-  # set yields a new .reg store path and the launcher's stamp check re-applies
-  # it automatically. regedit only adds/overwrites values; entries for fonts
-  # later dropped from the farm go stale, which is harmless (dwrite skips
-  # files it cannot open, with a WARN).
+  # absolute Z:\nix\store\... paths to the fully-resolved font files — the
+  # same way Wine registers its own bundled Tahoma — rather than the
+  # C:\windows\Fonts links. Because this file embeds the wineFonts store path,
+  # any change to the font set yields a new .reg store path and the launcher's
+  # stamp check re-applies it automatically. regedit only adds/overwrites
+  # values; entries for fonts later dropped from the farm go stale, which is
+  # harmless (dwrite skips files it cannot open, with a WARN).
   wineRegistry = pkgs.runCommand "xtool-studio-wine.reg" { } ''
     {
       cat ${wineRegistryBase}
       printf '\n%s\n' '[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]'
       for f in ${wineFonts}/*; do
         b=$(basename "$f")
-        printf '"%s (TrueType)"="%s"\n' "''${b%.*}" "$b"
+        real=$(readlink -f "$f")
+        printf '"%s (TrueType)"="Z:%s"\n' "''${b%.*}" "''${real//\//\\\\}"
       done
     } >$out
   '';
@@ -325,8 +326,18 @@ let
     # Prefix registry (graphics driver + font substitutes + the DirectWrite
     # font registration that makes the farm renderable at all; see
     # wineRegistry above): re-applied only when its store path changes.
+    #
+    # The trailing `wineserver -w` is load-bearing: under the bubblewrap
+    # sandbox the app cannot reach this preamble's wineserver (bwrap unshares
+    # pid/ipc and mounts a private /tmp, which is where the server socket
+    # lives), so it starts a second wineserver that reads system.reg from
+    # disk. Without waiting for this server to save and exit, the app's server
+    # loads a stale registry and its own final save then discards everything
+    # regedit just applied — which is why these registry tweaks historically
+    # never took effect under the default sandbox. The stamp is only written
+    # after a confirmed flush for the same reason.
     if [ "$(cat "$stateHome/.wine-registry" 2>/dev/null || true)" != "${wineRegistry}" ]; then
-      if wine regedit /S "${wineRegistry}" >/dev/null 2>&1; then
+      if wine regedit /S "${wineRegistry}" >/dev/null 2>&1 && wineserver -w; then
         printf '%s' '${wineRegistry}' >"$stateHome/.wine-registry"
       fi
     fi
@@ -342,8 +353,9 @@ let
     if [ -n "$scale" ]; then
       logpixels="$(awk -v s="$scale" 'BEGIN { printf "%d", (96 * s) + 0.5 }')"
       if [ "$(cat "$stateHome/.logpixels" 2>/dev/null || true)" != "$logpixels" ]; then
+        # wineserver -w: flush before stamping, see the registry note above.
         if wine reg add 'HKCU\Control Panel\Desktop' /v LogPixels /t REG_DWORD \
-          /d "$logpixels" /f >/dev/null 2>&1; then
+          /d "$logpixels" /f >/dev/null 2>&1 && wineserver -w; then
           printf '%s' "$logpixels" >"$stateHome/.logpixels"
         fi
       fi
