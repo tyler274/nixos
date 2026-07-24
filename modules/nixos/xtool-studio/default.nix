@@ -116,11 +116,12 @@
 #       under ~/.local/share/xtool-studio and log/stamps under
 #       ~/.local/state/xtool-studio) plus read-only Documents/Downloads/
 #       Pictures/Desktop/Projects + font dirs for importing artwork;
-#     - display transport: the Wayland socket (in XDG_RUNTIME_DIR) is the
-#       primary path — wine 11's winewayland.drv is preferred (see wineRegistry)
-#       since X11 is deprecated upstream — with the X11 socket + XAUTHORITY
-#       cookie kept bound as the XWayland/X11 fallback; no D-Bus (a Windows
-#       Electron under Wine never speaks it);
+#     - display transport: X11/XWayland (the X11 socket + XAUTHORITY cookie)
+#       is the default path — wine 11's winewayland.drv shows a white window
+#       with Studio's Chromium, see the wineRegistry note — with the Wayland
+#       socket (in XDG_RUNTIME_DIR) kept bound so `DISPLAY= xtool-studio` can
+#       opt into the native Wayland driver; no D-Bus (a Windows Electron
+#       under Wine never speaks it);
 #     - all other namespaces unshared, all caps dropped, no new-session TTY.
 #   Deliberately NOT restricted in either: memory W^X (V8's JIT and Wine's
 #   codegen both need it) and the inherited environment (clearing it breaks
@@ -201,12 +202,17 @@ let
   # One-shot prefix registry setup, applied by the launcher (REGEDIT4 / ANSI —
   # all values here are pure ASCII, which Wine's regedit parses as-is):
   #
-  #   Drivers\Graphics = "wayland,x11" — prefer Wine's native Wayland driver
-  #   (winewayland.drv, shipped by wine64 11) and fall back to X11/XWayland.
-  #   Wine tries the drivers in order and uses the first that initialises, so
-  #   this is safe on X11-only sessions too: with no WAYLAND_DISPLAY the wayland
-  #   driver bails and x11 takes over. X11 is deprecated upstream, hence Wayland
-  #   first; the fallback keeps non-Wayland sessions working.
+  #   Drivers\Graphics = "x11,wayland" — X11/XWayland first, Wine's native
+  #   Wayland driver (winewayland.drv) only as the fallback when no X server
+  #   is reachable. Wine tries the drivers in order and uses the first that
+  #   initialises. Wayland-first was tried and reverted: wine 11's
+  #   winewayland presents Studio's Chromium as a solid white window after
+  #   the splash (the renderer itself is healthy — remote-debugging shows the
+  #   pages fully loaded — the frames just never reach the surface), so the
+  #   deprecated-but-working X11 path stays the default. Native Wayland
+  #   remains opt-in for testing newer wine: run `DISPLAY= xtool-studio`
+  #   (empty DISPLAY makes x11 bail so wayland takes over; the launcher's
+  #   bwrap sandbox already binds the Wayland socket).
   #
   #   FontSubstitutes — map the Windows family names Studio/Chromium asks for
   #   onto fonts actually present in wineFonts. The Latin UI faces (Segoe UI is
@@ -220,7 +226,7 @@ let
     REGEDIT4
 
     [HKEY_CURRENT_USER\Software\Wine\Drivers]
-    "Graphics"="wayland,x11"
+    "Graphics"="x11,wayland"
 
     [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes]
     "Segoe UI"="Noto Sans"
