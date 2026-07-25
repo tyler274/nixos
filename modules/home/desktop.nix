@@ -63,6 +63,7 @@
     reaper
     lycheeslicer
     cura-appimage
+    orca-slicer
 
     vlc
     mpv
