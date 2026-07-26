@@ -12,7 +12,10 @@
     # segfault in DrmAbstractColorOp::matchPipeline on NVIDIA 610+.
     # Drop this input (and the overlay) once nixos-unstable carries 6.7.0.
     # nixpkgs-plasma.url = "git+https://github.com/K900/nixpkgs.git?ref=plasma-6.7&shallow=1";
-    nixos-hardware.url = "git+https://github.com/NixOS/nixos-hardware.git?ref=master&shallow=1";
+    nixos-hardware = {
+      url = "git+https://github.com/NixOS/nixos-hardware.git?ref=master&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixos-wsl = {
       url = "git+https://github.com/nix-community/NixOS-WSL.git?ref=main&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";

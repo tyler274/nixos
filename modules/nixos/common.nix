@@ -34,6 +34,7 @@
       "benchmark"
       "big-parallel"
       "gccarch-znver3"
+      "gccarch-znver5"
     ];
     # Restrict Nix daemon access to the @users group (excludes system services
     # that have no business evaluating Nix expressions).
