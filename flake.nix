@@ -133,6 +133,19 @@
         # linalg cholesky_invert test: expects a 0.0 residual, gets ~2.6e-13
         # with FMA-contracted code.
         gsl = prev.gsl.overrideAttrs (old: { doCheck = false; });
+
+        # GCC miscompiles the legacy blosclz codec at -O3 (segfaults in
+        # blosclz_compress; observed with gcc 16 by Gentoo, reproduced here
+        # with gcc 15 + znver5 vectorization — test_api/test_noinit/
+        # test_nolock/test_nthreads SEGV). CMake's Release type forces -O3;
+        # the trailing NIX_CFLAGS_COMPILE -O2 wins because the wrapper
+        # appends it after the command-line flags. Tests stay enabled to
+        # verify the cap actually fixes the codegen.
+        c-blosc = prev.c-blosc.overrideAttrs (old: {
+          env = (old.env or { }) // {
+            NIX_CFLAGS_COMPILE = ((old.env.NIX_CFLAGS_COMPILE or "") + " -O2");
+          };
+        });
       };
 
       cudaFixOverlay = final: prev: {
