@@ -171,7 +171,9 @@
     },
     "nixos-hardware": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1784723954,
@@ -214,15 +216,19 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1767892417,
-        "narHash": "sha256-8bW3q88CEg2u4hSP66Vf4lpbLonHz7hqDNBMcCY7E9U=",
-        "rev": "3497aa5c9457a9d88d71fa93a4a8368816fbeeba",
-        "type": "tarball",
-        "url": "https://releases.nixos.org/nixos/unstable/nixos-26.05pre924538.3497aa5c9457/nixexprs.tar.xz"
+        "lastModified": 1784796856,
+        "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
+        "ref": "nixos-unstable",
+        "rev": "e2587caef70cea85dd97d7daab492899902dbf5d",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nixos/nixpkgs.git"
       },
       "original": {
-        "type": "tarball",
-        "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
+        "ref": "nixos-unstable",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nixos/nixpkgs.git"
       }
     },
     "nixpkgs-stable": {
@@ -254,23 +260,6 @@
       },
       "original": {
         "ref": "staging",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/nixos/nixpkgs.git"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1784796856,
-        "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
-        "ref": "nixos-unstable",
-        "rev": "e2587caef70cea85dd97d7daab492899902dbf5d",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/nixos/nixpkgs.git"
-      },
-      "original": {
-        "ref": "nixos-unstable",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -330,7 +319,7 @@
         "mini-diarium": "mini-diarium",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
         "plasma-manager": "plasma-manager"

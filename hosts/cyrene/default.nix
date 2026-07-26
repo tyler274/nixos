@@ -29,6 +29,23 @@
   # generation snapshots share the same 30-day horizon.
   nix.gc.dates = lib.mkForce "daily";
 
+  # Build everything locally: overrides the substituter list from common.nix.
+  # With the znver5 hostPlatform below, store paths diverge from Hydra's
+  # anyway, so caches would mostly miss; this makes the from-source policy
+  # explicit. Source tarballs (fetchurl etc.) still download normally.
+  nix.settings.substituters = lib.mkForce [ ];
+
+  # Target the Ryzen 9 9950X3D (Zen 5). Overrides the plain "x86_64-linux"
+  # mkDefault in hardware-configuration.nix; every package is compiled with
+  # -march=znver5. Requires the gccarch-znver5 system-feature (common.nix) so
+  # the daemon accepts derivations marked with that requirement. Note: the
+  # resulting system will not boot on pre-Zen-5 (no AVX-512/newer ISA) CPUs.
+  nixpkgs.hostPlatform = {
+    system = "x86_64-linux";
+    gcc.arch = "znver5";
+    gcc.tune = "znver5";
+  };
+
   networking = {
     hostName = "Cyrene";
     networkmanager.enable = true;
