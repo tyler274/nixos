@@ -79,15 +79,6 @@
         };
       };
 
-      # Workaround for https://github.com/NixOS/nixpkgs/issues/544701: CMake
-      # 4.2+ hard-fails FindCUDAToolkit when CUDAToolkit_ROOT lacks bin/nvcc,
-      # and nixpkgs' setup-cuda-hook only collects host-side deps (nvcc is a
-      # nativeBuildInput), so cudnn-frontend — and transitively the CUDA
-      # onnxruntime — fail to configure. Pre-seed CUDAToolkit_ROOT with nvcc's
-      # package root: user preConfigure runs before hook-registered ones, and
-      # the hook appends to any existing value, so nvcc survives into the
-      # final -DCUDAToolkit_ROOT flag. Remove once nixpkgs PR #545542 reaches
-      # nixos-unstable.
       # LLVM 21's test suite includes llvm-exegesis/RISCV/rvv/filter.test,
       # which is nondeterministic (random snippet generation sometimes fails
       # to assign unique def/use registers) and known to flake on upstream
@@ -124,30 +115,19 @@
           llvmPackages_21 = fixLlvmScope prev.llvmPackages_21;
         };
 
-      # Test suites that fail under -march=znver5 for benign reasons —
-      # typically floating-point unit tests that expect exact bit-for-bit
-      # results, broken by FMA/AVX-512 contraction changing rounding. The
-      # libraries themselves are fine; skip their check phases. Expect this
-      # list to grow as the from-source world build progresses.
-      znver5FixOverlay = final: prev: {
-        # linalg cholesky_invert test: expects a 0.0 residual, gets ~2.6e-13
-        # with FMA-contracted code.
-        gsl = prev.gsl.overrideAttrs (old: { doCheck = false; });
+      # Fixes for packages that break under -march=znver5; see the file for
+      # per-package details.
+      znver5FixOverlay = import ./overlays/znver5-fixes.nix;
 
-        # GCC miscompiles the legacy blosclz codec at -O3 (segfaults in
-        # blosclz_compress; observed with gcc 16 by Gentoo, reproduced here
-        # with gcc 15 + znver5 vectorization — test_api/test_noinit/
-        # test_nolock/test_nthreads SEGV). CMake's Release type forces -O3;
-        # the trailing NIX_CFLAGS_COMPILE -O2 wins because the wrapper
-        # appends it after the command-line flags. Tests stay enabled to
-        # verify the cap actually fixes the codegen.
-        c-blosc = prev.c-blosc.overrideAttrs (old: {
-          env = (old.env or { }) // {
-            NIX_CFLAGS_COMPILE = ((old.env.NIX_CFLAGS_COMPILE or "") + " -O2");
-          };
-        });
-      };
-
+      # Workaround for https://github.com/NixOS/nixpkgs/issues/544701: CMake
+      # 4.2+ hard-fails FindCUDAToolkit when CUDAToolkit_ROOT lacks bin/nvcc,
+      # and nixpkgs' setup-cuda-hook only collects host-side deps (nvcc is a
+      # nativeBuildInput), so cudnn-frontend — and transitively the CUDA
+      # onnxruntime — fail to configure. Pre-seed CUDAToolkit_ROOT with nvcc's
+      # package root: user preConfigure runs before hook-registered ones, and
+      # the hook appends to any existing value, so nvcc survives into the
+      # final -DCUDAToolkit_ROOT flag. Remove once nixpkgs PR #545542 reaches
+      # nixos-unstable.
       cudaFixOverlay = final: prev: {
         cudaPackages = prev.cudaPackages.overrideScope (
           cudaFinal: cudaPrev: {
