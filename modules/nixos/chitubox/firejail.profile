@@ -44,9 +44,9 @@ whitelist ${HOME}/.fonts
 whitelist ${HOME}/.local/share/fonts
 include whitelist-common.inc
 
-# Display: Wine prefers its Wayland driver (see wineRegistry in default.nix).
-# The Wayland socket in ${RUNUSER} is left reachable (not whitelisted away),
-# and private-tmp keeps /tmp/.X11-unix for the XWayland/X11 fallback.
+# Display: the app is pinned to Wine's X11 driver (see wineRegistry in
+# default.nix — winewayland freezes and drops keyboard input for this app);
+# private-tmp keeps /tmp/.X11-unix so the X11/XWayland socket stays reachable.
 private-tmp
 private-cache
 # private-dev keeps a minimal /dev but retains dri (GPU) and snd (sound).

@@ -112,9 +112,18 @@ let
       '';
 
   # One-shot prefix registry setup, applied by the launcher (REGEDIT4 / ANSI):
-  # prefer Wine's native Wayland driver with X11/XWayland fallback, and map
-  # the Windows font family names onto fonts present in wineFonts. Same
-  # rationale as the xtool-studio wineRegistry.
+  # graphics driver pin, drive-type pin, and mapping the Windows font family
+  # names onto fonts present in wineFonts (same rationale as the xtool-studio
+  # wineRegistry).
+  #
+  # Graphics = "x11" — deliberately NOT wayland-first like xtool-studio.
+  # Under wine 11's winewayland this app freezes and keyboard input never
+  # reaches the QtWebEngine login view (observed on the real Plasma Wayland
+  # session, 2026-07); on the X11 driver the same build takes focus and text
+  # fine (verified by an xdotool typing test against the login form). Qt +
+  # child-webengine windows trip winewayland's focus handling where xtool's
+  # single-window Electron does not. Revisit when Wine's Wayland driver
+  # matures; on Wayland sessions this means XWayland, which is fine.
   #
   # Drives\c: = "hd" pins GetDriveType(C:) to DRIVE_FIXED. Inside bubblewrap
   # the minimal --dev /dev has no block-device nodes, so Wine's mountmgr
@@ -128,7 +137,7 @@ let
     REGEDIT4
 
     [HKEY_CURRENT_USER\Software\Wine\Drivers]
-    "Graphics"="wayland,x11"
+    "Graphics"="x11"
 
     [HKEY_LOCAL_MACHINE\Software\Wine\Drives]
     "c:"="hd"
@@ -193,8 +202,9 @@ let
     # 192 = 200%); Qt reads the Windows system DPI and scales the whole UI.
     # Precedence: CHITUBOX_SCALE env override, then the programs.chitubox.scale
     # option, then the desktop's GDK_SCALE hint; unset leaves Wine at its
-    # default. On Wayland winewayland.drv additionally honours the
-    # compositor's per-output scale.
+    # default. The app runs on Wine's X11 driver (see wineRegistry), so this
+    # is the only scaling knob — there is no compositor-side scale to fall
+    # back on.
     scale="''${CHITUBOX_SCALE:-${lib.optionalString (cfg.scale != null) cfg.scale}}"
     scale="''${scale:-''${GDK_SCALE:-}}"
     if [ -n "$scale" ]; then
@@ -219,8 +229,11 @@ let
     # so it cannot join that wineserver and instead reads the registry from
     # disk — racing the flush. Lost race = the Drives override above is
     # missing and the first-run install fails its drive-type check.
-    # wineserver -w waits for the running server (if any) to exit.
-    wineserver -w
+    # wineserver -w waits for the running server (if any) to exit; the
+    # timeout keeps a stray long-lived wine service on this prefix (e.g.
+    # winedevice from an interrupted run) from wedging every launch — a
+    # bounded, possibly-incomplete flush beats never starting.
+    timeout 15 wineserver -w || true
   '';
 
   # Bubblewrap sandbox: identical policy to xtool-studio's bwrapExec (host
@@ -273,11 +286,11 @@ let
       bwrap_args+=(--ro-bind-try "$HOME/$d" "$HOME/$d")
     done
 
-    # Session runtime dir (Wayland socket — the preferred transport, see
-    # wineRegistry — plus PulseAudio / PipeWire) and the X11 auth cookie for
-    # the XWayland/X11 fallback; read-only, only if present. Env is inherited
-    # so WAYLAND_DISPLAY / DISPLAY / XAUTHORITY / XDG_RUNTIME_DIR reach the
-    # child unchanged.
+    # Session runtime dir (PulseAudio / PipeWire sockets, and the X11 auth
+    # cookie some sessions keep in there) plus XAUTHORITY for the X11/XWayland
+    # display (the pinned driver, see wineRegistry); read-only, only if
+    # present. Env is inherited so DISPLAY / XAUTHORITY / XDG_RUNTIME_DIR
+    # reach the child unchanged.
     if [ -n "''${XDG_RUNTIME_DIR:-}" ]; then
       bwrap_args+=(--ro-bind-try "$XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR")
     fi
@@ -425,10 +438,10 @@ in
     description = ''
       HiDPI scale factor for the CHITUBOX UI, as a multiplier of 100% (e.g.
       "1.5" = 150%, "2" = 200%). Translated to Wine's LogPixels, which Qt
-      reads as the system DPI. `null` leaves Wine at its default — on Wayland
-      winewayland.drv follows the compositor's output scale, so an explicit
-      value is mainly needed on X11 or to override. The `CHITUBOX_SCALE`
-      environment variable overrides this at runtime.
+      reads as the system DPI. The app is pinned to Wine's X11 driver (see
+      wineRegistry in the module), so on HiDPI screens an explicit value here
+      is usually needed. The `CHITUBOX_SCALE` environment variable overrides
+      this at runtime.
     '';
   };
 
