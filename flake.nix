@@ -88,6 +88,27 @@
       # the hook appends to any existing value, so nvcc survives into the
       # final -DCUDAToolkit_ROOT flag. Remove once nixpkgs PR #545542 reaches
       # nixos-unstable.
+      # LLVM 21's test suite includes llvm-exegesis/RISCV/rvv/filter.test,
+      # which is nondeterministic (random snippet generation sometimes fails
+      # to assign unique def/use registers) and known to flake on upstream
+      # buildbots. LLVM 22 fixed it by pinning the RNG seed
+      # (llvm/llvm-project#170014); until nixpkgs ships 22 as default, drop
+      # the test so from-source rebuilds don't die on a coin flip. The
+      # overrideScope makes clang/lld/etc. pick up the fixed libllvm.
+      llvmFixOverlay = final: prev: {
+        llvmPackages_21 = prev.llvmPackages_21.overrideScope (
+          lFinal: lPrev: {
+            libllvm = lPrev.libllvm.overrideAttrs (old: {
+              # sourceRoot is the llvm/ subdir of the monorepo, hence the
+              # test/ (not llvm/test/) prefix.
+              postPatch = (old.postPatch or "") + ''
+                rm -f test/tools/llvm-exegesis/RISCV/rvv/filter.test
+              '';
+            });
+          }
+        );
+      };
+
       cudaFixOverlay = final: prev: {
         cudaPackages = prev.cudaPackages.overrideScope (
           cudaFinal: cudaPrev: {
@@ -122,7 +143,7 @@
           specialArgs = { inherit inputs; };
           modules = [
             # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
-            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay cudaFixOverlay ]; })
+            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay cudaFixOverlay llvmFixOverlay ]; })
             home-manager.nixosModules.home-manager
             hostPath
           ]
