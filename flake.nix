@@ -76,6 +76,29 @@
         };
       };
 
+      # Workaround for https://github.com/NixOS/nixpkgs/issues/544701: CMake
+      # 4.2+ hard-fails FindCUDAToolkit when CUDAToolkit_ROOT lacks bin/nvcc,
+      # and nixpkgs' setup-cuda-hook only collects host-side deps (nvcc is a
+      # nativeBuildInput), so cudnn-frontend — and transitively the CUDA
+      # onnxruntime — fail to configure. Pre-seed CUDAToolkit_ROOT with nvcc's
+      # package root: user preConfigure runs before hook-registered ones, and
+      # the hook appends to any existing value, so nvcc survives into the
+      # final -DCUDAToolkit_ROOT flag. Remove once nixpkgs PR #545542 reaches
+      # nixos-unstable.
+      cudaFixOverlay = final: prev: {
+        cudaPackages = prev.cudaPackages.overrideScope (
+          cudaFinal: cudaPrev: {
+            cudnn-frontend = cudaPrev.cudnn-frontend.overrideAttrs (old: {
+              preConfigure = ''
+                if nvccBin="$(type -P nvcc)"; then
+                  export CUDAToolkit_ROOT="''${CUDAToolkit_ROOT:+$CUDAToolkit_ROOT;}''${nvccBin%/bin/nvcc}"
+                fi
+              '' + (old.preConfigure or "");
+            });
+          }
+        );
+      };
+
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
       # from the 6.7 branch. KF6 (6.26) and KDE Gear (26.04) are unchanged, so
       # only the Plasma set rebuilds. This is the real fix for the KWin DRM
@@ -96,7 +119,7 @@
           specialArgs = { inherit inputs; };
           modules = [
             # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
-            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay ]; })
+            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay cudaFixOverlay ]; })
             home-manager.nixosModules.home-manager
             hostPath
           ]
