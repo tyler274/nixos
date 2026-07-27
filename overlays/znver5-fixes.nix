@@ -33,4 +33,31 @@ final: prev: {
       NIX_CFLAGS_COMPILE = ((old.env.NIX_CFLAGS_COMPILE or "") + " -O2");
     };
   });
+
+  # simde is header-only, but its meson build compiles a large native +
+  # emulated test suite by default (the only compiled artifacts), and the
+  # AVX-512 tests fail to compile with gcc 15 at -march=znver5. -Dtests=false
+  # skips them; the installed headers are identical. Revisit when nixpkgs
+  # moves past simde 0.8.2.
+  simde = prev.simde.overrideAttrs (old: {
+    mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dtests=false" ];
+  });
+
+  # Not arch-related: eventlet's greenthread/locking tests assert wall-clock
+  # timeouts and starve when the machine is saturated by the from-source
+  # world build (3 of 602 failed with "AssertionError: timed out"). Disable
+  # just those tests instead of the whole suite. Goes through
+  # pythonPackagesExtensions so all Python package sets and their consumers
+  # agree on the fixed derivation.
+  pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+    (pyFinal: pyPrev: {
+      eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
+        disabledTests = (old.disabledTests or [ ]) ++ [
+          "test_socketserver_selectors"
+          "test_patcher_existing_locks"
+          "test_can_use_eventlet_in_os_threads"
+        ];
+      });
+    })
+  ];
 }
