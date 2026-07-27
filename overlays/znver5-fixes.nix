@@ -85,6 +85,15 @@ final: prev: {
         jaraco-functools = pyPrev.jaraco-functools.overridePythonAttrs (
           appendDisabledTests [ "TestThrottler" ]
         );
+
+        # Meta-test asserting on pytest's internal report lists; passes on
+        # pytest 9.0.2 (Alpine CI) but fails deterministically on the 9.1.1
+        # in this nixpkgs pin — a pytest behavior change, not load or arch.
+        # Upstream (bjoluc/pytest-reraise) is unmaintained since 2022.
+        # Blocks duckdb -> fastmcp -> mcp-nixos.
+        pytest-reraise = pyPrev.pytest-reraise.overridePythonAttrs (
+          appendDisabledTests [ "test_multiple_exceptions" ]
+        );
       }
     )
   ];
