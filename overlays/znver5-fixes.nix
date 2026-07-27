@@ -43,6 +43,16 @@ final: prev: {
     mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dtests=false" ];
   });
 
+  # Not arch-related: the memcached_udp test spawns a memcached and streams
+  # thousands of UDP datagrams over loopback, asserting every send succeeds.
+  # UDP has no delivery guarantee and drops under full build load (failures
+  # started mid-loop at i~940 of 12k assertions). The package uses
+  # ctestCheckHook and already excludes two tests via disabledTests; append
+  # this one. The 60 others, including the TCP equivalents, pass.
+  libmemcached = prev.libmemcached.overrideAttrs (old: {
+    disabledTests = (old.disabledTests or [ ]) ++ [ "memcached_udp" ];
+  });
+
   # Not arch-related: eventlet's greenthread/patcher tests assert wall-clock
   # timeouts and starve when the machine is saturated by the from-source
   # world build. Disabling individual tests proved to be whack-a-mole — a
