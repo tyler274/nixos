@@ -63,6 +63,15 @@ final: prev: {
           "test_repeated_formatting_pairs_return_quickly"
         ];
       });
+
+      # TestThrottler counts rate-limited calls against wall-clock seconds
+      # (expects 28-32 calls/s, got 27 under full build load). All tests in
+      # the class are real-time measurements, so disable the class. Blocks a
+      # large subtree: keyring, scons, and thereby pipewire/chromium/
+      # qtwebengine.
+      jaraco-functools = pyPrev.jaraco-functools.overridePythonAttrs (old: {
+        disabledTests = (old.disabledTests or [ ]) ++ [ "TestThrottler" ];
+      });
     })
   ];
 }
