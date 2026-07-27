@@ -86,6 +86,18 @@ final: prev: {
           appendDisabledTests [ "TestThrottler" ]
         );
 
+        # Algorithmic-complexity tests: they time small vs large inputs and
+        # assert the ratio is linear. Wall-clock scaling measurements are
+        # noise under full build load. Note the second entry's substring
+        # already matches the first via pytest -k, but both are listed for
+        # documentation.
+        tornado = pyPrev.tornado.overridePythonAttrs (
+          appendDisabledTests [
+            "test_disposition_param_linear_performance"
+            "test_linear_performance"
+          ]
+        );
+
         # Meta-test asserting on pytest's internal report lists; passes on
         # pytest 9.0.2 (Alpine CI) but fails deterministically on the 9.1.1
         # in this nixpkgs pin — a pytest behavior change, not load or arch.
