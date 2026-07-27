@@ -54,6 +54,15 @@ final: prev: {
       eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
         doCheck = false;
       });
+
+      # Same class as eventlet: a wall-clock performance assertion (parse in
+      # <0.5s; took 0.514s under full build load). It's the only timed test
+      # in mistune's suite, so disabling it individually is safe.
+      mistune = pyPrev.mistune.overridePythonAttrs (old: {
+        disabledTests = (old.disabledTests or [ ]) ++ [
+          "test_repeated_formatting_pairs_return_quickly"
+        ];
+      });
     })
   ];
 }
