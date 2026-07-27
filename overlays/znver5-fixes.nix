@@ -50,28 +50,42 @@ final: prev: {
   # Goes through pythonPackagesExtensions so all Python package sets and
   # their consumers agree on the fixed derivation.
   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-    (pyFinal: pyPrev: {
-      eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
-        doCheck = false;
-      });
+    (pyFinal: pyPrev:
+      let
+        # Some python derivations carry disabledTests = null as an explicit
+        # attribute; `old.disabledTests or [ ]` keeps the null in that case
+        # (the `or` fallback only applies to *missing* attrs) and `null ++`
+        # is an eval error. Normalize null/missing to [ ].
+        appendDisabledTests =
+          tests: old:
+          let
+            existing = old.disabledTests or null;
+          in
+          {
+            disabledTests = (if existing == null then [ ] else existing) ++ tests;
+          };
+      in
+      {
+        eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
+          doCheck = false;
+        });
 
-      # Same class as eventlet: a wall-clock performance assertion (parse in
-      # <0.5s; took 0.514s under full build load). It's the only timed test
-      # in mistune's suite, so disabling it individually is safe.
-      mistune = pyPrev.mistune.overridePythonAttrs (old: {
-        disabledTests = (old.disabledTests or [ ]) ++ [
-          "test_repeated_formatting_pairs_return_quickly"
-        ];
-      });
+        # Same class as eventlet: a wall-clock performance assertion (parse
+        # in <0.5s; took 0.514s under full build load). It's the only timed
+        # test in mistune's suite, so disabling it individually is safe.
+        mistune = pyPrev.mistune.overridePythonAttrs (
+          appendDisabledTests [ "test_repeated_formatting_pairs_return_quickly" ]
+        );
 
-      # TestThrottler counts rate-limited calls against wall-clock seconds
-      # (expects 28-32 calls/s, got 27 under full build load). All tests in
-      # the class are real-time measurements, so disable the class. Blocks a
-      # large subtree: keyring, scons, and thereby pipewire/chromium/
-      # qtwebengine.
-      jaraco-functools = pyPrev.jaraco-functools.overridePythonAttrs (old: {
-        disabledTests = (old.disabledTests or [ ]) ++ [ "TestThrottler" ];
-      });
-    })
+        # TestThrottler counts rate-limited calls against wall-clock seconds
+        # (expects 28-32 calls/s, got 27 under full build load). All tests in
+        # the class are real-time measurements, so disable the class. Blocks
+        # a large subtree: keyring, scons, and thereby pipewire/chromium/
+        # qtwebengine.
+        jaraco-functools = pyPrev.jaraco-functools.overridePythonAttrs (
+          appendDisabledTests [ "TestThrottler" ]
+        );
+      }
+    )
   ];
 }
