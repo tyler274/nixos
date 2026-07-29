@@ -43,6 +43,20 @@ final: prev: {
     mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dtests=false" ];
   });
 
+  # Not arch-related: 70-test_quic_multistream.t drives simulated QUIC
+  # connections with idle timeouts and tick scheduling; it's reported flaky
+  # upstream and failed here on a run where the whole suite took 1532s
+  # wall-clock under full build load. The harness derives the test list by
+  # globbing test/recipes/, so removing the file skips just this test.
+  # Everything linking openssl rebuilds when this changes — post-GC that's
+  # happening anyway, and it beats losing another python/curl rebuild to a
+  # coin flip.
+  openssl = prev.openssl.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      rm -f test/recipes/70-test_quic_multistream.t
+    '';
+  });
+
   # Not arch-related: the test suite runs live client/server exchanges against
   # a spawned memcached, and under full build load they flake one at a time —
   # first memcached_udp (loopback datagram drops mid-loop), then, with that
