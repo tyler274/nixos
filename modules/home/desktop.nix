@@ -107,6 +107,7 @@
     zed-editor
     #sublime4
     imhex
+    bambu-studio
   ];
 
   xdg.mimeApps = {
