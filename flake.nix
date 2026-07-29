@@ -151,6 +151,14 @@
           # and inherits only the env var, which lacks nvcc without the seed.
           # Blocks blender.
           openimagedenoise = prev.openimagedenoise.overrideAttrs seedNvccIntoToolkitRoot;
+
+          # Same shape as oidn: ollama's llama.cpp CUDA runner is a nested
+          # ExternalProject whose find_package(CUDAToolkit) (ggml-cuda's
+          # CMakeLists) fails on the hook's nvcc-less env var. Upstream lists
+          # ollama-cuda as fixed by the very same seed (issue #545286).
+          # preConfigure still runs under buildGoModule, and the exported var
+          # survives into the preBuild cmake invocation.
+          ollama = prev.ollama.overrideAttrs seedNvccIntoToolkitRoot;
         };
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
