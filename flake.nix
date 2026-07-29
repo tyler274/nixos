@@ -157,8 +157,12 @@
           # CMakeLists) fails on the hook's nvcc-less env var. Upstream lists
           # ollama-cuda as fixed by the very same seed (issue #545286).
           # preConfigure still runs under buildGoModule, and the exported var
-          # survives into the preBuild cmake invocation.
+          # survives into the preBuild cmake invocation. ollama-cuda is a
+          # separate top-level instantiation (acceleration = "cuda") used by
+          # services.ollama.package (modules/nixos/ollama.nix), so it needs
+          # its own override — fixing `ollama` alone leaves it untouched.
           ollama = prev.ollama.overrideAttrs seedNvccIntoToolkitRoot;
+          ollama-cuda = prev.ollama-cuda.overrideAttrs seedNvccIntoToolkitRoot;
         };
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
