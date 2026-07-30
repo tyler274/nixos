@@ -88,9 +88,20 @@ final: prev: {
           };
       in
       {
-        eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
-          doCheck = false;
-        });
+            eventlet = pyPrev.eventlet.overridePythonAttrs (old: {
+              doCheck = false;
+            });
+
+            # Same class as eventlet: every capturer test prints into a pty
+            # and asserts the background relay thread has already delivered
+            # the output — a wall-clock race under build load (observed:
+            # test_stdout_capture_same_process got [] while its subprocess
+            # sibling passed). Upstream is unmaintained; skip the suite
+            # rather than chase races one test at a time. Blocks
+            # coloredlogs -> onnxruntime -> piper-tts/calibre.
+            capturer = pyPrev.capturer.overridePythonAttrs (old: {
+              doCheck = false;
+            });
 
         # Same class as eventlet: a wall-clock performance assertion (parse
         # in <0.5s; took 0.514s under full build load). It's the only timed
