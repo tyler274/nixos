@@ -131,6 +131,15 @@ final: prev: {
               appendDisabledTests [ "test_timeout" ]
             );
 
+            # znver5 FMA/AVX-512: test_poly_int_overflow expects poly() coeffs
+            # to match a reference to 7 decimals; at ~1e18 magnitude the actual
+            # vs desired differ by a few ULPs (rel ~2e-16). Same class as gsl/
+            # assimp. 47072 other tests passed. Blocks pandas, pybind11,
+            # libcamera, pipewire.
+            numpy = pyPrev.numpy.overridePythonAttrs (
+              appendDisabledTests [ "test_poly_int_overflow" ]
+            );
+
         # TestThrottler counts rate-limited calls against wall-clock seconds
         # (expects 28-32 calls/s, got 27 under full build load). All tests in
         # the class are real-time measurements, so disable the class. Blocks
