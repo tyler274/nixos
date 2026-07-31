@@ -43,6 +43,19 @@ final: prev: {
     mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dtests=false" ];
   });
 
+  # Not arch-related: Test2-Harness (yath) runs 62 integration-test files
+  # that spawn real harness processes (758% CPU during the run); under full
+  # build load t/integration/init.t flaked. Same live-process timing class
+  # as eventlet/libmemcached, so skip the suite. overrideScope (rather than
+  # config.perlPackageOverrides, which infinitely recurses for
+  # self-referencing overrides) is verified to propagate into
+  # nix-perl-bindings -> nix -> nixos-rebuild-ng, which this was blocking.
+  perlPackages = prev.perlPackages.overrideScope (
+    pFinal: pPrev: {
+      Test2Harness = pPrev.Test2Harness.overrideAttrs (old: { doCheck = false; });
+    }
+  );
+
   # Not arch-related: 70-test_quic_multistream.t drives simulated QUIC
   # connections with idle timeouts and tick scheduling; it's reported flaky
   # upstream and failed here on a run where the whole suite took 1532s
@@ -103,12 +116,20 @@ final: prev: {
               doCheck = false;
             });
 
-        # Same class as eventlet: a wall-clock performance assertion (parse
-        # in <0.5s; took 0.514s under full build load). It's the only timed
-        # test in mistune's suite, so disabling it individually is safe.
-        mistune = pyPrev.mistune.overridePythonAttrs (
-          appendDisabledTests [ "test_repeated_formatting_pairs_return_quickly" ]
-        );
+            # Same class as eventlet: a wall-clock performance assertion (parse
+            # in <0.5s; took 0.514s under full build load). It's the only timed
+            # test in mistune's suite, so disabling it individually is safe.
+            mistune = pyPrev.mistune.overridePythonAttrs (
+              appendDisabledTests [ "test_repeated_formatting_pairs_return_quickly" ]
+            );
+
+            # Wall-clock: asserts regex.sub(..., timeout=N) raises TimeoutError
+            # while a slow replacement callback busy-waits; failed (no raise)
+            # under full build load. The only timed test in a 567-test suite.
+            # Blocks mkdocs-material -> fastmcp -> mcp-nixos.
+            backrefs = pyPrev.backrefs.overridePythonAttrs (
+              appendDisabledTests [ "test_timeout" ]
+            );
 
         # TestThrottler counts rate-limited calls against wall-clock seconds
         # (expects 28-32 calls/s, got 27 under full build load). All tests in
