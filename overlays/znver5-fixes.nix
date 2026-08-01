@@ -165,15 +165,16 @@ final: prev: {
           appendDisabledTests [ "TestThrottler" ]
         );
 
-        # Algorithmic-complexity tests: they time small vs large inputs and
-        # assert the ratio is linear. Wall-clock scaling measurements are
-        # noise under full build load. Note the second entry's substring
-        # already matches the first via pytest -k, but both are listed for
-        # documentation.
+        # Load flakes in tornado's suite: algorithmic-complexity tests that
+        # time small vs large inputs, plus AutoreloadTest::test_reload which
+        # spawns a child and asserts it terminates ("subprocess failed to
+        # terminate" under full build load). Note the second entry's substring
+        # already matches the first via pytest -k; both listed for docs.
         tornado = pyPrev.tornado.overridePythonAttrs (
           appendDisabledTests [
             "test_disposition_param_linear_performance"
             "test_linear_performance"
+            "test_reload"
           ]
         );
 
