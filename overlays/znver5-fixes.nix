@@ -140,6 +140,14 @@ final: prev: {
               appendDisabledTests [ "test_poly_int_overflow" ]
             );
 
+            # Wall-clock: connect-only send/recv against a local socket server
+            # with a hard read timeout; failed under full build load
+            # ("timed out while reading response"). 657 others passed.
+            # Blocks system-config-printer -> dbus/udev.
+            pycurl = pyPrev.pycurl.overridePythonAttrs (
+              appendDisabledTests [ "test_connect_only_send_recv_byteslike" ]
+            );
+
         # TestThrottler counts rate-limited calls against wall-clock seconds
         # (expects 28-32 calls/s, got 27 under full build load). All tests in
         # the class are real-time measurements, so disable the class. Blocks
