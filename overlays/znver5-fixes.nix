@@ -148,6 +148,15 @@ final: prev: {
               appendDisabledTests [ "test_connect_only_send_recv_byteslike" ]
             );
 
+            # Time race: test_serialize_date formats "now" and compares
+            # against a separately computed "now"; fails whenever the wall
+            # clock crosses a second boundary between the two calls (:50 vs
+            # :49 here). 2387 others passed. Blocks webtest -> moto/fastmcp
+            # and calibre.
+            webob = pyPrev.webob.overridePythonAttrs (
+              appendDisabledTests [ "test_serialize_date" ]
+            );
+
             # Same class as eventlet: watchdog's tests wait on filesystem
             # events and watchmedo auto-restart subprocess lifecycles with
             # thread-count assertions; three failed in one round under full
