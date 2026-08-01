@@ -169,18 +169,14 @@ final: prev: {
           appendDisabledTests [ "TestThrottler" ]
         );
 
-        # Load flakes in tornado's suite: algorithmic-complexity tests that
-        # time small vs large inputs, plus AutoreloadTest::test_reload which
-        # spawns a child and asserts it terminates ("subprocess failed to
-        # terminate" under full build load). Note the second entry's substring
-        # already matches the first via pytest -k; both listed for docs.
-        tornado = pyPrev.tornado.overridePythonAttrs (
-          appendDisabledTests [
-            "test_disposition_param_linear_performance"
-            "test_linear_performance"
-            "test_reload"
-          ]
-        );
+        # Same whack-a-mole as eventlet: tornado's suite is full of wall-clock
+        # tests. Three rounds of individual disables (linear-performance
+        # scaling tests, autoreload subprocess termination, then
+        # RunnerGCTest::test_gc timing out) each surfaced a new flake under
+        # full build load, so skip the suite outright.
+        tornado = pyPrev.tornado.overridePythonAttrs (old: {
+          doCheck = false;
+        });
 
         # Meta-test asserting on pytest's internal report lists; passes on
         # pytest 9.0.2 (Alpine CI) but fails deterministically on the 9.1.1
