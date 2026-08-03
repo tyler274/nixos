@@ -197,14 +197,15 @@ final: prev: {
               doCheck = false;
             });
 
-            # pexpect timeout: test_where_erase_value drives an interactive
-            # pdb session and timed out under full build load (suite took
-            # 16min vs the usual few). The rest of ipython's 1591 tests are
-            # not timing-based, so disable just this one. Blocks black,
-            # duckdb, ipykernel and the fastmcp stack.
-            ipython = pyPrev.ipython.overridePythonAttrs (
-              appendDisabledTests [ "test_where_erase_value" ]
-            );
+            # Same whack-a-mole as eventlet: ipython's debugger tests drive
+            # interactive pdb sessions via pexpect. test_where_erase_value
+            # timed out first; with that disabled, test_ignore_module_all_commands
+            # timed out on the retry (slowest tests are all in test_debugger.py).
+            # Skip the suite. Blocks black, duckdb, ipykernel and the fastmcp
+            # stack.
+            ipython = pyPrev.ipython.overridePythonAttrs (old: {
+              doCheck = false;
+            });
 
             # Time race: test_serialize_date formats "now" and compares
             # against a separately computed "now"; fails whenever the wall
