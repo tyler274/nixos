@@ -160,6 +160,18 @@ final: prev: {
               appendDisabledTests [ "test_connect_only_send_recv_byteslike" ]
             );
 
+            # Not load- or arch-related: on the 2026-08-02 nixpkgs pin,
+            # mkdocs' livereload tests error deterministically — watchdog's
+            # dirsnapshot walker follows the suite's circular-symlink fixture
+            # until ELOOP ("Too many levels of symbolic links"). Built fine
+            # on the 07-23 pin; a version-interaction regression, not ours to
+            # fix. The suite is unittest-based, so disabledTests (pytest -k)
+            # can't target it — skip the check phase. Blocks mkdocstrings ->
+            # fastmcp -> mcp-nixos.
+            mkdocs = pyPrev.mkdocs.overridePythonAttrs (old: {
+              doCheck = false;
+            });
+
             # Same class as eventlet: inquirer's acceptance tests drive
             # interactive terminal prompts via pexpect, and all 30 of them
             # timed out at once under full build load. Skip the suite.
