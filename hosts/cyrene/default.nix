@@ -177,7 +177,7 @@
       #cemu
       #dolphin-emu
       wine
-      capacities
+      #capacities
       kubectl
       pods
       hydra-check
