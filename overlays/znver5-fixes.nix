@@ -160,6 +160,23 @@ final: prev: {
               appendDisabledTests [ "test_connect_only_send_recv_byteslike" ]
             );
 
+            # Watcher timing: the reloader tests create files and assert the
+            # filewatcher (stat-polling or watchdog variants) requests a
+            # restart within a deadline; the stat variant missed it under
+            # full build load (rc 0 vs expected 3). The whole module is the
+            # same pattern, so exclude the file. Blocks aioboto3 ->
+            # fastmcp -> mcp-nixos.
+            chalice = pyPrev.chalice.overridePythonAttrs (old:
+              let
+                existing = old.disabledTestPaths or null;
+              in
+              {
+                disabledTestPaths =
+                  (if existing == null then [ ] else existing)
+                  ++ [ "tests/functional/cli/test_reloader.py" ];
+              }
+            );
+
             # Not load- or arch-related: on the 2026-08-02 nixpkgs pin,
             # mkdocs' livereload tests error deterministically — watchdog's
             # dirsnapshot walker follows the suite's circular-symlink fixture
