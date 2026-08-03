@@ -160,6 +160,23 @@ final: prev: {
               appendDisabledTests [ "test_connect_only_send_recv_byteslike" ]
             );
 
+            # Same class as eventlet: inquirer's acceptance tests drive
+            # interactive terminal prompts via pexpect, and all 30 of them
+            # timed out at once under full build load. Skip the suite.
+            # Blocks chalice -> aioboto3 and the fastmcp stack.
+            inquirer = pyPrev.inquirer.overridePythonAttrs (old: {
+              doCheck = false;
+            });
+
+            # pexpect timeout: test_where_erase_value drives an interactive
+            # pdb session and timed out under full build load (suite took
+            # 16min vs the usual few). The rest of ipython's 1591 tests are
+            # not timing-based, so disable just this one. Blocks black,
+            # duckdb, ipykernel and the fastmcp stack.
+            ipython = pyPrev.ipython.overridePythonAttrs (
+              appendDisabledTests [ "test_where_erase_value" ]
+            );
+
             # Time race: test_serialize_date formats "now" and compares
             # against a separately computed "now"; fails whenever the wall
             # clock crosses a second boundary between the two calls (:50 vs
