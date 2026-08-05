@@ -110,11 +110,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785769751,
-        "narHash": "sha256-jj4XwIuS7oFiKEvCOiwrGdTjmdR77KUffPXTupQO35o=",
+        "lastModified": 1785865591,
+        "narHash": "sha256-Acde9wN9opNKcPXjPOgcDoeENTwWrhQzsfvS8KKfHUo=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "4b7d54ebd99d4c949ae65baef828d2790f6aa3fa",
+        "rev": "ff39744e0ee206e527f50fa5914d0db75c2355df",
         "type": "github"
       },
       "original": {
@@ -216,10 +216,10 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1785692966,
-        "narHash": "sha256-vUfIeBEfpbAfZ5zjgIkYk7eHBeVfCYVjLbWnMkseYnk=",
+        "lastModified": 1785828668,
+        "narHash": "sha256-8fsyqeO+mJqvIzeO4xIpgJe/f7MTbbVTEC6RT6WSXNs=",
         "ref": "nixos-unstable",
-        "rev": "643809054d65fdd466a63e3155b8c498cb483c04",
+        "rev": "e72e4f299401a3689d4b3d5fc6496b11db7064eb",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -250,10 +250,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1785782148,
-        "narHash": "sha256-dxSXNxTfXsjV5VaInuQ6LU71ZsAX4PLQI1ixksWl7iQ=",
+        "lastModified": 1785884101,
+        "narHash": "sha256-iXtWmwh6mtCelSnJJFHYzKCR26JvKY9d5JMZLl4Zbs8=",
         "ref": "staging",
-        "rev": "c4c252b91c53120bc3a088c0c80dc6a22b2088f2",
+        "rev": "ee0c2b165226de313d3d0e15940e15bccaec0f57",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
