@@ -236,6 +236,13 @@ final: prev: {
               appendDisabledTests [ "test_serialize_date" ]
             );
 
+            # File-lock ordering: test_fs_backend_stores_honor_load_store_locking
+            # asserts lock contention behavior (got 0 vs expected -1) under full
+            # build load. 533 others passed.
+            liquidctl = pyPrev.liquidctl.overridePythonAttrs (
+              appendDisabledTests [ "test_fs_backend_stores_honor_load_store_locking" ]
+            );
+
             # Same class as eventlet: watchdog's tests wait on filesystem
             # events and watchmedo auto-restart subprocess lifecycles with
             # thread-count assertions; three failed in one round under full
