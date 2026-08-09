@@ -102,6 +102,17 @@ final: prev: {
     '';
   });
 
+  # znver5 + Valgrind 3.27: valgrind_unittest wraps the gtest binary with
+  # memcheck, but Valgrind SIGILLs on EVEX (0x62) instructions in glibc's
+  # ld.so when the test binary is built with -march=znver5. unittest and
+  # perftest pass outside Valgrind; skip only the valgrind CTest.
+  rapidjson = prev.rapidjson.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace test/unittest/CMakeLists.txt \
+        --replace-fail 'if(NOT MSVC AND VALGRIND_FOUND)' 'if(FALSE)'
+    '';
+  });
+
   # Not arch-related: the test suite runs live client/server exchanges against
   # a spawned memcached, and under full build load they flake one at a time —
   # first memcached_udp (loopback datagram drops mid-loop), then, with that
