@@ -243,6 +243,13 @@ final: prev: {
               appendDisabledTests [ "test_fs_backend_stores_honor_load_store_locking" ]
             );
 
+            # Subprocess wait race: test_multiple_wait spawns a child that
+            # sleeps and asserts wait() returns in time; timed out after 0.9s
+            # under full build load. 160 others passed.
+            pytest-subprocess = pyPrev.pytest-subprocess.overridePythonAttrs (
+              appendDisabledTests [ "test_multiple_wait" ]
+            );
+
             # Same class as eventlet: watchdog's tests wait on filesystem
             # events and watchmedo auto-restart subprocess lifecycles with
             # thread-count assertions; three failed in one round under full
