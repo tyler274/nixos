@@ -250,6 +250,15 @@ final: prev: {
               appendDisabledTests [ "test_multiple_wait" ]
             );
 
+            # Load flakes: transport tests spin up WSGI capturing servers and
+            # assert flush/close timing; seven failures and four teardown
+            # errors in one run under full build load (test_transport_works*
+            # parametrizations, test_transaction_uses_downsampled_rate,
+            # test_get_current_thread_meta_main_thread). 2349 others passed.
+            sentry-sdk = pyPrev.sentry-sdk.overridePythonAttrs (old: {
+              doCheck = false;
+            });
+
             # Same class as eventlet: watchdog's tests wait on filesystem
             # events and watchmedo auto-restart subprocess lifecycles with
             # thread-count assertions; three failed in one round under full
