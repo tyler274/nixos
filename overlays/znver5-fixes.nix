@@ -259,6 +259,12 @@ final: prev: {
               doCheck = false;
             });
 
+            # RustNotify on / for permission-denied handling; times out (>10s)
+            # under full build load. 150 others passed.
+            watchfiles = pyPrev.watchfiles.overridePythonAttrs (
+              appendDisabledTests [ "test_ignore_permission_denied" ]
+            );
+
             # Same class as eventlet: watchdog's tests wait on filesystem
             # events and watchmedo auto-restart subprocess lifecycles with
             # thread-count assertions; three failed in one round under full
