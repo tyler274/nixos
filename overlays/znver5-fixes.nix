@@ -274,6 +274,21 @@ final: prev: {
           doCheck = false;
         });
 
+        # Meta-tests in test_pytest_plugin.py spawn nested pytest runs with
+        # 20s timeouts; four failed at once under full build load (two
+        # pytest-timeout failures, two cascade assertion errors). 2672 others
+        # passed. Exclude the file. Blocks httpx/fastapi/fastmcp stack.
+        anyio = pyPrev.anyio.overridePythonAttrs (old:
+          let
+            existing = old.disabledTestPaths or null;
+          in
+          {
+            disabledTestPaths =
+              (if existing == null then [ ] else existing)
+              ++ [ "tests/test_pytest_plugin.py" ];
+          }
+        );
+
         # Meta-test asserting on pytest's internal report lists; passes on
         # pytest 9.0.2 (Alpine CI) but fails deterministically on the 9.1.1
         # in this nixpkgs pin — a pytest behavior change, not load or arch.
