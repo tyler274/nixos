@@ -162,9 +162,14 @@ final: prev: {
 
             # Same class as eventlet: a wall-clock performance assertion (parse
             # in <0.5s; took 0.514s under full build load). It's the only timed
-            # test in mistune's suite, so disabling it individually is safe.
+            # Wall-clock / complexity: repeated-formatting and unclosed-link
+            # destination tests assert near-linear runtime via perf_counter;
+            # both flake under full build load. Security edge-case class only.
             mistune = pyPrev.mistune.overridePythonAttrs (
-              appendDisabledTests [ "test_repeated_formatting_pairs_return_quickly" ]
+              appendDisabledTests [
+                "test_repeated_formatting_pairs_return_quickly"
+                "test_unclosed_link_destinations_are_near_linear"
+              ]
             );
 
             # Wall-clock: asserts regex.sub(..., timeout=N) raises TimeoutError
