@@ -20,6 +20,7 @@
     ./hardware-configuration.nix
     ./radios.nix
     ./scratch.nix
+    ./ccache.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
@@ -63,13 +64,14 @@
     };
   };
 
-  # Swap on the repurposed Samsung 980 PRO (replaced the old 870 EVO).
+  # Swap on the Samsung 990 PRO (took over swap+scratch duty from the 980
+  # PRO, which now holds the persistent ccache — see ccache.nix).
   # part1 = 512 GiB swap; part2 = Nix build scratch (see scratch.nix).
   # Encrypted with a fresh random key on every boot so no sensitive data is
   # written to disk in plaintext. zswap (zfs/boot.nix) requires at least one
   # physical swap device as its backing store, so this must stay non-empty.
   swapDevices = [
-    { device = "/dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA08502B-part1"; randomEncryption.enable = true; }
+    { device = "/dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part1"; randomEncryption.enable = true; }
   ];
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
