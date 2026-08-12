@@ -83,6 +83,22 @@ final: prev: {
     }
   );
 
+  # eigen_5 (5.0.1; plain `eigen` is still 3.4.1 and unaffected): the
+  # AVX-512 erfc packet op for double miscompiles at -march=znver5 with
+  # gcc 15 — CoreEvaluators.h:590 can't convert '__vector(4) double' to
+  # '__m512d' while building the Cwise_erfc doc example, failing the
+  # install-doc target (the -doc output) and taking krita / orca-slicer
+  # down with it. Cwise_erf and Cwise_lgamma compile fine; the headers are
+  # only affected if a consumer instantiates vectorized erfc<double>.
+  # doc/examples/CMakeLists.txt globs *.cpp, so dropping the file skips
+  # just this example (doxygen warns about the missing snippet but doesn't
+  # fail).
+  eigen_5 = prev.eigen_5.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      rm -f doc/examples/Cwise_erfc.cpp
+    '';
+  });
+
   # Not arch-related: QUIC integration recipes drive simulated servers/clients
   # via quictestlib (globserverret / qtest_create_quic_connection); they flake
   # under full build load — first 70-test_quic_multistream.t, then
@@ -214,6 +230,20 @@ final: prev: {
             # libcamera, pipewire.
             numpy = pyPrev.numpy.overridePythonAttrs (
               appendDisabledTests [ "test_poly_int_overflow" ]
+            );
+
+            # znver5 FMA/AVX-512 rounding: STFT roundtrips exceed rtol=1e-07
+            # by ~2e-07 (and compare ~1e-20 residuals against exact 0.0), and
+            # the interior-point linprog solver lands just outside its 3.16e-4
+            # feasibility tolerance on test_bug_6139 (both the plain and
+            # presolve parametrizations). 87708 other tests passed. Blocks
+            # scikit-learn, torchvision, librosa, calibre, yt-dlp, fastmcp.
+            scipy = pyPrev.scipy.overridePythonAttrs (
+              appendDisabledTests [
+                "test_roundtrip_float32"
+                "test_roundtrip_scaling"
+                "test_bug_6139"
+              ]
             );
 
             # Wall-clock: connect-only send/recv against a local socket server

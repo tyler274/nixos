@@ -137,6 +137,19 @@
               fi
             '' + (old.preConfigure or "");
           };
+          # The seed above is a no-op unless nvcc is actually on PATH, which
+          # requires cuda_nvcc in nativeBuildInputs (buildInputs bin/ dirs
+          # don't reach PATH under strictDeps). For packages that only consume
+          # a CUDA-enabled opencv via its exported OpenCVConfig.cmake
+          # (find_package(CUDAToolkit) at OpenCVConfig.cmake:86), add nvcc to
+          # PATH too.
+          seedNvccWithNvccOnPath = old:
+            seedNvccIntoToolkitRoot old
+            // {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                final.cudaPackages.cuda_nvcc
+              ];
+            };
         in
         {
           # Transitively fixes the CUDA onnxruntime.
@@ -165,10 +178,17 @@
           ollama-cuda = prev.ollama-cuda.overrideAttrs seedNvccIntoToolkitRoot;
 
           # Same nvcc-less CUDAToolkit_ROOT bug, hit two ways here: frei0r
-          # links cuda_nvcc directly, and (transitively) find_package(OpenCV)
-          # re-triggers find_package(CUDAToolkit) via OpenCVConfig.cmake
-          # since cudaSupport is on for opencv too. Blocks mlt -> jellyfin.
-          frei0r = prev.frei0r.overrideAttrs seedNvccIntoToolkitRoot;
+          # links cuda_nvcc directly (but only via buildInputs + strictDeps,
+          # so nvcc is NOT on PATH and the plain seed no-ops), and
+          # (transitively) find_package(OpenCV) re-triggers
+          # find_package(CUDAToolkit) via OpenCVConfig.cmake since
+          # cudaSupport is on for opencv too. Blocks mlt -> jellyfin.
+          frei0r = prev.frei0r.overrideAttrs seedNvccWithNvccOnPath;
+
+          # Pure opencv consumer (src/libslic3r/CMakeLists.txt:525
+          # find_package(OpenCV)); has no CUDA inputs of its own at all, so
+          # it needs both nvcc on PATH and the seed.
+          bambu-studio = prev.bambu-studio.overrideAttrs seedNvccWithNvccOnPath;
         };
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
