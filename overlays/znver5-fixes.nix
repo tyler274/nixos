@@ -43,6 +43,33 @@ final: prev: {
     mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dtests=false" ];
   });
 
+  # embree hand-rolls per-ISA multi-versioning: kernels/bvh/bvh.cpp is
+  # compiled once per ISA tier (SSE2/AVX/AVX2/AVX512) and instantiates the
+  # canonical, un-namespaced `BVHN<4>` exactly once, guarded by
+  # `!defined(__AVX__) || !defined(EMBREE_TARGET_SSE2) && ...` — it relies on
+  # its own per-tier -m flags (e.g. plain "-msse2" for the lowest tier) being
+  # the ONLY thing that defines __AVX__/__AVX512F__. The znver5 wrapper's
+  # trailing -march=znver5 defines those macros unconditionally on every
+  # translation unit regardless of embree's own -m flags (same append-after
+  # mechanism as the c-blosc fix above), so the guard concludes the lowest
+  # tier "isn't" the designated instantiation point and skips it — nothing
+  # else in the tree ever instantiates BVHN<4>, hence the undefined
+  # references from bvh_builder_twolevel.cpp's avx512-namespaced code.
+  # Documented upstream as fundamentally incompatible with any blanket
+  # -march flag (RenderKit/embree#115; godotengine/godot#91217, #49225) —
+  # Gentoo's ebuild works around it the same way: strip all -m* flags and
+  # let embree's cmake own ISA selection. EMBREE_MAX_ISA=SSE2 drops the
+  # avx/avx2/avx512 static libs entirely (only one tier left to keep
+  # consistent); the trailing -march override then makes __AVX__ actually
+  # go undefined for that tier, matching its EMBREE_TARGET_SSE2 tag. Loses
+  # embree's AVX-optimized ray-tracing kernels; blocks jellyfin(-ffmpeg).
+  embree = prev.embree.overrideAttrs (old: {
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DEMBREE_MAX_ISA=SSE2" ];
+    env = (old.env or { }) // {
+      NIX_CFLAGS_COMPILE = ((old.env.NIX_CFLAGS_COMPILE or "") + " -march=x86-64-v2");
+    };
+  });
+
   # Not arch-related: Test2-Harness (yath) runs 62 integration-test files
   # that spawn real harness processes (758% CPU during the run); under full
   # build load t/integration/init.t flaked. Same live-process timing class

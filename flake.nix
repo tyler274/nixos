@@ -163,6 +163,12 @@
           # its own override — fixing `ollama` alone leaves it untouched.
           ollama = prev.ollama.overrideAttrs seedNvccIntoToolkitRoot;
           ollama-cuda = prev.ollama-cuda.overrideAttrs seedNvccIntoToolkitRoot;
+
+          # Same nvcc-less CUDAToolkit_ROOT bug, hit two ways here: frei0r
+          # links cuda_nvcc directly, and (transitively) find_package(OpenCV)
+          # re-triggers find_package(CUDAToolkit) via OpenCVConfig.cmake
+          # since cudaSupport is on for opencv too. Blocks mlt -> jellyfin.
+          frei0r = prev.frei0r.overrideAttrs seedNvccIntoToolkitRoot;
         };
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
