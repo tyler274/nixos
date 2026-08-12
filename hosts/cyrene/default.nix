@@ -26,8 +26,21 @@
 
   # Run GC daily (more frequently than the default weekly) given rpool space pressure.
   # Retention window matches common.nix (30d) so Nix generations and ZFS
-  # generation snapshots share the same 30-day horizon.
+  # generation snapshots (zfs/lib.nix) share the same 30-day horizon.
   nix.gc.dates = lib.mkForce "daily";
+
+  nix.settings = {
+    # This host builds the world from source (-march=znver5 below), so the
+    # cachix substituters in common.nix can never hit — they only serve
+    # standard-arch builds — yet each derivation still costs a narinfo query
+    # per cache. Keep only cache.nixos.org: it still serves the arch-
+    # independent fixed-output sources (tarballs, cargo/go/npm vendor dirs),
+    # which beats fetching them from upstream project sites.
+    substituters = lib.mkForce [ "https://cache.nixos.org" ];
+    # Cache "not in this cache" answers for 24h instead of the default 1h so
+    # iterative fix-and-rebuild runs don't re-query thousands of known misses.
+    narinfo-cache-negative-ttl = 86400;
+  };
 
   # Target the Ryzen 9 9950X3D (Zen 5). Overrides the plain "x86_64-linux"
   # mkDefault in hardware-configuration.nix; every package is compiled with
