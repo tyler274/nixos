@@ -187,8 +187,19 @@
 
           # Pure opencv consumer (src/libslic3r/CMakeLists.txt:525
           # find_package(OpenCV)); has no CUDA inputs of its own at all, so
-          # it needs both nvcc on PATH and the seed.
-          bambu-studio = prev.bambu-studio.overrideAttrs seedNvccWithNvccOnPath;
+          # it needs nvcc on PATH, the seed, AND cuda_cudart in buildInputs —
+          # after nvcc is found, FindCUDAToolkit still requires the cudart
+          # library (CUDA_CUDART), which lives in the separate cuda_cudart
+          # split package (frei0r carries it natively; bambu doesn't).
+          bambu-studio = prev.bambu-studio.overrideAttrs (
+            old:
+            seedNvccWithNvccOnPath old
+            // {
+              buildInputs = (old.buildInputs or [ ]) ++ [
+                final.cudaPackages.cuda_cudart
+              ];
+            }
+          );
         };
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one

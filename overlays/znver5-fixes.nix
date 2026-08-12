@@ -99,6 +99,23 @@ final: prev: {
     '';
   });
 
+  # frei0r's tint0r filter has an SSE4.1 code path that was never
+  # compile-tested upstream: tint_sse41 declares its pixel register as
+  # __m128 (float) but drives it through __m128i integer intrinsics
+  # (_mm_loadu_si128 / _mm_srli_si128 / _mm_packus_epi32 ...). The path is
+  # gated on __SSE4_1__, which baseline x86-64 never defines but
+  # -march=znver5 always does, so the dead broken code suddenly compiles
+  # (and fails). Force the gate off; the scalar fallback right below it is
+  # what every other build uses anyway. The CUDA/nvcc side of frei0r is
+  # handled separately in flake.nix's cudaFixOverlay (this overlay layers
+  # on top of it). Blocks mlt -> jellyfin-ffmpeg -> jellyfin.
+  frei0r = prev.frei0r.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace src/filter/tint0r/tint0r.c \
+        --replace-fail '#if defined(__SSE4_1__)' '#if 0'
+    '';
+  });
+
   # Not arch-related: QUIC integration recipes drive simulated servers/clients
   # via quictestlib (globserverret / qtest_create_quic_connection); they flake
   # under full build load — first 70-test_quic_multistream.t, then
@@ -243,6 +260,18 @@ final: prev: {
                 "test_roundtrip_float32"
                 "test_roundtrip_scaling"
                 "test_bug_6139"
+              ]
+            );
+
+            # znver5 FMA/AVX-512 rounding: multichannel MFCC and scipy-mode
+            # resample outputs differ from their per-channel references in the
+            # last float32 digit (np.allclose False on e.g. 1.483e-04 vs
+            # 1.484e-04). Same class as scipy/numpy above. 13913 other tests
+            # passed. Blocks piper-tts -> calibre.
+            librosa = pyPrev.librosa.overridePythonAttrs (
+              appendDisabledTests [
+                "test_mfcc_multi"
+                "test_resample_multichannel"
               ]
             );
 
