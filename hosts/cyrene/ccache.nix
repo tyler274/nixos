@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 
 {
   # Persistent compiler cache on the Samsung 980 PRO (single partition; it
@@ -52,30 +52,145 @@
     ];
   };
 
-  programs.ccache = {
-    enable = true;
-    cacheDir = "/var/cache/ccache";
-    # Wrapped with ccacheStdenv via the module's overlay; only top-level
-    # attrs work here. Wrapping changes these packages' hashes (one-time
-    # rebuild of them and their dependents). chromium is intentionally
-    # absent: its build uses a custom clang stdenv that a plain stdenv
-    # override doesn't reach — revisit if it starts flaking after long
-    # compiles.
-    packageNames = [ "firefox-unwrapped" ];
-  };
-
-  # qtwebengine (the other multi-hour monster) lives in the qt6Packages
-  # scope, out of packageNames' top-level reach; wrap it by hand.
+  # programs.ccache.enable, the hardened ccacheWrapper (CCACHE_DIR/UMASK +
+  # loud preflight), and nix.settings.extra-sandbox-paths all come from
+  # modules/nixos/ccache.nix; this file only adds the per-package wraps.
+  #
+  # programs.ccache.packageNames is deliberately unused: it injects
+  # `stdenv = ccacheStdenv` via .override, which every monster here
+  # defeats — firefox swaps in its own LLVM stdenv, and anything
+  # cudaSupport-enabled (blender, torch, onnxruntime) swaps in
+  # cudaPackages.backendStdenv (both verified: the injected stdenv's
+  # compiler never reaches the build). Each package gets the hook its
+  # build system actually honors:
+  #
+  # - qtwebengine lives in the qt6Packages scope and DOES take a plain
+  #   stdenv override (no cuda, and Qt's GN honors the stdenv compiler).
+  #   kdePackages shares the same instantiation (verified: identical
+  #   drvPath), so the Plasma stack picks this up too.
+  #
+  # - libreoffice-qt-fresh (desktop.nix) is a wrapper whose `unwrapped`
+  #   callPackage arg is the real multi-hour build; that build takes a
+  #   plain stdenv (verified: cc resolves to ccache-links-wrapper).
+  #
+  # - firefox-unwrapped ignores injected stdenvs (buildMozillaMach forces
+  #   its own llvmPackages stdenv for LTO), but mozilla's configure has
+  #   first-class ccache support: --with-ccache=ccache prefixes every
+  #   compiler invocation, clang included.
+  #
+  # - blender is CMake but cudaSupport makes it use
+  #   cudaPackages.backendStdenv, unreachable by stdenv override; CMake's
+  #   compiler-launcher flags wrap whatever compiler the build ends up
+  #   using. CUDA kernels via nvcc aren't cached; host C++ (the bulk) is.
+  #
+  # - electron (linux default = built from source with chromium's build
+  #   machinery) is a wrapper derivation; the real GN build sits behind the
+  #   wrapper's electron-unwrapped callPackage arg. Its custom clang
+  #   toolchain ignores the wrapped stdenv entirely, and chromium/common.nix
+  #   serializes gnFlags into configurePhase at eval time and strips the
+  #   attr, so there's no gnFlags to override post-hoc. Instead splice
+  #   chromium's own compiler-launcher hook — the cc_wrapper="ccache" GN
+  #   arg (build/toolchain/cc_wrapper.gni), the documented way to ccache
+  #   chromium — directly into the serialized `gn gen --args='...'` call,
+  #   with ccache on PATH and CCACHE_DIR pointed at the shared cache
+  #   (programs.ccache exposes it to the sandbox; CCACHE_UMASK replicates
+  #   the wrapper's usual umask setup so all nixbld users share entries).
+  #   The assert makes eval fail loudly if a nixpkgs bump reshapes the
+  #   configurePhase instead of silently building uncached. Overlaying
+  #   electron-source propagates through the top-level electron_NN /
+  #   electron aliases via the fixpoint, so every app's runtime picks up
+  #   the wrapped build. Rust/TS steps aren't cached; the C++ bulk is.
+  #
+  # - chromium is in the closure only through security.chromiumSuidSandbox
+  #   (desktop-common.nix), whose `pkgs.chromium.sandbox` is an output of
+  #   the full browser build. The browser is assembled in a private scope
+  #   with no override hook, so graft a cc_wrapper-spliced browser over the
+  #   `browser`/`sandbox` passthrough attrs; the sandbox consumer then pulls
+  #   the ccached build and the pristine browser drv is never referenced.
+  #
+  # - onnxruntime (CUDA): same backendStdenv story as blender, same
+  #   CMake-launcher fix.
+  #
+  # Deliberately NOT wrapped:
+  #
+  # - python3Packages.torch: same backendStdenv story as onnxruntime, but
+  #   its cmake runs inside setup.py where cmakeFlags don't flow. The real
+  #   fix would be ccache-wrapping cudaPackages.backendStdenv itself, which
+  #   invalidates the entire CUDA subtree (opencv -> frei0r/mlt/jellyfin,
+  #   just rebuilt) and risks subtle nvcc host-compiler breakage across all
+  #   of it — not worth it mid-campaign. Revisit if torch actually flakes.
   nixpkgs.overlays = [
-    (final: prev: {
-      qt6Packages = prev.qt6Packages.overrideScope (
-        qFinal: qPrev: {
-          qtwebengine = qPrev.qtwebengine.override { stdenv = final.ccacheStdenv; };
-        }
-      );
-    })
-  ];
+    (
+      final: prev:
+      let
+        ccacheEnv = {
+          CCACHE_DIR = "/var/cache/ccache";
+          CCACHE_UMASK = "007";
+        };
 
-  # No extra-sandbox-paths needed: programs.ccache already exposes cacheDir
-  # to the build sandbox (verified in the evaluated nix.settings).
+        # For chromium-family GN builds (electron, chromium.browser).
+        ccacheGnBuild =
+          unwrapped:
+          unwrapped.overrideAttrs (
+            old:
+            assert lib.assertMsg (lib.hasInfix "gn gen --args='" (old.configurePhase or ""))
+              "GN ccache hook: configurePhase no longer matches; fix hosts/cyrene/ccache.nix";
+            {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
+              configurePhase = builtins.replaceStrings [ "gn gen --args='" ] [
+                "gn gen --args='cc_wrapper=\"ccache\" "
+              ] old.configurePhase;
+              env = (old.env or { }) // ccacheEnv;
+            }
+          );
+
+        # For CMake builds whose effective compiler is out of stdenv's
+        # hands (e.g. cudaPackages.backendStdenv users).
+        ccacheCmakeBuild =
+          pkg:
+          pkg.overrideAttrs (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
+            cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+              "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
+              "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+            ];
+            env = (old.env or { }) // ccacheEnv;
+          });
+
+        ccachedChromiumBrowser = ccacheGnBuild prev.chromium.browser;
+      in
+      {
+        qt6Packages = prev.qt6Packages.overrideScope (
+          qFinal: qPrev: {
+            qtwebengine = qPrev.qtwebengine.override { stdenv = final.ccacheStdenv; };
+          }
+        );
+
+        libreoffice-qt-fresh = prev.libreoffice-qt-fresh.override (old: {
+          unwrapped = old.unwrapped.override { stdenv = final.ccacheStdenv; };
+        });
+
+        firefox-unwrapped = prev.firefox-unwrapped.overrideAttrs (old: {
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
+          configureFlags = (old.configureFlags or [ ]) ++ [ "--with-ccache=ccache" ];
+          env = (old.env or { }) // ccacheEnv;
+        });
+
+        blender = ccacheCmakeBuild prev.blender;
+
+        electron-source =
+          prev.electron-source
+          // lib.mapAttrs (
+            _: wrapper: wrapper.override { electron-unwrapped = ccacheGnBuild wrapper.unwrapped; }
+          ) (lib.filterAttrs (n: _: lib.hasPrefix "electron_" n) prev.electron-source);
+
+        chromium = prev.chromium // {
+          browser = ccachedChromiumBrowser;
+          sandbox = ccachedChromiumBrowser.sandbox;
+        };
+
+        onnxruntime = ccacheCmakeBuild prev.onnxruntime;
+      }
+    )
+  ];
 }
