@@ -107,7 +107,23 @@
     zed-editor
     #sublime4
     imhex
-    bambu-studio
+    # Bambu Studio's plate/model preview renders blank when glvnd
+    # dispatches GLX/EGL to the NVIDIA vendor library, so force Mesa
+    # (the machine's /run/opengl-driver carries both vendor JSONs).
+    # Wrapping via symlinkJoin instead of overrideAttrs avoids
+    # rebuilding the CUDA-overridden derivation; the desktop entry's
+    # relative `Exec=bambu-studio` resolves to this wrapper via PATH.
+    # See https://www.reddit.com/r/BambuLab/comments/1kx4v59/
+    (symlinkJoin {
+      name = "bambu-studio-mesa-glvnd";
+      paths = [ bambu-studio ];
+      nativeBuildInputs = [ makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/bambu-studio \
+          --set __GLX_VENDOR_LIBRARY_NAME mesa \
+          --set __EGL_VENDOR_LIBRARY_FILENAMES /run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json
+      '';
+    })
   ];
 
   xdg.mimeApps = {
