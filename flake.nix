@@ -86,6 +86,10 @@
       # per-package details.
       znver5FixOverlay = import ./overlays/znver5-fixes.nix;
 
+      # One-time escape hatch for a local Nix daemon output-validation bug
+      # hit on nodejs-slim; see the file for details.
+      nodejsFixOverlay = import ./overlays/nodejs-fixes.nix;
+
       # nvcc-on-PATH/CUDAToolkit_ROOT workarounds for CMake's FindCUDAToolkit;
       # see the file for per-package details.
       cudaFixOverlay = import ./overlays/cuda-fixes.nix;
@@ -110,7 +114,18 @@
           specialArgs = { inherit inputs; };
           modules = [
             # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
-            ({ ... }: { nixpkgs.overlays = [ pkgsOverlay cudaFixOverlay llvmFixOverlay znver5FixOverlay ]; })
+            (
+              { ... }:
+              {
+                nixpkgs.overlays = [
+                  pkgsOverlay
+                  cudaFixOverlay
+                  llvmFixOverlay
+                  znver5FixOverlay
+                  nodejsFixOverlay
+                ];
+              }
+            )
             home-manager.nixosModules.home-manager
             hostPath
           ]
