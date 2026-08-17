@@ -104,6 +104,8 @@
     android-studio-full
     android-tools
 
+    pocket-casts
+
     zed-editor
     #sublime4
     imhex
