@@ -26,13 +26,24 @@
   #
   # The scratch partition is plain dm-crypt keyed from /dev/urandom on every
   # boot, matching the swap's security posture: build inputs/sources never hit
-  # the platter in cleartext and nothing survives a reboot. tmp=xfs makes
+  # the platter in cleartext and nothing survives a reboot. tmp=ext4 makes
   # systemd-cryptsetup mkfs the mapping each boot, which is exactly right for
-  # inherently throwaway build dirs (no manual formatting, ever). XFS over
-  # ext4/btrfs: per-AG parallelism suits 32 build threads hammering
-  # create/write/delete, with none of btrfs's CoW+checksum overhead — all
-  # integrity machinery is wasted on data that never survives a reboot.
-  # The every-boot mkfs makes the switch free (nothing to migrate).
+  # inherently throwaway build dirs (no manual formatting, ever).
+  #
+  # ext4, not XFS: XFS hard-caps symlink targets at 1024 bytes
+  # (XFS_SYMLINK_MAXLEN — an on-disk format constant from the Irix era,
+  # not a mkfs/mount-tunable; confirmed directly by creating symlinks on a
+  # loopback XFS fs: 1023 bytes succeeds, 1024+ fails ENAMETOOLONG on every
+  # kernel). Nix's own build-from-source hits this: nix-util-tests-run's
+  # `readLinkAt.works` creates 2048- and 4095-byte symlink targets to
+  # exercise readlinkat() buffer growth, and nixpkgs' pinned nix 2.34.8
+  # predates upstream's fix (nix#f535e4a) that catches ENAMETOOLONG and
+  # skips those sub-cases on filesystems that don't support long targets.
+  # ext4 has no such ceiling (targets up to the full 4095-byte Linux
+  # PATH_MAX-1), so this only ever surfaces on XFS/overlayfs. Loses XFS's
+  # per-AG parallelism for the 32-thread build workload, but the
+  # every-boot mkfs makes reverting free if that turns out to matter more
+  # than losing an afternoon to filesystem-specific test breakage.
   #
   # The mapping is named "scratch" deliberately — no dash, so the systemd unit
   # is plain systemd-cryptsetup@scratch.service with no \x2d escaping needed.
@@ -43,21 +54,18 @@
   # the partition must be created with `sgdisk --align-end` (-I) so the end
   # doesn't run to the disk's unaligned last usable sector.
   environment.etc.crypttab.text = ''
-    scratch /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part2 /dev/urandom plain,cipher=aes-xts-plain64,size=512,sector-size=4096,discard,tmp=xfs
+    scratch /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part2 /dev/urandom plain,cipher=aes-xts-plain64,size=512,sector-size=4096,discard,tmp=ext4
   '';
 
   # Mount directly over the default build-dir location so no nix.settings
   # change is needed; the daemon keeps using its default path.
   fileSystems."/nix/var/nix/builds" = {
     device = "/dev/mapper/scratch";
-    fsType = "xfs";
+    fsType = "ext4";
     options = [
       "noatime"
       "nodev"
       "nosuid"
-      # Larger in-memory log buffers help the metadata-heavy unpack/delete
-      # phases of builds.
-      "logbsize=256k"
       # The fstab generator only sees an opaque /dev/mapper device here, so
       # explicitly tie the mount to the cryptsetup unit that creates (and
       # mkfs's) it. Requires= + After= in one option.
