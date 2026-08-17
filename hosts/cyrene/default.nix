@@ -25,10 +25,24 @@
     inputs.aagl.nixosModules.default
   ];
 
-  # Run GC daily (more frequently than the default weekly) given rpool space pressure.
-  # Retention window matches common.nix (30d) so Nix generations and ZFS
-  # generation snapshots (zfs/lib.nix) share the same 30-day horizon.
-  nix.gc.dates = lib.mkForce "daily";
+  # Automatic GC OFF during the from-source znver5 world-rebuild campaign
+  # (see gccarch-znver5 below): `nixos-rebuild boot` never registers a GC
+  # root until the ENTIRE system closure builds successfully, so every
+  # source fetch and every leaf package compiled across dozens of
+  # multi-hour --keep-going attempts sits unreferenced in the store the
+  # whole time. GC's mark-and-sweep doesn't care about --delete-older-than
+  # for these — that flag only prunes old *generations*; anything that was
+  # never a root gets swept on every run, age be damned. Confirmed via
+  # nix-gc.service's last run: 14744 store paths / 189.8 GiB deleted in one
+  # sweep, including bare source tarballs and fully-built leaf packages —
+  # a full day of build progress erased, forcing refetches and recompiles
+  # on the next attempt. rpool/nixos/root is at 9% used / 1.1T free (`df -h
+  # /nix/store`), so there's no actual space pressure justifying daily
+  # sweeps right now. Re-enable (`nix.gc.automatic = true;` + a `dates`)
+  # once this generation lands and stabilizes, or run
+  # `sudo nix-collect-garbage --delete-older-than 30d` manually if rpool
+  # usage climbs mid-campaign.
+  # nix.gc.automatic = lib.mkForce "false";
 
   nix.settings = {
     # This host builds the world from source (-march=znver5 below), so the
