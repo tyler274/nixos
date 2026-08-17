@@ -94,6 +94,10 @@
       # see the file for per-package details.
       cudaFixOverlay = import ./overlays/cuda-fixes.nix;
 
+      # Skips a nix unit test that can't pass on the XFS-backed build
+      # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
+      nixFixOverlay = import ./overlays/nix-fixes.nix;
+
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
       # from the 6.7 branch. KF6 (6.26) and KDE Gear (26.04) are unchanged, so
       # only the Plasma set rebuilds. This is the real fix for the KWin DRM
@@ -123,6 +127,7 @@
                   llvmFixOverlay
                   znver5FixOverlay
                   nodejsFixOverlay
+                  nixFixOverlay
                 ];
               }
             )
