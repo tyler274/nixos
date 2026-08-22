@@ -123,7 +123,9 @@
       postBuild = ''
         wrapProgram $out/bin/bambu-studio \
           --set __GLX_VENDOR_LIBRARY_NAME mesa \
-          --set __EGL_VENDOR_LIBRARY_FILENAMES /run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json
+          --set __EGL_VENDOR_LIBRARY_FILENAMES /run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json \
+          --set MESA_LOADER_DRIVER_OVERRIDE zink \
+          --set GALLIUM_DRIVER zink
       '';
     })
   ];
