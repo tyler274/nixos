@@ -92,6 +92,8 @@
     direnv
     nix-direnv
     nix-output-monitor
+    vulnix
+    inspec
   ];
 
   boot.loader.grub.memtest86.enable = true;
