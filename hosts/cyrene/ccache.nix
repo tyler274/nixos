@@ -166,7 +166,7 @@
           }
         );
 
-        libreoffice-qt-fresh = prev.libreoffice-qt-fresh.override (old: {
+        libreoffice-qt-stable = prev.libreoffice-qt-stable.override (old: {
           unwrapped = old.unwrapped.override { stdenv = final.ccacheStdenv; };
         });
 

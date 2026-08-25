@@ -75,7 +75,7 @@
     chiaki
     protonup-qt
 
-    libreoffice-qt-fresh
+    libreoffice-qt-stable
     # Not available on x86_64-linux wow
     # libreoffice-bin
     kdePackages.ark
