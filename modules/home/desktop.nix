@@ -107,6 +107,7 @@
     pocket-casts
 
     zed-editor
+    obsidian
     #sublime4
     imhex
     # Bambu Studio's plate/model preview renders blank when glvnd
