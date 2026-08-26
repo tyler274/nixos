@@ -161,6 +161,8 @@
 
   services.jellyfin.enable = true;
 
+  users.defaultUserShell = pkgs.brush;
+
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTRS{idVendor}=="0764", ATTRS{idProduct}=="0501", MODE="664", GROUP="nut", OWNER="nut"
   '';
