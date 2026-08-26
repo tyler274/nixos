@@ -94,6 +94,7 @@
     nix-output-monitor
     vulnix
     inspec
+    brush
   ];
 
   boot.loader.grub.memtest86.enable = true;
