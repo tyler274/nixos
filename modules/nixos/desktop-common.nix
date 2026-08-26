@@ -100,7 +100,7 @@
           ];
         };
         firefox = {
-          executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
+          executable = "${lib.getBin pkgs.firefox}/bin/firefox";
           profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
           extraArgs = [ hideSystemMalloc ];
         };

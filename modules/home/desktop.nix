@@ -22,7 +22,7 @@
     enable = true;
     nativeMessagingHosts = [ pkgs.kdePackages.plasma-browser-integration ];
     configPath = "${config.xdg.configHome}/mozilla/firefox";
-    package = pkgs.firefox-bin;
+    package = pkgs.firefox;
   };
 
   programs.thunderbird = {
