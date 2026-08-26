@@ -34,5 +34,5 @@
   # shader-based color management. Set as a kernel param so it applies even when
   # nvidia-drm is loaded from the initrd.
   # Refs: NVIDIA 610 release notes ("Wayland Known Issues"); KWin !9042/!9278.
-  boot.kernelParams = [ "nvidia-drm.color_pipeline=0" ];
+  #boot.kernelParams = [ "nvidia-drm.color_pipeline=0" ];
 }
