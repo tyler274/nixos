@@ -56,6 +56,14 @@
   security.rtkit.enable = true;
 
   #environment.memoryAllocator.provider = "libc";
+
+  # Alternative allocators are injected via /etc/ld-nix.so.preload. Mozilla,
+  # Chromium, and Electron apps are opted out in overlays/allocator-exclusions.nix
+  # (and firejail --blacklist of that path in desktop-common.nix). Switching
+  # this to graphene-hardened / graphene-hardened-light does not need more
+  # package wraps; mimalloc is the one that currently SIGSEGV/SIGTRAPs Edge
+  # and Electron, while graphene survived the same smoke tests.
+>>>>>>> 5927831 (mcp + mimalloc fixes + etc)
   environment.memoryAllocator.provider = "mimalloc";
 
   # Enable mimalloc's hardened build: randomises heap segment placement,

@@ -81,41 +81,53 @@
 
   programs.firejail = {
     enable = true;
-    wrappedBinaries = {
-      signal-desktop = {
-        executable = "${pkgs.signal-desktop}/bin/signal-desktop --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
-        profile = "${pkgs.firejail}/etc/firejail/signal-desktop.profile";
-        extraArgs = [
-          "--env=LC_ALL=C"
-          "--env=GTK_THEME=Adwaita:dark"
-        ];
+    wrappedBinaries =
+      let
+        # Hide the system malloc preload. Firejail profiles typically set
+        # noroot, which blocks the bubblewrap wrap in allocator-exclusions.nix
+        # from creating a user namespace; blacklisting the file here is what
+        # actually opts these binaries out when launched via firejail.
+        hideSystemMalloc = "--blacklist=/etc/ld-nix.so.preload";
+      in
+      {
+        signal-desktop = {
+          executable = "${pkgs.signal-desktop}/bin/signal-desktop --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland";
+          profile = "${pkgs.firejail}/etc/firejail/signal-desktop.profile";
+          extraArgs = [
+            hideSystemMalloc
+            "--env=LC_ALL=C"
+            "--env=GTK_THEME=Adwaita:dark"
+          ];
+        };
+        firefox = {
+          executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
+          profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
+          extraArgs = [ hideSystemMalloc ];
+        };
+        thunderbird = {
+          executable = "${lib.getBin pkgs.thunderbird-bin}/bin/thunderbird";
+          profile = "${pkgs.firejail}/etc/firejail/thunderbird-wayland.profile";
+          extraArgs = [ hideSystemMalloc ];
+        };
+        microsoft-edge = {
+          executable = "${pkgs.microsoft-edge}/bin/microsoft-edge";
+          profile = "${pkgs.firejail}/etc/firejail/microsoft-edge.profile";
+          extraArgs = [
+            hideSystemMalloc
+            "--enable-features=WebRTCPipeWireCapturer"
+            "--enable-features=UseOzonePlatform,WaylandWindowDecorations"
+            "--ozone-platform=wayland"
+          ];
+        };
+        fractal = {
+          executable = "${pkgs.fractal}/bin/fractal";
+          profile = "${pkgs.firejail}/etc/firejail/fractal.profile";
+        };
+        halloy = {
+          executable = "${pkgs.halloy}/bin/halloy";
+          profile = "${pkgs.firejail}/etc/firejail/halloy.profile";
+        };
       };
-      firefox = {
-        executable = "${lib.getBin pkgs.firefox-bin}/bin/firefox";
-        profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
-      };
-      thunderbird = {
-        executable = "${lib.getBin pkgs.thunderbird-bin}/bin/thunderbird";
-        profile = "${pkgs.firejail}/etc/firejail/thunderbird-wayland.profile";
-      };
-      microsoft-edge = {
-        executable = "${pkgs.microsoft-edge}/bin/microsoft-edge";
-        profile = "${pkgs.firejail}/etc/firejail/microsoft-edge.profile";
-        extraArgs = [
-          "--enable-features=WebRTCPipeWireCapturer"
-          "--enable-features=UseOzonePlatform,WaylandWindowDecorations"
-          "--ozone-platform=wayland"
-        ];
-      };
-      fractal = {
-        executable = "${pkgs.fractal}/bin/fractal";
-        profile = "${pkgs.firejail}/etc/firejail/fractal.profile";
-      };
-      halloy = {
-        executable = "${pkgs.halloy}/bin/halloy";
-        profile = "${pkgs.firejail}/etc/firejail/halloy.profile";
-      };
-    };
   };
 
   # Allow native messaging host integrations to work

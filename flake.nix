@@ -98,6 +98,11 @@
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
 
+      # Hides /etc/ld-nix.so.preload for Mozilla/Chromium/Electron launchers
+      # so they keep libc malloc when environment.memoryAllocator is set.
+      # mkAfter so this wraps the packages ccache/znver5 overlays produce.
+      allocatorExclusionOverlay = import ./overlays/allocator-exclusions.nix;
+
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
       # from the 6.7 branch. KF6 (6.26) and KDE Gear (26.04) are unchanged, so
       # only the Plasma set rebuilds. This is the real fix for the KWin DRM
@@ -129,6 +134,14 @@
                   nodejsFixOverlay
                   nixFixOverlay
                 ];
+              }
+            )
+            # Separate module so mkAfter merges after host overlays (ccache,
+            # znver5) rather than colliding as a duplicate attr in one set.
+            (
+              { lib, ... }:
+              {
+                nixpkgs.overlays = lib.mkAfter [ allocatorExclusionOverlay ];
               }
             )
             home-manager.nixosModules.home-manager
