@@ -33,18 +33,47 @@ let
 
   emptyPreload = prev.writeText "empty-ld-nix.so.preload" "";
 
+  # NixOS installs /etc/ld-nix.so.preload as a symlink into /etc/static (and
+  # from there into the store). bwrap --ro-bind onto a symlink dest fails
+  # with "Can't create file at /etc/ld-nix.so.preload: No such file or
+  # directory". Bind the resolved regular file instead; glibc follows the
+  # symlink and then reads emptiness.
   wrapperTemplate = prev.writeText "hide-system-malloc.sh" ''
     #!${prev.runtimeShell}
-    if [ -s /etc/ld-nix.so.preload ]; then
-      exec ${lib.getExe prev.bubblewrap} \
-        --bind / / \
-        --dev-bind /dev /dev \
-        --proc /proc \
-        --ro-bind ${emptyPreload} /etc/ld-nix.so.preload \
-        --die-with-parent \
-        "@real@" "$@"
+    empty=${emptyPreload}
+    real="@real@"
+
+    if [ ! -e /etc/ld-nix.so.preload ] && [ ! -L /etc/ld-nix.so.preload ]; then
+      exec "$real" "$@"
     fi
-    exec "@real@" "$@"
+
+    binds=()
+    add_bind() {
+      local f=$1
+      [[ -n $f && -f $f && ! -L $f ]] || return 0
+      local b
+      for b in "''${binds[@]}"; do
+        [[ $b == "$f" ]] && return 0
+      done
+      binds+=("$f")
+    }
+
+    add_bind /etc/ld-nix.so.preload
+    add_bind "$(readlink -f /etc/ld-nix.so.preload 2>/dev/null || true)"
+    add_bind /etc/static/ld-nix.so.preload
+    add_bind "$(readlink -f /etc/static/ld-nix.so.preload 2>/dev/null || true)"
+
+    if (( ''${#binds[@]} == 0 )); then
+      exec "$real" "$@"
+    fi
+
+    args=(--bind / / --dev-bind /dev /dev --proc /proc)
+    for f in "''${binds[@]}"; do
+      args+=(--ro-bind "$empty" "$f")
+    done
+    args+=(--die-with-parent)
+
+    exec ${lib.getExe prev.bubblewrap} "''${args[@]}" "$real" "$@"
   '';
 
   # Preserve callPackage/wrapFirefox surface so later overlays and HM
