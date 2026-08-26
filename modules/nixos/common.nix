@@ -63,7 +63,6 @@
   # this to graphene-hardened / graphene-hardened-light does not need more
   # package wraps; mimalloc is the one that currently SIGSEGV/SIGTRAPs Edge
   # and Electron, while graphene survived the same smoke tests.
->>>>>>> 5927831 (mcp + mimalloc fixes + etc)
   environment.memoryAllocator.provider = "mimalloc";
 
   # Enable mimalloc's hardened build: randomises heap segment placement,
