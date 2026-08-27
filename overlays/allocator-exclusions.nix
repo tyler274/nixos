@@ -25,6 +25,16 @@
 # programs.firejail wrappers (see desktop-common.nix); without it, firejail
 # noroot blocks the inner bwrap.
 #
+# Do not wrap `electron` / `electron_N`: leaf apps (Signal, Bitwarden, …)
+# exec those binaries, so wrapping the launcher is enough — the child
+# inherits the mount namespace. Wrapping electron itself also catches
+# Mullvad's GUI, whose bwrap user namespace cannot talk to mullvad-daemon
+# on /run/mullvad-vpn.
+#
+# Do not wrap sleepy-launcher (or other aagl launchers). They already run
+# inside steam-run's FHS bwrap, whose tmpfs /etc omits ld-nix.so.preload,
+# and a second user namespace breaks Wine on NVIDIA (udev, drive letters).
+#
 # The wrap is allocator-agnostic: switching provider to graphene-hardened
 # or graphene-hardened-light does not need another overlay change.
 final: prev:
@@ -122,13 +132,21 @@ let
             done
 
             # Edge (and some Chromium builds) bake absolute store paths into
-            # .desktop Exec= lines; rewrite those so the launcher hits the
-            # wrapped bin instead of the original.
+            # .desktop Exec= lines. aagl's wrapAAGL points Exec at the inner
+            # steam-run script, not the symlinkJoin out path, so also rewrite
+            # resolved bin paths.
             if [ -d "$out/share" ]; then
               find "$out/share" \( -name '*.desktop' -o -name '*.service' \) -print0 \
                 | while IFS= read -r -d "" f; do
+                    [ -e "$f" ] || continue
                     cp -L --remove-destination "$f" "$f.tmp"
                     substituteInPlace "$f.tmp" --replace-quiet ${pkg} "$out" || true
+                    for origbin in ${pkg}/bin/*; do
+                      [ -e "$origbin" ] || continue
+                      name=$(basename "$origbin")
+                      orig=$(readlink -f "$origbin")
+                      substituteInPlace "$f.tmp" --replace-quiet "$orig" "$out/bin/$name" || true
+                    done
                     mv "$f.tmp" "$f"
                   done
             fi
@@ -138,13 +156,9 @@ let
       keepInterface pkg wrapped;
 in
 # Do not filterAttrs over `prev` — that forces every nixpkgs attribute.
-# Wrap the electron alias plus the versioned slots this config actually
-# runs (42 = pocket-casts, 43 = signal/bitwarden). New Electron apps that
-# pin some other slot need their slot added here (or wrap the leaf app).
+# Wrap leaf apps, not the electron interpreter (see header). New Electron
+# apps that ship their own launcher script should be added here.
 lib.genAttrs [
-  "electron"
-  "electron_42"
-  "electron_43"
   "firefox"
   "firefox-bin"
   "thunderbird"
