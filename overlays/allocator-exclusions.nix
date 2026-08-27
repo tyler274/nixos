@@ -25,6 +25,13 @@
 # programs.firejail wrappers (see desktop-common.nix); without it, firejail
 # noroot blocks the inner bwrap.
 #
+# sleepy-launcher (aagl) is the same wrap. The GTK UI is steam-run FHS, and
+# Zenless Zone Zero is a Wine-tkg wow64 child of that FHS (not pkgs.wine), so
+# hiding the preload around the launcher covers both. The FHS tmpfs /etc omits
+# ld-nix.so.preload but still propagates /etc/static; overlaying the resolved
+# store file is what actually empties that path. Other aagl launchers need
+# their attr added here the same way.
+#
 # The wrap is allocator-agnostic: switching provider to graphene-hardened
 # or graphene-hardened-light does not need another overlay change.
 final: prev:
@@ -122,13 +129,21 @@ let
             done
 
             # Edge (and some Chromium builds) bake absolute store paths into
-            # .desktop Exec= lines; rewrite those so the launcher hits the
-            # wrapped bin instead of the original.
+            # .desktop Exec= lines. aagl's wrapAAGL points Exec at the inner
+            # steam-run script, not the symlinkJoin out path, so also rewrite
+            # resolved bin paths.
             if [ -d "$out/share" ]; then
               find "$out/share" \( -name '*.desktop' -o -name '*.service' \) -print0 \
                 | while IFS= read -r -d "" f; do
+                    [ -e "$f" ] || continue
                     cp -L --remove-destination "$f" "$f.tmp"
                     substituteInPlace "$f.tmp" --replace-quiet ${pkg} "$out" || true
+                    for origbin in ${pkg}/bin/*; do
+                      [ -e "$origbin" ] || continue
+                      name=$(basename "$origbin")
+                      orig=$(readlink -f "$origbin")
+                      substituteInPlace "$f.tmp" --replace-quiet "$orig" "$out/bin/$name" || true
+                    done
                     mv "$f.tmp" "$f"
                   done
             fi
@@ -141,7 +156,7 @@ in
 # Wrap the electron alias plus the versioned slots this config actually
 # runs (42 = pocket-casts, 43 = signal/bitwarden). New Electron apps that
 # pin some other slot need their slot added here (or wrap the leaf app).
-lib.genAttrs [
+(lib.genAttrs [
   "electron"
   "electron_42"
   "electron_43"
@@ -155,4 +170,9 @@ lib.genAttrs [
   "signal-desktop"
   "bitwarden-desktop"
   "pocket-casts"
-] (n: hideSystemMalloc prev.${n})
+] (n: hideSystemMalloc prev.${n}))
+# aagl overlay (Cyrene) runs before this mkAfter overlay; other hosts have
+# no such attr, and prev.sleepy-launcher would eval-fail there.
+// lib.optionalAttrs (prev ? sleepy-launcher) {
+  sleepy-launcher = hideSystemMalloc prev.sleepy-launcher;
+}
