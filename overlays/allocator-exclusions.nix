@@ -28,8 +28,11 @@
 # Do not wrap `electron` / `electron_N`: leaf apps (Signal, Bitwarden, …)
 # exec those binaries, so wrapping the launcher is enough — the child
 # inherits the mount namespace. Wrapping electron itself also catches
-# Mullvad's GUI, whose bwrap user namespace cannot talk to mullvad-daemon
-# on /run/mullvad-vpn.
+# Mullvad's GUI. bwrap's user namespace makes the daemon socket look
+# unowned ("Failed to verify root ownership of socket"); unwrapped
+# Electron SIGTRAPs under mimalloc. Mullvad is wrapped with a
+# CAP_SYS_ADMIN helper that only unshares the mount namespace (see
+# hide-system-malloc.c and security.wrappers in common.nix).
 #
 # Do not wrap sleepy-launcher (or other aagl launchers). They already run
 # inside steam-run's FHS bwrap, whose tmpfs /etc omits ld-nix.so.preload,
@@ -86,24 +89,47 @@ let
     exec ${lib.getExe prev.bubblewrap} "''${args[@]}" "$real" "$@"
   '';
 
+  # Mullvad (and anything else that stats a root-owned Unix socket) cannot
+  # use the bwrap wrap: host uid 0 is unmapped in an unprivileged user
+  # namespace, so the socket appears to be owned by nobody. This helper
+  # is security.wrappers.hide-system-malloc (CAP_SYS_ADMIN, dropped before
+  # exec) and only creates a mount namespace.
+  capWrapperTemplate = prev.writeText "hide-system-malloc-cap.sh" ''
+    #!${prev.runtimeShell}
+    real="@real@"
+    helper=/run/wrappers/bin/hide-system-malloc
+    if [ ! -x "$helper" ]; then
+      echo "hide-system-malloc: $helper missing; rebuild with security.wrappers" >&2
+      exec "$real" "$@"
+    fi
+    exec "$helper" "$real" "$@"
+  '';
+
+  hideSystemMallocExec = prev.runCommandCC "hide-system-malloc" { } ''
+    mkdir -p $out/bin
+    $CC -O2 -Wall -Werror \
+      -DEMPTY_PRELOAD='"${emptyPreload}"' \
+      -o $out/bin/hide-system-malloc ${./hide-system-malloc.c}
+  '';
+
   # Preserve callPackage/wrapFirefox surface so later overlays and HM
   # (`package.override`, chromium.sandbox, firefox-bin.unwrapped) keep working
   # on top of the symlinkJoin.
   keepInterface =
-    orig: wrapped:
+    wrapFn: orig: wrapped:
     wrapped
     // lib.optionalAttrs (orig ? override) {
-      override = args: hideSystemMalloc (orig.override args);
+      override = args: wrapFn (orig.override args);
     }
     // lib.optionalAttrs (orig ? overrideAttrs) {
-      overrideAttrs = f: hideSystemMalloc (orig.overrideAttrs f);
+      overrideAttrs = f: wrapFn (orig.overrideAttrs f);
     }
     // lib.optionalAttrs (orig ? sandbox) { inherit (orig) sandbox; }
     // lib.optionalAttrs (orig ? browser) { inherit (orig) browser; }
     // lib.optionalAttrs (orig ? unwrapped) { inherit (orig) unwrapped; };
 
-  hideSystemMalloc =
-    pkg:
+  wrapWith =
+    template: pkg:
     if !lib.isDerivation pkg then
       pkg
     else
@@ -127,7 +153,7 @@ let
               [ -x "$bin" ] || continue
               real=$(readlink -f "$bin")
               rm -f "$bin"
-              substitute ${wrapperTemplate} "$bin" --subst-var-by real "$real"
+              substitute ${template} "$bin" --subst-var-by real "$real"
               chmod +x "$bin"
             done
 
@@ -153,12 +179,19 @@ let
           '';
         };
       in
-      keepInterface pkg wrapped;
+      keepInterface (wrapWith template) pkg wrapped;
+
+  hideSystemMalloc = wrapWith wrapperTemplate;
+  hideSystemMallocNoUserns = wrapWith capWrapperTemplate;
 in
+{
+  hide-system-malloc-exec = hideSystemMallocExec;
+  mullvad-vpn = hideSystemMallocNoUserns prev.mullvad-vpn;
+}
 # Do not filterAttrs over `prev` — that forces every nixpkgs attribute.
 # Wrap leaf apps, not the electron interpreter (see header). New Electron
 # apps that ship their own launcher script should be added here.
-lib.genAttrs [
+// lib.genAttrs [
   "firefox"
   "firefox-bin"
   "thunderbird"
