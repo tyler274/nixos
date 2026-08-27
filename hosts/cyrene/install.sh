@@ -1,6 +1,6 @@
 #!/usr/bin/env nix-shell
 #!nix-shell -i bash -p gptfdisk parted dosfstools nvme-cli sbctl git
-# Cyrene ZFS-on-root installer — run as root from the NixOS live ISO.
+# Cyrene ZFS-on-root installer - run as root from the NixOS live ISO.
 # The nix-shell shebang above pulls in all required tools automatically;
 # no manual `nix-shell -p ...` needed.
 #
@@ -154,7 +154,7 @@ zfs create -o canmount=noauto -o mountpoint=/var/log "$POOL/nixos/var/log"
 zfs create -o mountpoint=legacy -o com.sun:auto-snapshot=false -o sync=disabled "$POOL/nixos/tmp"
 zfs create -o mountpoint=legacy -o com.sun:auto-snapshot=false "$POOL/docker"
 
-# swap zvol — CyreneMinimal's swapDevices expects this
+# swap zvol - CyreneMinimal's swapDevices expects this
 zfs create -V "$SWAP_SIZE" -b "$(getconf PAGESIZE)" \
   -o compression=zle -o logbias=throughput -o sync=always \
   -o primarycache=metadata -o com.sun:auto-snapshot=false \
@@ -226,7 +226,7 @@ if [ "$RUN_INSTALL" -eq 1 ]; then
   echo "--- running nixos-install (#$FLAKE_ATTR)"
   nixos-install --flake "$REPO_DIR#$FLAKE_ATTR" --no-root-passwd
   echo
-  echo "=== done — reboot when ready. Root password comes from initialHashedPassword;"
+  echo "=== done - reboot when ready. Root password comes from initialHashedPassword;"
   echo "=== you'll be prompted for the rpool passphrase at boot."
 else
   echo

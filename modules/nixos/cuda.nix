@@ -2,7 +2,7 @@
 #
 # GPU access in WSL flows from the Windows NVIDIA driver, which is mapped into
 # WSL at /usr/lib/wsl/lib/. The Linux kernel-side NVIDIA driver
-# (`hardware.nvidia.enable`) MUST NOT be enabled here — it would conflict with
+# (`hardware.nvidia.enable`) MUST NOT be enabled here - it would conflict with
 # the Windows driver stub. `linuxPackages.nvidia_x11` is intentionally omitted
 # for the same reason.
 #
@@ -47,10 +47,12 @@ in
 
   environment.sessionVariables = {
     CUDA_PATH = "${cudaPkgs.cudatoolkit}";
-    LD_LIBRARY_PATH = "/usr/lib/wsl/lib:${lib.makeLibraryPath [
-      cudaPkgs.cudatoolkit
-      cudaPkgs.cuda_cudart
-    ]}";
+    LD_LIBRARY_PATH = "/usr/lib/wsl/lib:${
+      lib.makeLibraryPath [
+        cudaPkgs.cudatoolkit
+        cudaPkgs.cuda_cudart
+      ]
+    }";
   };
 
   virtualisation.docker.enable = true;

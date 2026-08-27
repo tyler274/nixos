@@ -1,7 +1,15 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
-  boot.supportedFilesystems = [ "zfs" "ntfs" ];
+  boot.supportedFilesystems = [
+    "zfs"
+    "ntfs"
+  ];
   boot.zfs.forceImportRoot = false;
   boot.zfs.requestEncryptionCredentials = true;
   networking.hostId = "48cd5bc1";
@@ -59,7 +67,7 @@
     interval = "hourly";
 
     # Home: longer retention; recursive covers all per-user sub-datasets
-    # automatically — no per-user entry needed when new users are added.
+    # automatically - no per-user entry needed when new users are added.
     datasets."rpool/nixos/home" = {
       autoprune = true;
       autosnap = true;
@@ -94,12 +102,32 @@
     enable = true;
     sshKey = "/etc/syncoid/.ssh/id_rsa";
     localSourceAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+      "change-key"
+      "compression"
+      "create"
+      "mount"
+      "mountpoint"
+      "receive"
+      "rollback"
+      "bookmark"
+      "hold"
+      "send"
+      "snapshot"
+      "destroy"
     ];
     localTargetAllow = [
-      "change-key" "compression" "create" "mount" "mountpoint"
-      "receive" "rollback" "bookmark" "hold" "send" "snapshot" "destroy"
+      "change-key"
+      "compression"
+      "create"
+      "mount"
+      "mountpoint"
+      "receive"
+      "rollback"
+      "bookmark"
+      "hold"
+      "send"
+      "snapshot"
+      "destroy"
     ];
     commonArgs = [
       ''--sshoption="UserKnownHostsFile=/etc/syncoid/.ssh/known_hosts"''

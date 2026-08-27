@@ -1,4 +1,4 @@
-# Shared Cyrene ZFS constants (not a NixOS module — import from sibling files).
+# Shared Cyrene ZFS constants (not a NixOS module - import from sibling files).
 { lib }:
 
 let

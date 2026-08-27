@@ -1,4 +1,4 @@
-# CHITUBOX — slicer for SLA/DLP/LCD resin printers. CHITU merged the old
+# CHITUBOX - slicer for SLA/DLP/LCD resin printers. CHITU merged the old
 # Basic/Pro products into a single app in late 2025 and dropped the Linux
 # builds with it: the last native Linux release is Basic v2.3.1 (Jan 2025),
 # and the current unified releases (upgrade number v3.3.0 = app v1.2.0) ship
@@ -8,12 +8,12 @@
 #
 # What the payload is (looked at 2026-07): a Qt 6 QML application
 # (librabbit_* slicer/render DLLs, CadEx importers for STEP/OBJ/3MF/etc.)
-# plus QtWebEngine — an embedded Chromium that renders the account
+# plus QtWebEngine - an embedded Chromium that renders the account
 # login / user-center views. Verified under wine 11 (64-bit): installs
 # headless in ~15 s, launches to the login screen and renders it correctly.
 #
 # Why the launcher installs on first run instead of unpacking into the store:
-#   The installer is Qt Installer Framework 4.6, not NSIS — the application
+#   The installer is Qt Installer Framework 4.6, not NSIS - the application
 #   archives are appended to the PE in QtIFW's own resource-collection format
 #   that 7z cannot parse (it only finds a stray font archive). Extracting at
 #   build time would need QtIFW's `devtool dump`; nixpkgs only carries QtIFW
@@ -24,7 +24,7 @@
 #   into the wineprefix, stamped by the installer's store path; on a version
 #   bump it purges the old install through the bundled maintenance tool
 #   (Uninstall.exe) and reinstalls. The vendor installer, maintenance tool and
-#   app all run inside the sandbox — only trusted nixpkgs wine (wineboot,
+#   app all run inside the sandbox - only trusted nixpkgs wine (wineboot,
 #   regedit) runs outside it.
 #
 #   The prefix's Desktop shell folder is a wineboot-made symlink to the real
@@ -36,16 +36,16 @@
 #
 # GPU workaround: QtWebEngine's Chromium GPU process cannot create D3D11
 # shared images under Wine (ANGLE -> wined3d, "Unable to create shared handle
-# for DXGIResource"), and retries in a tight loop — ~80k error lines in a
+# for DXGIResource"), and retries in a tight loop - ~80k error lines in a
 # minute of uptime. QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu-compositing
 # makes the webviews composite on the CPU, which removes the spam entirely
 # with no visible regression (A/B-tested on the login screen). The Qt Quick
-# scene graph (the actual 3D viewport) is unaffected — it renders through
+# scene graph (the actual 3D viewport) is unaffected - it renders through
 # Qt's own RHI, not through the webengine. Override the flag at runtime via
 # CHITUBOX_WEBENGINE_FLAGS (set to a single space to pass nothing).
 #
-# The app requires a CHITU account (free tier) — the login screen is the
-# first thing it shows — so cloud reachability (DNS + TLS) must work inside
+# The app requires a CHITU account (free tier) - the login screen is the
+# first thing it shows - so cloud reachability (DNS + TLS) must work inside
 # the sandbox; see the resolv/nscd binds in bwrapExec.
 #
 # State follows the XDG base-dir spec:
@@ -57,7 +57,7 @@
 # the data base.
 #
 # Sandboxing (programs.chitubox.sandbox, default "bubblewrap"): same design
-# and rationale as programs.xtool-studio.sandbox — see the Sandboxing note in
+# and rationale as programs.xtool-studio.sandbox - see the Sandboxing note in
 # ../xtool-studio/default.nix. The one deviation: ~/Downloads is bound
 # READ-WRITE here, because a slicer's end product is an exported .ctb/.goo
 # job file the user must be able to reach from outside the sandbox (the
@@ -66,9 +66,14 @@
 # Updating: bump version + upgradeVersion + hash. Current URLs come from
 #   https://sac.chitubox.com/getSoftwareBySoftwareId.do2?softwareId=17839
 # (the same endpoint the download page uses; 17839 is the Basic/free
-# channel — 17842, the old Pro channel, serves the identical unified binary).
+# channel - 17842, the old Pro channel, serves the identical unified binary).
 
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.programs.chitubox;
@@ -116,7 +121,7 @@ let
   # names onto fonts present in wineFonts (same rationale as the xtool-studio
   # wineRegistry).
   #
-  # Graphics = "x11" — deliberately NOT wayland-first like xtool-studio.
+  # Graphics = "x11" - deliberately NOT wayland-first like xtool-studio.
   # Under wine 11's winewayland this app freezes and keyboard input never
   # reaches the QtWebEngine login view (observed on the real Plasma Wayland
   # session, 2026-07); on the X11 driver the same build takes focus and text
@@ -128,7 +133,7 @@ let
   # Drives\c: = "hd" pins GetDriveType(C:) to DRIVE_FIXED. Inside bubblewrap
   # the minimal --dev /dev has no block-device nodes, so Wine's mountmgr
   # cannot classify the device backing the prefix and reports the drive type
-  # as unknown — which CHITU's installer control script rejects ("The path
+  # as unknown - which CHITU's installer control script rejects ("The path
   # you have entered is not valid, please make sure to specify a valid
   # drive"), aborting the headless install. Verified: with this override the
   # install succeeds under the hardened /dev; without it only a full
@@ -155,7 +160,7 @@ let
   '';
 
   # Shared launcher preamble: prefix env, first-run wineboot, font + registry
-  # setup, HiDPI, webengine GPU flag. Runs before the sandbox — only trusted
+  # setup, HiDPI, webengine GPU flag. Runs before the sandbox - only trusted
   # nixpkgs wine, writing only into the state/data dirs. Vendor code (the
   # installer and the app) runs after, confined.
   launcherPreamble = ''
@@ -203,7 +208,7 @@ let
     # Precedence: CHITUBOX_SCALE env override, then the programs.chitubox.scale
     # option, then the desktop's GDK_SCALE hint; unset leaves Wine at its
     # default. The app runs on Wine's X11 driver (see wineRegistry), so this
-    # is the only scaling knob — there is no compositor-side scale to fall
+    # is the only scaling knob - there is no compositor-side scale to fall
     # back on.
     scale="''${CHITUBOX_SCALE:-${lib.optionalString (cfg.scale != null) cfg.scale}}"
     scale="''${scale:-''${GDK_SCALE:-}}"
@@ -227,18 +232,18 @@ let
     # regedit) exits and only writes system.reg/user.reg on exit; the
     # sandboxed wine below lives in its own pid namespace with /tmp hidden,
     # so it cannot join that wineserver and instead reads the registry from
-    # disk — racing the flush. Lost race = the Drives override above is
+    # disk - racing the flush. Lost race = the Drives override above is
     # missing and the first-run install fails its drive-type check.
     # wineserver -w waits for the running server (if any) to exit; the
     # timeout keeps a stray long-lived wine service on this prefix (e.g.
-    # winedevice from an interrupted run) from wedging every launch — a
+    # winedevice from an interrupted run) from wedging every launch - a
     # bounded, possibly-incomplete flush beats never starting.
     timeout 15 wineserver -w || true
   '';
 
   # Bubblewrap sandbox: identical policy to xtool-studio's bwrapExec (host
   # net namespace shared for cloud login + LAN send-to-printer, everything
-  # else unshared, caps dropped), except Downloads is read-write — see the
+  # else unshared, caps dropped), except Downloads is read-write - see the
   # Sandboxing note in the header. `wrap` is prefixed to every vendor-code
   # invocation (installer, maintenance tool, app).
   bwrapSetup = ''
@@ -346,9 +351,9 @@ let
     name = "chitubox";
     runtimeInputs = [
       wine # wine + wineboot on PATH
-    ] ++ lib.optional useBwrap pkgs.bubblewrap;
-    text =
-      launcherPreamble + (if useBwrap then bwrapSetup else plainSetup) + installExec + appExec;
+    ]
+    ++ lib.optional useBwrap pkgs.bubblewrap;
+    text = launcherPreamble + (if useBwrap then bwrapSetup else plainSetup) + installExec + appExec;
   };
 
   chitubox = pkgs.stdenvNoCC.mkDerivation {
@@ -467,7 +472,7 @@ in
     # create usable conntrack entries (the reply's source doesn't match the
     # broadcast destination tuple), so the response needs an open port.
     # NB: unlike the xtool-studio rules this is NOT verified against hardware
-    # — no resin printer was on the LAN at porting time.
+    # - no resin printer was on the LAN at porting time.
     networking.firewall.allowedUDPPorts = [ 3000 ];
   };
 }

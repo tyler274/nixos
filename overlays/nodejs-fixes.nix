@@ -3,8 +3,8 @@
 # npm, corepack) are already valid, but the other two (dev, libv8) are not
 # (likely from an earlier interrupted --keep-going run where different
 # downstream consumers pulled different output subsets). In that mixed
-# state, every rebuild attempt — via `nix build`, `nix-store --realise`, or
-# nixos-rebuild — deterministically fails at the final output-check step:
+# state, every rebuild attempt - via `nix build`, `nix-store --realise`, or
+# nixos-rebuild - deterministically fails at the final output-check step:
 #
 #   error: derivation '...nodejs-slim-24.18.1.drv' output check for 'libv8'
 #   contains output name 'corepack', but this is not a valid output of this
@@ -14,7 +14,7 @@
 # (out/libv8/npm/corepack/dev) cross-referentially, but the daemon
 # validates them against only the outputs actually being (re)built in this
 # invocation (the two missing ones) rather than the derivation's full
-# declared `outputs` list — a real Nix daemon bug (same family as
+# declared `outputs` list - a real Nix daemon bug (same family as
 # NixOS/nix#6572, NixOS/nix#8188: partial-output multi-output derivation
 # state confuses the build-goal machinery), not something fixable in the
 # package itself. Confirmed deterministic and tool-independent; requesting
@@ -29,7 +29,7 @@
 # new derivation's outputs are all-new store paths that have never been
 # built, so the rebuild realizes all five atomically from a clean slate,
 # never entering the mixed valid/invalid state that triggers the bug. This
-# does not touch or invalidate the old, currently-live paths — they're
+# does not touch or invalidate the old, currently-live paths - they're
 # simply orphaned (eligible for GC once no longer referenced) while the
 # fresh build proceeds independently.
 #

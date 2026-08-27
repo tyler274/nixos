@@ -1,5 +1,11 @@
-# Minimal bootstrap config — install this first, boot in, then nixos-rebuild switch to default.nix.
-{ config, pkgs, lib, inputs, ... }:
+# Minimal bootstrap config - install this first, boot in, then nixos-rebuild switch to default.nix.
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -51,23 +57,27 @@
 
   # Docker (zfs storage driver) is disabled during bootstrap: with the
   # /var/lib/docker mount marked nofail above, a skipped mount would let
-  # dockerd plant its per-layer datasets on rpool/nixos/var/lib — the exact
+  # dockerd plant its per-layer datasets on rpool/nixos/var/lib - the exact
   # snapshot/replication flood rpool/docker exists to prevent. The full
   # Cyrene config re-enables it once the pool layout is settled.
   virtualisation.docker.enable = lib.mkForce false;
 
   hardware.enableRedistributableFirmware = true;
 
-  environment.systemPackages = with pkgs; [ git sbctl ];
+  environment.systemPackages = with pkgs; [
+    git
+    sbctl
+  ];
 
   users = {
     users = {
       luluco = {
         isNormalUser = true;
-        extraGroups = [ "wheel" "networkmanager" ];
-        openssh.authorizedKeys.keyFiles = lib.optional
-          (builtins.pathExists ./authorized_keys)
-          ./authorized_keys;
+        extraGroups = [
+          "wheel"
+          "networkmanager"
+        ];
+        openssh.authorizedKeys.keyFiles = lib.optional (builtins.pathExists ./authorized_keys) ./authorized_keys;
       };
     };
   };

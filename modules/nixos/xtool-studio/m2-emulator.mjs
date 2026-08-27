@@ -1,7 +1,7 @@
 // Fake xTool M2 for testing Studio's Wi-Fi/USB device discovery without the
 // real hardware. Wired up as the `xtool-m2-emulator` command by
 // xtool-studio.nix; run it on a machine on the same subnet as the PC running
-// Studio, then start a scan — a "Fake xTool M2" should appear. It only answers
+// Studio, then start a scan - a "Fake xTool M2" should appear. It only answers
 // the discovery handshake; it does not emulate the job/control protocol.
 //
 // Protocol reverse-engineered from discover-worker.4a93a1c1.cjs in the 1.7.30

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cyrene from-source znver5 world-rebuild — run from /etc/nixos (or anywhere,
+# Cyrene from-source znver5 world-rebuild - run from /etc/nixos (or anywhere,
 # via a symlink/alias) on Cyrene itself. Wraps `nixos-rebuild boot` with the
 # flags this rebuild campaign needs; see hosts/cyrene/default.nix for why
 # each one is set the way it is:

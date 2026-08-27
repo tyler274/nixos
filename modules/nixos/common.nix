@@ -66,7 +66,7 @@
   environment.memoryAllocator.provider = "mimalloc";
 
   # Mount-namespace helper used by the Mullvad GUI wrap (allocator-exclusions.nix).
-  # Needs CAP_SYS_ADMIN so it can unshare a mount ns without a user ns — bwrap's
+  # Needs CAP_SYS_ADMIN so it can unshare a mount ns without a user ns - bwrap's
   # user ns makes /run/mullvad-vpn look unowned and the GUI refuses to connect.
   security.wrappers.hide-system-malloc = {
     source = "${pkgs.hide-system-malloc-exec}/bin/hide-system-malloc";

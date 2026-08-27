@@ -2,7 +2,7 @@
 
 {
   # Persistent compiler cache on the Samsung 980 PRO (single partition; it
-  # handed swap+scratch duty to the 990 PRO — see scratch.nix/default.nix).
+  # handed swap+scratch duty to the 990 PRO - see scratch.nix/default.nix).
   #
   # Purpose: crash insurance for the from-source znver5 world build. Completed
   # derivations already survive any crash (they're registered into /nix/store
@@ -18,12 +18,12 @@
   # change every derivation hash (one extra full world rebuild), and the
   # steady-state hit rate for dependency-cascade rebuilds is poor anyway
   # (compile lines embed dependency store paths, which change with every
-  # upstream fix). Only the multi-hour monsters below are wrapped — they're
+  # upstream fix). Only the multi-hour monsters below are wrapped - they're
   # where all the crash exposure is concentrated.
   #
   # Unencrypted on purpose, unlike swap/scratch: it only ever holds object
   # code compiled from public nixpkgs sources, and encrypting it with an
-  # ephemeral urandom key would defeat persistence — the whole point.
+  # ephemeral urandom key would defeat persistence - the whole point.
   #
   # One-time setup after the role-swap reboot (the 980 is idle then):
   #   sudo sgdisk --zap-all -I -n 1:0:0 -t 1:8300 -c 1:ccache \
@@ -33,7 +33,7 @@
   #   sudo mount /var/cache/ccache
   #   sudo chown root:nixbld /var/cache/ccache && sudo chmod 770 /var/cache/ccache
   #   echo 'max_size = 400G' | sudo tee /var/cache/ccache/ccache.conf
-  # XFS to match the scratch mount (scratch.nix) — the small-object cache
+  # XFS to match the scratch mount (scratch.nix) - the small-object cache
   # workload is indifferent between xfs/ext4, so keep a single filesystem
   # type in play across both NVMe roles.
   fileSystems."/var/cache/ccache" = {
@@ -58,7 +58,7 @@
   #
   # programs.ccache.packageNames is deliberately unused: it injects
   # `stdenv = ccacheStdenv` via .override, which every monster here
-  # defeats — firefox swaps in its own LLVM stdenv, and anything
+  # defeats - firefox swaps in its own LLVM stdenv, and anything
   # cudaSupport-enabled (blender, torch, onnxruntime) swaps in
   # cudaPackages.backendStdenv (both verified: the injected stdenv's
   # compiler never reaches the build). Each package gets the hook its
@@ -89,9 +89,9 @@
   #   toolchain ignores the wrapped stdenv entirely, and chromium/common.nix
   #   serializes gnFlags into configurePhase at eval time and strips the
   #   attr, so there's no gnFlags to override post-hoc. Instead splice
-  #   chromium's own compiler-launcher hook — the cc_wrapper="ccache" GN
+  #   chromium's own compiler-launcher hook - the cc_wrapper="ccache" GN
   #   arg (build/toolchain/cc_wrapper.gni), the documented way to ccache
-  #   chromium — directly into the serialized `gn gen --args='...'` call,
+  #   chromium - directly into the serialized `gn gen --args='...'` call,
   #   with ccache on PATH and CCACHE_DIR pointed at the shared cache
   #   (programs.ccache exposes it to the sandbox; CCACHE_UMASK replicates
   #   the wrapper's usual umask setup so all nixbld users share entries).
@@ -118,7 +118,7 @@
   #   fix would be ccache-wrapping cudaPackages.backendStdenv itself, which
   #   invalidates the entire CUDA subtree (opencv -> frei0r/mlt/jellyfin,
   #   just rebuilt) and risks subtle nvcc host-compiler breakage across all
-  #   of it — not worth it mid-campaign. Revisit if torch actually flakes.
+  #   of it - not worth it mid-campaign. Revisit if torch actually flakes.
   nixpkgs.overlays = [
     (
       final: prev:
@@ -133,13 +133,18 @@
           unwrapped:
           unwrapped.overrideAttrs (
             old:
-            assert lib.assertMsg (lib.hasInfix "gn gen --args='" (old.configurePhase or ""))
-              "GN ccache hook: configurePhase no longer matches; fix hosts/cyrene/ccache.nix";
+            assert lib.assertMsg (lib.hasInfix "gn gen --args='" (
+              old.configurePhase or ""
+            )) "GN ccache hook: configurePhase no longer matches; fix hosts/cyrene/ccache.nix";
             {
               nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
-              configurePhase = builtins.replaceStrings [ "gn gen --args='" ] [
-                "gn gen --args='cc_wrapper=\"ccache\" "
-              ] old.configurePhase;
+              configurePhase =
+                builtins.replaceStrings
+                  [ "gn gen --args='" ]
+                  [
+                    "gn gen --args='cc_wrapper=\"ccache\" "
+                  ]
+                  old.configurePhase;
               env = (old.env or { }) // ccacheEnv;
             }
           );

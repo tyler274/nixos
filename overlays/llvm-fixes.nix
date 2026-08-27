@@ -10,7 +10,7 @@
 # that callPackage attached to the original llvmPackages_21, and
 # build-mozilla-mach (firefox/thunderbird) calls llvmPackages.override
 # to force lld for LTO. fixLlvmScope therefore re-attaches .override,
-# wrapped so the re-instantiated scope gets the same test removal —
+# wrapped so the re-instantiated scope gets the same test removal -
 # firefox's LLVM variant is a separate derivation that runs the test
 # suite again and would otherwise hit the same flake.
 final: prev:
@@ -24,7 +24,8 @@ let
       '';
     });
   };
-  fixLlvmScope = scope:
+  fixLlvmScope =
+    scope:
     scope.overrideScope dropFlakyTest
     // final.lib.optionalAttrs (scope ? override) {
       override = args: fixLlvmScope (scope.override args);

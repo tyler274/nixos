@@ -1,6 +1,6 @@
 # Bitwarden + Halloy (Libera IRC)
 
-Halloy connects to Libera IRC with SASL PLAIN. The NickServ password lives in Bitwarden and is fetched at runtime by a hardened Nix store script — never written into `config.toml` or the Nix store as plaintext.
+Halloy connects to Libera IRC with SASL PLAIN. The NickServ password lives in Bitwarden and is fetched at runtime by a hardened Nix store script - never written into `config.toml` or the Nix store as plaintext.
 
 This document covers what is implemented, how to use it, and where work stopped on CLI ↔ desktop vault sharing.
 
@@ -25,10 +25,10 @@ Enabled on desktop hosts via `modules/home/desktop.nix` and `modules/nixos/deskt
 
 Script path: built by `bitwarden-get-password-script` in `modules/lib/bitwarden.nix`.
 
-1. **Self-check** — Verifies its own path and that `bw` resolves to the pinned Nix store binary (guards against a swapped executable on `PATH`).
-2. **Vault status** — Runs `bw status --raw` and reads `.status`.
-3. **If not `unlocked`** — Exits **0 with no output**. Halloy loads `config.toml` at startup; a non-zero exit would fail the entire config load, so “no password yet” is silent.
-4. **If `unlocked`** — Runs `bw get password <item> --nointeraction` and prints the password (newlines stripped).
+1. **Self-check** - Verifies its own path and that `bw` resolves to the pinned Nix store binary (guards against a swapped executable on `PATH`).
+2. **Vault status** - Runs `bw status --raw` and reads `.status`.
+3. **If not `unlocked`** - Exits **0 with no output**. Halloy loads `config.toml` at startup; a non-zero exit would fail the entire config load, so “no password yet” is silent.
+4. **If `unlocked`** - Runs `bw get password <item> --nointeraction` and prints the password (newlines stripped).
 
 Halloy invokes the command as:
 
@@ -42,8 +42,8 @@ The explicit `bash` wrapper is required because Halloy runs `password_command` v
 
 Home Manager would normally symlink `~/.config/halloy/config.toml` into the read-only Nix store. Two activations in `halloy.nix` work around that:
 
-- **`prepareHalloyConfig`** (before `linkGeneration`) — Removes a previous read-only copy so HM can refresh the file.
-- **`secureHalloyConfig`** (after `linkGeneration`) — Verifies `password_command` contains the expected Nix store script path, then replaces the symlink with a real file at mode `0444`.
+- **`prepareHalloyConfig`** (before `linkGeneration`) - Removes a previous read-only copy so HM can refresh the file.
+- **`secureHalloyConfig`** (after `linkGeneration`) - Verifies `password_command` contains the expected Nix store script path, then replaces the symlink with a real file at mode `0444`.
 
 If something edits `password_command` to point elsewhere, the next Home Manager switch fails.
 
@@ -77,13 +77,13 @@ If something edits `password_command` to point elsewhere, the next Home Manager 
 
 4. **Unlock the CLI vault** before Halloy needs the password (see [Desktop vs CLI](#desktop-vs-cli-vault-state) below).
 
-5. **Reload Halloy config** after unlocking — Halloy reads `password_command` output when loading config / connecting. If the vault was locked at config load, reload after unlock (Halloy: reload config, or restart the app).
+5. **Reload Halloy config** after unlocking - Halloy reads `password_command` output when loading config / connecting. If the vault was locked at config load, reload after unlock (Halloy: reload config, or restart the app).
 
 ## Daily workflow (current behavior)
 
 1. Start Bitwarden Desktop and unlock the vault (optional for desktop use; **does not unlock CLI**).
 2. Unlock the CLI: `bw unlock` (or export `BW_SESSION` from a prior unlock).
-3. Open Halloy and connect to Libera — SASL uses the password from Bitwarden.
+3. Open Halloy and connect to Libera - SASL uses the password from Bitwarden.
 
 If the CLI vault stays locked, Halloy still starts but SASL will not receive a password until you unlock and reload.
 
@@ -105,7 +105,7 @@ The upstream CLI lives in the [Bitwarden clients monorepo](https://github.com/bi
 
 On `main` today:
 
-- [`CliBiometricsService`](https://github.com/bitwarden/clients/blob/main/apps/cli/src/key-management/cli-biometrics-service.ts) is a **stub** — always returns `PlatformUnsupported`; no desktop IPC.
+- [`CliBiometricsService`](https://github.com/bitwarden/clients/blob/main/apps/cli/src/key-management/cli-biometrics-service.ts) is a **stub** - always returns `PlatformUnsupported`; no desktop IPC.
 - [`UnlockCommand`](https://github.com/bitwarden/clients/blob/main/apps/cli/src/key-management/commands/unlock.command.ts) only unlocks via **master password** and sets `BW_SESSION`.
 
 Building from source does not add desktop integration.
@@ -157,10 +157,10 @@ bitwarden.liberaItem = "libera.chat";  # Bitwarden item name for bw get password
 bitwarden.halloy.firejail.enable = true;  # default; set false to drop halloy.local
 ```
 
-Halloy Libera settings (in `modules/home/halloy.nix`): TLS, SASL plain, `disconnect_on_failure = true` (Libera recommendation — failed SASL disconnects instead of exposing real hostname).
+Halloy Libera settings (in `modules/home/halloy.nix`): TLS, SASL plain, `disconnect_on_failure = true` (Libera recommendation - failed SASL disconnects instead of exposing real hostname).
 
 ## Related docs
 
-- [Halloy — SASL PLAIN](https://halloy.chat/configuration/servers#sasl-plain)
+- [Halloy - SASL PLAIN](https://halloy.chat/configuration/servers#sasl-plain)
 - [Bitwarden CLI help](https://help.bitwarden.com/article/cli/)
 - [Bitwarden CLI source (`apps/cli`)](https://github.com/bitwarden/clients/tree/main/apps/cli)

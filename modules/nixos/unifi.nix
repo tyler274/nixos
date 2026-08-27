@@ -12,7 +12,7 @@
     enable = true;
     unifiPackage = pkgs.unifi;
     # The module default (pkgs.mongodb-7_0) is built from source and is not
-    # substituted by cache.nixos.org — it needs tens of GB of RAM/disk to
+    # substituted by cache.nixos.org - it needs tens of GB of RAM/disk to
     # compile. mongodb-ce repackages the upstream prebuilt binaries instead.
     # Note mongod requires AVX; fine on real hardware, but a VM must expose
     # the flag or mongod crashes on startup.

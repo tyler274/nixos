@@ -20,7 +20,7 @@ include chitubox.local
 
 # --- filesystem -----------------------------------------------------------
 # Maintained blacklists for credentials, keyrings, other apps' config, etc.
-# NB: disable-exec.inc is intentionally NOT included — it marks ${HOME}/tmp
+# NB: disable-exec.inc is intentionally NOT included - it marks ${HOME}/tmp
 # noexec, which would stop Wine from mapping the DLLs/EXEs in its prefix.
 include disable-common.inc
 include disable-programs.inc
@@ -45,7 +45,7 @@ whitelist ${HOME}/.local/share/fonts
 include whitelist-common.inc
 
 # Display: the app is pinned to Wine's X11 driver (see wineRegistry in
-# default.nix — winewayland freezes and drops keyboard input for this app);
+# default.nix - winewayland freezes and drops keyboard input for this app);
 # private-tmp keeps /tmp/.X11-unix so the X11/XWayland socket stays reachable.
 private-tmp
 private-cache
@@ -72,7 +72,7 @@ protocol unix,inet,inet6,netlink
 
 # --- deliberately NOT enabled (would break the app) -----------------------
 # net <iface>            : a private net namespace kills the LAN broadcast
-#                          discovery for send-to-printer — share host net.
+#                          discovery for send-to-printer - share host net.
 # memory-deny-write-execute : breaks QtWebEngine's V8 JIT and Wine's codegen.
 # apparmor               : no chitubox AppArmor profile is loaded here.
 # nosound / no3d         : the 3D viewport needs GL; keep sound for parity.

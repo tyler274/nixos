@@ -75,7 +75,7 @@ in
     # mirrors don't carry. Sanesecurity (phishing/spam/macro sigs) and URLhaus
     # (active malware-distribution URLs) are free and enabled by default; kept
     # explicit here so it's obvious what this host consumes. SecuriteInfo and
-    # MalwarePatrol offer more feeds but require (free/paid) registration —
+    # MalwarePatrol offer more feeds but require (free/paid) registration -
     # add customer_id/receipt settings here if that's ever wanted.
     fangfrisch = {
       enable = true;

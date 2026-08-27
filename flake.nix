@@ -43,7 +43,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
-    # Mini Diarium — encrypted local-first journaling app. Points at the fork
+    # Mini Diarium - encrypted local-first journaling app. Points at the fork
     # branch that carries the flake; switch to "github:fjrevoredo/mini-diarium"
     # once the packaging PR is merged upstream.
     mini-diarium = {

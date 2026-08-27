@@ -34,23 +34,23 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 └── hosts/
     ├── cyrene/                     Zen 4 + RTX 4090 workstation, ZFS root, UPS, homelab
     │   ├── default.nix             full workstation config
-    │   ├── minimal.nix             bootstrap config (CyreneMinimal) — install, boot, then switch
+    │   ├── minimal.nix             bootstrap config (CyreneMinimal) - install, boot, then switch
     │   ├── zfs.nix                 rpool (encrypted), lanzaboote, sanoid/syncoid, scrub/trim
     │   └── hardware-configuration.nix
     ├── wsl/                        WSL2 dev box (hostname `eula`, Cursor IDE remote)
     ├── laptop/                     placeholder for a future portable machine
-    ├── phainon/                    work in progress — not yet wired into flake.nix
-    └── sulla/                      work in progress — not yet wired into flake.nix
+    ├── phainon/                    work in progress - not yet wired into flake.nix
+    └── sulla/                      work in progress - not yet wired into flake.nix
 ```
 
 ## Hosts
 
 The flake exposes these `nixosConfigurations` (the attribute name is the deploy target):
 
-- **Cyrene** (`./hosts/cyrene`) — AMD Zen 4, NVIDIA RTX 4090 (latest driver, CUDA), encrypted ZFS rpool with lanzaboote Secure Boot, sanoid + syncoid to rsync.net and a local-backup pool, NUT/UPS, Postgres, Jellyfin, full Plasma 6 desktop. Adds the `lanzaboote` module.
-- **CyreneMinimal** (`./hosts/cyrene/minimal.nix`) — same hardware, stripped bootstrap config (SSH + ZFS home only). Install this first, boot in, then `nixos-rebuild switch` to the full `Cyrene`.
-- **eula** (`./hosts/wsl`) — NixOS-WSL on Windows. Carries the bash wrapper + nix-ld + `wsl.{wrapBinSh,extraBin}` block that Cursor IDE's remote server depends on, plus `cuda.nix` for GPU passthrough. No desktop, no system services.
-- **Laptop** (`./hosts/laptop`) — placeholder. Imports the desktop stack but is gated behind a real `hardware-configuration.nix` before it can build. Replace `networking.hostName` and the hardware config after first install.
+- **Cyrene** (`./hosts/cyrene`) - AMD Zen 4, NVIDIA RTX 4090 (latest driver, CUDA), encrypted ZFS rpool with lanzaboote Secure Boot, sanoid + syncoid to rsync.net and a local-backup pool, NUT/UPS, Postgres, Jellyfin, full Plasma 6 desktop. Adds the `lanzaboote` module.
+- **CyreneMinimal** (`./hosts/cyrene/minimal.nix`) - same hardware, stripped bootstrap config (SSH + ZFS home only). Install this first, boot in, then `nixos-rebuild switch` to the full `Cyrene`.
+- **eula** (`./hosts/wsl`) - NixOS-WSL on Windows. Carries the bash wrapper + nix-ld + `wsl.{wrapBinSh,extraBin}` block that Cursor IDE's remote server depends on, plus `cuda.nix` for GPU passthrough. No desktop, no system services.
+- **Laptop** (`./hosts/laptop`) - placeholder. Imports the desktop stack but is gated behind a real `hardware-configuration.nix` before it can build. Replace `networking.hostName` and the hardware config after first install.
 
 `hosts/phainon` and `hosts/sulla` exist but are **not** referenced in `flake.nix` yet (see Known rough edges).
 
@@ -86,17 +86,17 @@ The lockfile is committed. The flake's inputs are `nixpkgs` (`nixos-unstable`, t
 2. Replace `hardware-configuration.nix` with the output of `nixos-generate-config --show-hardware-config` from the live machine.
 3. Set `networking.hostName`, the user's `extraGroups`, and any host-specific services in `hosts/<name>/default.nix`.
 4. Add an entry to `nixosConfigurations` in [flake.nix](flake.nix), reusing the `mkHost` helper (`mkHost ./hosts/<name> [ ]`; pass extra NixOS modules like `lanzaboote.nixosModules.lanzaboote` in the list).
-5. Pick the right Home Manager imports — desktop machines get `modules/home/desktop.nix` and `modules/home/plasma.nix` on top of `modules/home/common.nix`; servers/WSL get `common.nix` only.
+5. Pick the right Home Manager imports - desktop machines get `modules/home/desktop.nix` and `modules/home/plasma.nix` on top of `modules/home/common.nix`; servers/WSL get `common.nix` only.
 6. `sudo nixos-rebuild switch --flake ~/code/nixos#<name>`.
 
 ## Cursor IDE on the WSL host
 
 Four things in [hosts/wsl/default.nix](hosts/wsl/default.nix) and [modules/nixos/common.nix](modules/nixos/common.nix) keep Cursor's WSL remote working. Do not remove any of them without a tested replacement:
 
-1. `programs.nix-ld.enable = true` (in `modules/nixos/common.nix`) — Cursor ships a prebuilt Linux binary that requires a glibc-style dynamic linker.
-2. `bashWrapper` derivation — prepends `gnugrep coreutils gnutar gzip getconf gnused procps which gawk wget curl util-linux` onto bash's PATH so Cursor's bootstrap scripts find them.
-3. `wsl.wrapBinSh = true` — replaces `/bin/sh` with a NixOS-aware shell.
-4. `wsl.extraBin = [ { name = "bash"; src = "${bashWrapper}/bin/bash"; } ]` — exposes the wrapped bash at `/bin/bash`.
+1. `programs.nix-ld.enable = true` (in `modules/nixos/common.nix`) - Cursor ships a prebuilt Linux binary that requires a glibc-style dynamic linker.
+2. `bashWrapper` derivation - prepends `gnugrep coreutils gnutar gzip getconf gnused procps which gawk wget curl util-linux` onto bash's PATH so Cursor's bootstrap scripts find them.
+3. `wsl.wrapBinSh = true` - replaces `/bin/sh` with a NixOS-aware shell.
+4. `wsl.extraBin = [ { name = "bash"; src = "${bashWrapper}/bin/bash"; } ]` - exposes the wrapped bash at `/bin/bash`.
 
 ## Editor tooling
 
@@ -104,7 +104,7 @@ Four things in [hosts/wsl/default.nix](hosts/wsl/default.nix) and [modules/nixos
 
 ## Bitwarden + Halloy
 
-Libera IRC SASL passwords are fetched from Bitwarden at runtime (not stored in the Nix store). Desktop unlock does **not** unlock the CLI — see [docs/bitwarden-halloy.md](docs/bitwarden-halloy.md) for setup, security model, upstream CLI status, and open work (e.g. optional **bwbio** integration).
+Libera IRC SASL passwords are fetched from Bitwarden at runtime (not stored in the Nix store). Desktop unlock does **not** unlock the CLI - see [docs/bitwarden-halloy.md](docs/bitwarden-halloy.md) for setup, security model, upstream CLI status, and open work (e.g. optional **bwbio** integration).
 
 ## Configuration philosophy
 

@@ -36,7 +36,7 @@ json="$(curl -fsSL "$api_url")" || die "failed to fetch $api_url"
 #                 "extra": { "package_url": "https://storage.atomm.com/...
 #                              .../<uuid>/xTool-Studio-x64-<version>.exe",
 #                            "version": "1.7" } }, ... ] }
-# NB: extra.version is truncated (major.minor only) — the full version exists
+# NB: extra.version is truncated (major.minor only) - the full version exists
 # only in the package_url filename, so it is parsed out of that.
 jq -e '.code == 0 and (.data | type == "array")' <<<"$json" >/dev/null ||
   die "unexpected API response shape (want .code==0 and .data array): $(head -c 300 <<<"$json")"

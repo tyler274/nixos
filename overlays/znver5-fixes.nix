@@ -2,7 +2,7 @@
 # see nixpkgs.hostPlatform in hosts/cyrene/default.nix). Two failure classes
 # live here:
 #
-#   1. Test suites that fail for benign reasons — typically floating-point
+#   1. Test suites that fail for benign reasons - typically floating-point
 #      unit tests that expect exact bit-for-bit results, broken by FMA/
 #      AVX-512 contraction changing rounding. The libraries themselves are
 #      fine; skip their check phases.
@@ -23,7 +23,7 @@ final: prev: {
 
   # GCC miscompiles the legacy blosclz codec at -O3 (segfaults in
   # blosclz_compress; observed with gcc 16 by Gentoo, reproduced here with
-  # gcc 15 + znver5 vectorization — test_api/test_noinit/test_nolock/
+  # gcc 15 + znver5 vectorization - test_api/test_noinit/test_nolock/
   # test_nthreads SEGV). CMake's Release type forces -O3; the trailing
   # NIX_CFLAGS_COMPILE -O2 wins because the wrapper appends it after the
   # command-line flags. Tests stay enabled to verify the cap actually fixes
@@ -46,17 +46,17 @@ final: prev: {
   # embree hand-rolls per-ISA multi-versioning: kernels/bvh/bvh.cpp is
   # compiled once per ISA tier (SSE2/AVX/AVX2/AVX512) and instantiates the
   # canonical, un-namespaced `BVHN<4>` exactly once, guarded by
-  # `!defined(__AVX__) || !defined(EMBREE_TARGET_SSE2) && ...` — it relies on
+  # `!defined(__AVX__) || !defined(EMBREE_TARGET_SSE2) && ...` - it relies on
   # its own per-tier -m flags (e.g. plain "-msse2" for the lowest tier) being
   # the ONLY thing that defines __AVX__/__AVX512F__. The znver5 wrapper's
   # trailing -march=znver5 defines those macros unconditionally on every
   # translation unit regardless of embree's own -m flags (same append-after
   # mechanism as the c-blosc fix above), so the guard concludes the lowest
-  # tier "isn't" the designated instantiation point and skips it — nothing
+  # tier "isn't" the designated instantiation point and skips it - nothing
   # else in the tree ever instantiates BVHN<4>, hence the undefined
   # references from bvh_builder_twolevel.cpp's avx512-namespaced code.
   # Documented upstream as fundamentally incompatible with any blanket
-  # -march flag (RenderKit/embree#115; godotengine/godot#91217, #49225) —
+  # -march flag (RenderKit/embree#115; godotengine/godot#91217, #49225) -
   # Gentoo's ebuild works around it the same way: strip all -m* flags and
   # let embree's cmake own ISA selection. EMBREE_MAX_ISA=SSE2 drops the
   # avx/avx2/avx512 static libs entirely (only one tier left to keep
@@ -85,7 +85,7 @@ final: prev: {
 
   # eigen_5 (5.0.1; plain `eigen` is still 3.4.1 and unaffected): the
   # AVX-512 erfc packet op for double miscompiles at -march=znver5 with
-  # gcc 15 — CoreEvaluators.h:590 can't convert '__vector(4) double' to
+  # gcc 15 - CoreEvaluators.h:590 can't convert '__vector(4) double' to
   # '__m512d' while building the Cwise_erfc doc example, failing the
   # install-doc target (the -doc output) and taking krita / orca-slicer
   # down with it. Cwise_erf and Cwise_lgamma compile fine; the headers are
@@ -118,7 +118,7 @@ final: prev: {
 
   # Not arch-related: QUIC integration recipes drive simulated servers/clients
   # via quictestlib (globserverret / qtest_create_quic_connection); they flake
-  # under full build load — first 70-test_quic_multistream.t, then
+  # under full build load - first 70-test_quic_multistream.t, then
   # 75-test_quicapi.t (test_fin_only_blocking). Skip the integration trio;
   # the other ~4500 tests (including 70-test_quic_* unit recipes) still run.
   # Harness globs test/recipes/, so removing the files skips just these.
@@ -135,7 +135,7 @@ final: prev: {
   # over loopback UDP; under full build load the client raced the server
   # startup ("Connection refused" -> "Error in the push function"). Overwrite
   # the script with exit 77 (automake SKIP) so the other 512 tests still run
-  # — gnutls is security-critical, so keep the suite otherwise intact.
+  # - gnutls is security-critical, so keep the suite otherwise intact.
   # Blocks systemd/networkmanager/ffmpeg/cups/samba/webkitgtk.
   gnutls = prev.gnutls.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
@@ -146,7 +146,7 @@ final: prev: {
   # Not arch-related: rwlock_test's isc_rwlock_benchmark subtest hits the
   # runner's wall-clock limit under full build load (exit 124); the four
   # functional rwlock subtests pass. nixpkgs already skips a timezone test
-  # the same way in bind's preCheck — append this entry removal there.
+  # the same way in bind's preCheck - append this entry removal there.
   bind = prev.bind.overrideAttrs (old: {
     preCheck = (old.preCheck or "") + ''
       sed -i '/^ISC_TEST_ENTRY_CUSTOM(isc_rwlock_benchmark,/d' tests/isc/rwlock_test.c
@@ -175,7 +175,7 @@ final: prev: {
   });
 
   # Not arch-related: the test suite runs live client/server exchanges against
-  # a spawned memcached, and under full build load they flake one at a time —
+  # a spawned memcached, and under full build load they flake one at a time -
   # first memcached_udp (loopback datagram drops mid-loop), then, with that
   # excluded, memcached_noblock (non-blocking I/O timing; every test in that
   # run also took ~430s vs ~89s unloaded). Same whack-a-mole as eventlet, so
@@ -184,8 +184,8 @@ final: prev: {
 
   # Not arch-related: eventlet's greenthread/patcher tests assert wall-clock
   # timeouts and starve when the machine is saturated by the from-source
-  # world build. Disabling individual tests proved to be whack-a-mole — a
-  # different pair timed out on the retry — so skip the suite outright.
+  # world build. Disabling individual tests proved to be whack-a-mole - a
+  # different pair timed out on the retry - so skip the suite outright.
   # Goes through pythonPackagesExtensions so all Python package sets and
   # their consumers agree on the fixed derivation.
   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
@@ -211,7 +211,7 @@ final: prev: {
 
             # Same class as eventlet: every capturer test prints into a pty
             # and asserts the background relay thread has already delivered
-            # the output — a wall-clock race under build load (observed:
+            # the output - a wall-clock race under build load (observed:
             # test_stdout_capture_same_process got [] while its subprocess
             # sibling passed). Upstream is unmaintained; skip the suite
             # rather than chase races one test at a time. Blocks
@@ -301,12 +301,12 @@ final: prev: {
             );
 
             # Not load- or arch-related: on the 2026-08-02 nixpkgs pin,
-            # mkdocs' livereload tests error deterministically — watchdog's
+            # mkdocs' livereload tests error deterministically - watchdog's
             # dirsnapshot walker follows the suite's circular-symlink fixture
             # until ELOOP ("Too many levels of symbolic links"). Built fine
             # on the 07-23 pin; a version-interaction regression, not ours to
             # fix. The suite is unittest-based, so disabledTests (pytest -k)
-            # can't target it — skip the check phase. Blocks mkdocstrings ->
+            # can't target it - skip the check phase. Blocks mkdocstrings ->
             # fastmcp -> mcp-nixos.
             mkdocs = pyPrev.mkdocs.overridePythonAttrs (old: {
               doCheck = false;
@@ -383,7 +383,7 @@ final: prev: {
             # test_general_signal flaked (SIGTERM landed late); with that
             # disabled, three different ones failed on the retry
             # (test_stdin_unbuffered_bufsize, test_timeout_overstep,
-            # test_done_callback_no_deadlock — all sub-second timing
+            # test_done_callback_no_deadlock - all sub-second timing
             # assertions). Skip the suite. Blocks python-dotenv ->
             # flask/fastapi/mcp stack.
             sh = pyPrev.sh.overridePythonAttrs (old: {
@@ -410,7 +410,7 @@ final: prev: {
 
         # Same whack-a-mole as tornado: asyncio/socket tests flake under load
         # (first round: deadlock + ECONNRESET; with those disabled,
-        # test_call_at timed out on callback scheduling — 0.112s vs 0.07s
+        # test_call_at timed out on callback scheduling - 0.112s vs 0.07s
         # limit). Skip the suite. Blocks anyio -> httpx/fastapi/fastmcp stack.
         uvloop = pyPrev.uvloop.overridePythonAttrs (old: {
           doCheck = false;
@@ -426,7 +426,7 @@ final: prev: {
 
         # Meta-test asserting on pytest's internal report lists; passes on
         # pytest 9.0.2 (Alpine CI) but fails deterministically on the 9.1.1
-        # in this nixpkgs pin — a pytest behavior change, not load or arch.
+        # in this nixpkgs pin - a pytest behavior change, not load or arch.
         # Upstream (bjoluc/pytest-reraise) is unmaintained since 2022.
         # Blocks duckdb -> fastmcp -> mcp-nixos.
         pytest-reraise = pyPrev.pytest-reraise.overridePythonAttrs (

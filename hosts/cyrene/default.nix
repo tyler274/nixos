@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -31,10 +37,10 @@
   # source fetch and every leaf package compiled across dozens of
   # multi-hour --keep-going attempts sits unreferenced in the store the
   # whole time. GC's mark-and-sweep doesn't care about --delete-older-than
-  # for these — that flag only prunes old *generations*; anything that was
+  # for these - that flag only prunes old *generations*; anything that was
   # never a root gets swept on every run, age be damned. Confirmed via
   # nix-gc.service's last run: 14744 store paths / 189.8 GiB deleted in one
-  # sweep, including bare source tarballs and fully-built leaf packages —
+  # sweep, including bare source tarballs and fully-built leaf packages -
   # a full day of build progress erased, forcing refetches and recompiles
   # on the next attempt. rpool/nixos/root is at 9% used / 1.1T free (`df -h
   # /nix/store`), so there's no actual space pressure justifying daily
@@ -46,8 +52,8 @@
 
   nix.settings = {
     # This host builds the world from source (-march=znver5 below), so the
-    # cachix substituters in common.nix can never hit — they only serve
-    # standard-arch builds — yet each derivation still costs a narinfo query
+    # cachix substituters in common.nix can never hit - they only serve
+    # standard-arch builds - yet each derivation still costs a narinfo query
     # per cache. Keep only cache.nixos.org: it still serves the arch-
     # independent fixed-output sources (tarballs, cargo/go/npm vendor dirs),
     # which beats fetching them from upstream project sites.
@@ -79,13 +85,16 @@
   };
 
   # Swap on the Samsung 990 PRO (took over swap+scratch duty from the 980
-  # PRO, which now holds the persistent ccache — see ccache.nix).
+  # PRO, which now holds the persistent ccache - see ccache.nix).
   # part1 = 512 GiB swap; part2 = Nix build scratch (see scratch.nix).
   # Encrypted with a fresh random key on every boot so no sensitive data is
   # written to disk in plaintext. zswap (zfs/boot.nix) requires at least one
   # physical swap device as its backing store, so this must stay non-empty.
   swapDevices = [
-    { device = "/dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part1"; randomEncryption.enable = true; }
+    {
+      device = "/dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part1";
+      randomEncryption.enable = true;
+    }
   ];
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
@@ -96,7 +105,10 @@
     freeMemThreshold = 5;
     freeSwapThreshold = 10;
     # Prefer killing nix build workers over other processes.
-    extraArgs = [ "--prefer" "^nix" ];
+    extraArgs = [
+      "--prefer"
+      "^nix"
+    ];
   };
 
   #programs.ccache.packageNames = [
@@ -141,7 +153,13 @@
 
   users.users.luluco = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "scanner" "lp" "docker" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "scanner"
+      "lp"
+      "docker"
+    ];
   };
 
   # Second account. NixOS users are declarative: without this block there is no

@@ -109,7 +109,7 @@
     ];
   };
 
-  # Konsole terminal emulator profile — font must be set for size changes to
+  # Konsole terminal emulator profile - font must be set for size changes to
   # work (plasma-manager limitation: always writes the font name to the profile).
   programs.konsole = {
     enable = true;

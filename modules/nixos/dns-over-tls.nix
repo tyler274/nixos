@@ -13,7 +13,7 @@ let
     "194.242.2.3#dns.mullvad.net"
   ];
 
-  # Quad9 DNS-over-TLS (https://quad9.net/) — encrypted fallback when Mullvad
+  # Quad9 DNS-over-TLS (https://quad9.net/) - encrypted fallback when Mullvad
   # resolvers are unreachable. Do not use router/VPN DHCP DNS here; those leak
   # plaintext and bypass the Mullvad/Quad9 chain.
   quad9Dns = [

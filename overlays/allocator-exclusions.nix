@@ -7,10 +7,10 @@
 # processes can drop):
 #
 #   Edge / Electron (Signal, Bitwarden, Pocket Casts)
-#     libc / graphene / graphene-light  — start
-#     mimalloc                          — SIGSEGV (Edge) or SIGTRAP (Electron)
+#     libc / graphene / graphene-light  - start
+#     mimalloc                          - SIGSEGV (Edge) or SIGTRAP (Electron)
 #   Firefox / Thunderbird (firefox-bin, thunderbird-bin)
-#     all four                          — headless start; still wrapped
+#     all four                          - headless start; still wrapped
 #                                         because mozjemalloc vs ld.so.preload
 #                                         is a known class of content-process
 #                                         crashes (scudo/graphene on other
@@ -19,14 +19,14 @@
 #
 # Hiding the preload in a mount namespace (empty file bind-mounted over
 # /etc/ld-nix.so.preload) restores Edge and Signal under mimalloc. Package
-# overrides can't opt a derivation out of ld.so.preload at build time — the
-# file is applied by glibc at runtime — so each launcher is wrapped with
+# overrides can't opt a derivation out of ld.so.preload at build time - the
+# file is applied by glibc at runtime - so each launcher is wrapped with
 # bubblewrap. Firejail's --blacklist of the same path covers the
 # programs.firejail wrappers (see desktop-common.nix); without it, firejail
 # noroot blocks the inner bwrap.
 #
 # Do not wrap `electron` / `electron_N`: leaf apps (Signal, Bitwarden, …)
-# exec those binaries, so wrapping the launcher is enough — the child
+# exec those binaries, so wrapping the launcher is enough - the child
 # inherits the mount namespace. Wrapping electron itself also catches
 # Mullvad's GUI. bwrap's user namespace makes the daemon socket look
 # unowned ("Failed to verify root ownership of socket"); unwrapped
@@ -188,7 +188,7 @@ in
   hide-system-malloc-exec = hideSystemMallocExec;
   mullvad-vpn = hideSystemMallocNoUserns prev.mullvad-vpn;
 }
-# Do not filterAttrs over `prev` — that forces every nixpkgs attribute.
+# Do not filterAttrs over `prev` - that forces every nixpkgs attribute.
 # Wrap leaf apps, not the electron interpreter (see header). New Electron
 # apps that ship their own launcher script should be added here.
 // lib.genAttrs [

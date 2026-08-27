@@ -3,14 +3,14 @@
 {
   # NOTE: Nix >= 2.24 moved daemon build sandboxes from /tmp to
   # /nix/var/nix/builds, which now lives on the 980 PRO scratch partition
-  # (../scratch.nix) — this dataset no longer sees them. It still keeps
+  # (../scratch.nix) - this dataset no longer sees them. It still keeps
   # everything ELSE that lands in /tmp off rpool/nixos/root (and therefore out
   # of every snapshot) while letting large files grow into whatever pool space
-  # is free — a fixed-size tmpfs would kill those.
+  # is free - a fixed-size tmpfs would kill those.
   # sync=disabled is safe for /tmp: the kernel's page cache is the durability
   # guarantee here, not ZFS intent-log.
   #
-  # The dataset must be created once (mountpoint=legacy is REQUIRED — without
+  # The dataset must be created once (mountpoint=legacy is REQUIRED - without
   # it ZFS auto-mounts the dataset itself and races the fileSystems entry below,
   # causing a double-mount conflict on boot):
   #   sudo zfs create -o mountpoint=legacy \
@@ -39,7 +39,7 @@
     # neededForBoot must stay false (the default). Setting it true moves the
     # mount into stage 1 and generates a sysroot-tmp.mount unit that tries to
     # mount rpool/nixos/tmp inside the initrd at /sysroot/tmp, before ZFS
-    # userland is ready — causing the /sysroot/tmp boot error.
+    # userland is ready - causing the /sysroot/tmp boot error.
   };
 
   # Docker's zfs storage driver creates one dataset per image/container layer as
@@ -55,8 +55,8 @@
   #   * the generation snapshot is `-r rpool/nixos`           -> rpool/docker is excluded
   #   * sanoid only configures the rpool/nixos/* trees        -> never sees it
   #   * syncoid's source is rpool/nixos                       -> never replicates it
-  # rpool/docker is still encrypted (ZFS forces a child of an encrypted parent —
-  # here the rpool encryption root — to inherit its key) and is tagged
+  # rpool/docker is still encrypted (ZFS forces a child of an encrypted parent -
+  # here the rpool encryption root - to inherit its key) and is tagged
   # com.sun:auto-snapshot=false for good measure.
   #
   # mountpoint=legacy on the dataset is REQUIRED for the same reason as /tmp
@@ -73,12 +73,12 @@
     device = "rpool/docker";
     fsType = "zfs";
     options = [
-      # NO zfsutil — legacy dataset, same reason as /tmp above.
+      # NO zfsutil - legacy dataset, same reason as /tmp above.
       "X-mount.mkdir"
       "noatime"
     ];
   };
 
   # Game datasets mount via zfs-game-home-mounts.service after /home/luluco.
-  # Do not add fileSystems entries here — nested children race the home mount.
+  # Do not add fileSystems entries here - nested children race the home mount.
 }

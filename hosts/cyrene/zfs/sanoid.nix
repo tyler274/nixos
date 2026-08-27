@@ -22,7 +22,7 @@ in
 
     datasets = gameDatasetSanoidEntries // {
       # Home: longer retention; recursive covers all per-user sub-datasets
-      # automatically — no per-user entry needed when new users are added.
+      # automatically - no per-user entry needed when new users are added.
       "rpool/nixos/home" = {
         autoprune = true;
         autosnap = true;

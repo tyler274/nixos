@@ -1,23 +1,23 @@
 { pkgs, lib, ... }:
 
-# Samsung PSSD T7 Shield — external USB SSD used as Steam game library.
+# Samsung PSSD T7 Shield - external USB SSD used as Steam game library.
 #
 # Mount tuning rationale:
-#   noatime        — eliminates atime writes on every file read; games read
+#   noatime        - eliminates atime writes on every file read; games read
 #                    constantly so this removes significant write amplification
-#   compress=zstd:1 — level 1 is near-free CPU cost; uncompressed game assets
+#   compress=zstd:1 - level 1 is near-free CPU cost; uncompressed game assets
 #                    (textures, audio, maps) compress well; already-packed files
 #                    (.pak, .zip) are detected and skipped automatically
-#   autodefrag     — Steam's VDF files, SQLite databases, and shader-cache
+#   autodefrag     - Steam's VDF files, SQLite databases, and shader-cache
 #                    indexes are small files CoW-fragmented on every update;
 #                    autodefrag coalesces them in the background
-#   ssd            — enables SSD-aware chunk allocator (also auto-detected from
+#   ssd            - enables SSD-aware chunk allocator (also auto-detected from
 #                    ROTA=0, kept explicit for clarity)
-#   space_cache=v2 — modern free-space tree, substantially faster than v1 on
+#   space_cache=v2 - modern free-space tree, substantially faster than v1 on
 #                    large volumes; v1 is the kernel default before 6.x
-#   nofail                      — USB drive may not be attached at boot; do not
+#   nofail                      - USB drive may not be attached at boot; do not
 #                                  block the boot sequence if it is absent
-#   x-systemd.device-timeout=5s — give udev 5 s to find the device; after that
+#   x-systemd.device-timeout=5s - give udev 5 s to find the device; after that
 #                                  nofail lets the mount unit finish as skipped
 #
 # TRIM is intentionally omitted: DISC-MAX=0 on this USB bridge means the kernel

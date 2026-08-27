@@ -9,7 +9,7 @@ in
   # dataset, mounted at their ~/.local/share/* paths. Each is a normal fileSystems
   # entry using zfsutil (mount.zfs reads the dataset's own mountpoint property).
   #
-  # Why this is enough — no custom service or activation script needed:
+  # Why this is enough - no custom service or activation script needed:
   #   * systemd auto-orders these mount units AFTER /home/luluco because the
   #     paths are nested, so the parent home dataset is always mounted first.
   #   * X-mount.mkdir creates the mountpoint directory if it does not exist.

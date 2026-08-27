@@ -8,7 +8,7 @@
 
   # Hardening kernel params recommended by https://wiki.nixos.org/wiki/NixOS_Hardening
   boot.kernelParams = [
-    # Don't merge slab caches — makes heap spray harder.
+    # Don't merge slab caches - makes heap spray harder.
     "slab_nomerge"
 
     # Overwrite freed pages with 0xAA to catch use-after-free bugs.
@@ -29,7 +29,7 @@
     # that rely on a deterministic stack layout.
     "randomize_kstack_offset=on"
 
-    # Remove the legacy fixed-address vsyscall page — a classic ROP gadget
+    # Remove the legacy fixed-address vsyscall page - a classic ROP gadget
     # source. Only ancient (pre-2013 glibc) binaries need it.
     "vsyscall=none"
   ];
@@ -88,7 +88,7 @@
     "dev.tty.ldisc_autoload" = "0";
 
     # Disallow O_CREAT in world-writable sticky dirs when the existing
-    # FIFO/regular file isn't owned by the opener — blocks /tmp squatting
+    # FIFO/regular file isn't owned by the opener - blocks /tmp squatting
     # attacks against sloppy scripts.
     "fs.protected_fifos" = "2";
     "fs.protected_regular" = "2";
@@ -96,7 +96,7 @@
     # Disable ftrace; it exposes detailed kernel internals to root.
     # "kernel.ftrace_enabled" = false;
 
-    # Disable io_uring entirely — it has been a prolific kernel CVE source.
+    # Disable io_uring entirely - it has been a prolific kernel CVE source.
     # If an application breaks (check with: journalctl -xe | grep io_uring),
     # set to 1 (restrict to privileged) or 0 (allow all) as needed.
     # "kernel.io_uring_disabled" = 2;

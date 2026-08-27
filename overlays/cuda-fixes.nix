@@ -14,7 +14,8 @@ let
       if nvccBin="$(type -P nvcc)"; then
         export CUDAToolkit_ROOT="''${CUDAToolkit_ROOT:+$CUDAToolkit_ROOT;}''${nvccBin%/bin/nvcc}"
       fi
-    '' + (old.preConfigure or "");
+    ''
+    + (old.preConfigure or "");
   };
   # The seed above is a no-op unless nvcc is actually on PATH, which
   # requires cuda_nvcc in nativeBuildInputs (buildInputs bin/ dirs
@@ -22,7 +23,8 @@ let
   # a CUDA-enabled opencv via its exported OpenCVConfig.cmake
   # (find_package(CUDAToolkit) at OpenCVConfig.cmake:86), add nvcc to
   # PATH too.
-  seedNvccWithNvccOnPath = old:
+  seedNvccWithNvccOnPath =
+    old:
     seedNvccIntoToolkitRoot old
     // {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
@@ -52,7 +54,7 @@ in
   # survives into the preBuild cmake invocation. ollama-cuda is a
   # separate top-level instantiation (acceleration = "cuda") used by
   # services.ollama.package (modules/nixos/ollama.nix), so it needs
-  # its own override — fixing `ollama` alone leaves it untouched.
+  # its own override - fixing `ollama` alone leaves it untouched.
   ollama = prev.ollama.overrideAttrs seedNvccIntoToolkitRoot;
   ollama-cuda = prev.ollama-cuda.overrideAttrs seedNvccIntoToolkitRoot;
 
@@ -66,7 +68,7 @@ in
 
   # Pure opencv consumer (src/libslic3r/CMakeLists.txt:525
   # find_package(OpenCV)); has no CUDA inputs of its own at all, so
-  # it needs nvcc on PATH, the seed, AND cuda_cudart in buildInputs —
+  # it needs nvcc on PATH, the seed, AND cuda_cudart in buildInputs -
   # after nvcc is found, FindCUDAToolkit still requires the cudart
   # library (CUDA_CUDART), which lives in the separate cuda_cudart
   # split package (frei0r carries it natively; bambu doesn't).

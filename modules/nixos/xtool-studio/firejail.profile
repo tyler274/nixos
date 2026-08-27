@@ -4,7 +4,7 @@
 # for hosts that already standardise on firejail for their other GUI apps.
 #
 # Goal: confine the proprietary vendor blob as much as possible while keeping
-# the two things it genuinely needs — a GPU-backed X11 GUI and unrestricted
+# the two things it genuinely needs - a GPU-backed X11 GUI and unrestricted
 # LAN access to reach the M2. Several "obvious" hardening knobs are deliberately
 # left OFF because they break this specific workload; each is noted below so the
 # tradeoff is explicit rather than accidental.
@@ -19,7 +19,7 @@ include xtool-studio.local
 
 # --- filesystem -----------------------------------------------------------
 # Maintained blacklists for credentials, keyrings, other apps' config, etc.
-# NB: disable-exec.inc is intentionally NOT included — it marks ${HOME}/tmp
+# NB: disable-exec.inc is intentionally NOT included - it marks ${HOME}/tmp
 # noexec, which would stop Wine from mapping the DLLs/EXEs in its prefix.
 # (disable-passwdmgr.inc was folded into disable-common.inc as of firejail
 # 0.9.80, so it is not included separately.)
@@ -71,7 +71,7 @@ protocol unix,inet,inet6,netlink
 
 # --- deliberately NOT enabled (would break the app) -----------------------
 # net <iface>            : a private net namespace kills the LAN multicast the
-#                          M2 discovery relies on — we must share host net.
+#                          M2 discovery relies on - we must share host net.
 # memory-deny-write-execute : breaks V8's JIT and Wine's code generation.
 # apparmor               : no xtool-studio AppArmor profile is loaded here.
 # nosound / no3d         : Studio uses both.

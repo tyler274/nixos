@@ -143,7 +143,7 @@
       "audio/mpeg" = [ "mpv.desktop" ];
       "image/png" = [ "org.kde.gwenview.desktop" ];
       "image/jpeg" = [ "org.kde.gwenview.desktop" ];
-      # Application-registered URI schemes — kept here so HM owns the full
+      # Application-registered URI schemes - kept here so HM owns the full
       # file and KDE additions do not accumulate between rebuilds.
       "x-scheme-handler/capacities" = [ "capacities.desktop" ];
       # Lychee Slicer 7.6.2+ logs in via the browser and returns the session

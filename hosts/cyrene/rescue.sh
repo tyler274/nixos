@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cyrene rescue/maintenance helper — run as root from the NixOS live ISO.
+# Cyrene rescue/maintenance helper - run as root from the NixOS live ISO.
 # Imports the encrypted rpool and mounts the full hierarchy under /mnt,
 # without touching or destroying anything. Counterpart to install.sh.
 #
@@ -95,7 +95,7 @@ case "$CMD" in
   umount)
     umount -R /mnt 2>/dev/null || true
     zpool export "$POOL"
-    echo "pool exported — safe to reboot"
+    echo "pool exported - safe to reboot"
     ;;
 
   *)

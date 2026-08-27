@@ -12,16 +12,16 @@
 
   # Nix >= 2.24 moved daemon build scratch from /tmp to /nix/var/nix/builds
   # (upstream fix for the world-writable-/tmp build-dir CVE), so the
-  # rpool/nixos/tmp dataset no longer catches builds — they were silently
+  # rpool/nixos/tmp dataset no longer catches builds - they were silently
   # landing on rpool/nixos/root and therefore inside every snapshot again.
   # Offload them to the Samsung 990 PRO (which took over swap+scratch duty
-  # from the 980 PRO; the 980 now holds the persistent ccache — ccache.nix):
-  #   part1: 512 GiB swap  (randomEncryption — see swapDevices in default.nix)
+  # from the 980 PRO; the 980 now holds the persistent ccache - ccache.nix):
+  #   part1: 512 GiB swap  (randomEncryption - see swapDevices in default.nix)
   #   part2: ~1.3 TiB Nix build scratch (this file)
   #
   # Losing this on reboot costs nothing: completed derivations are registered
   # into /nix/store (rpool) the moment they finish, and Nix cannot resume a
-  # half-built derivation anyway — crash salvage for in-flight compiles is
+  # half-built derivation anyway - crash salvage for in-flight compiles is
   # ccache's job (ccache.nix), not this mount's.
   #
   # The scratch partition is plain dm-crypt keyed from /dev/urandom on every
@@ -30,23 +30,23 @@
   # systemd-cryptsetup mkfs the mapping each boot, which is exactly right for
   # inherently throwaway build dirs (no manual formatting, ever). XFS over
   # ext4/btrfs: per-AG parallelism suits 32 build threads hammering
-  # create/write/delete, with none of btrfs's CoW+checksum overhead — all
+  # create/write/delete, with none of btrfs's CoW+checksum overhead - all
   # integrity machinery is wasted on data that never survives a reboot.
   # The every-boot mkfs makes the switch free (nothing to migrate).
   #
   # Known tradeoff: XFS hard-caps symlink targets at 1024 bytes
-  # (XFS_SYMLINK_MAXLEN — an on-disk format constant from the Irix era,
+  # (XFS_SYMLINK_MAXLEN - an on-disk format constant from the Irix era,
   # not a mkfs/mount-tunable; confirmed directly on a loopback XFS fs:
   # 1023 bytes succeeds, 1024+ fails ENAMETOOLONG on every kernel). This
   # breaks nix-util-tests-run's `readLinkAt.works`, which creates 2048-
   # and 4095-byte symlink targets to exercise readlinkat() buffer growth.
   # nixpkgs' pinned nix 2.34.8 predates upstream's fix that catches
   # ENAMETOOLONG and skips those sub-cases on filesystems that don't
-  # support long targets, so we disable the test ourselves for now — see
+  # support long targets, so we disable the test ourselves for now - see
   # overlays/nix-fixes.nix. Revisit once nixpkgs picks up a nix release
   # with that upstream fix; the skip can be dropped then.
   #
-  # The mapping is named "scratch" deliberately — no dash, so the systemd unit
+  # The mapping is named "scratch" deliberately - no dash, so the systemd unit
   # is plain systemd-cryptsetup@scratch.service with no \x2d escaping needed.
   #
   # sector-size=4096 requires the partition SIZE to be a multiple of 8×512 B
