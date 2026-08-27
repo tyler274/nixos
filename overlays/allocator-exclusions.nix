@@ -25,12 +25,15 @@
 # programs.firejail wrappers (see desktop-common.nix); without it, firejail
 # noroot blocks the inner bwrap.
 #
-# sleepy-launcher (aagl) is the same wrap. The GTK UI is steam-run FHS, and
-# Zenless Zone Zero is a Wine-tkg wow64 child of that FHS (not pkgs.wine), so
-# hiding the preload around the launcher covers both. The FHS tmpfs /etc omits
-# ld-nix.so.preload but still propagates /etc/static; overlaying the resolved
-# store file is what actually empties that path. Other aagl launchers need
-# their attr added here the same way.
+# Do not wrap `electron` / `electron_N`: leaf apps (Signal, Bitwarden, …)
+# exec those binaries, so wrapping the launcher is enough — the child
+# inherits the mount namespace. Wrapping electron itself also catches
+# Mullvad's GUI, whose bwrap user namespace cannot talk to mullvad-daemon
+# on /run/mullvad-vpn.
+#
+# Do not wrap sleepy-launcher (or other aagl launchers). They already run
+# inside steam-run's FHS bwrap, whose tmpfs /etc omits ld-nix.so.preload,
+# and a second user namespace breaks Wine on NVIDIA (udev, drive letters).
 #
 # The wrap is allocator-agnostic: switching provider to graphene-hardened
 # or graphene-hardened-light does not need another overlay change.
@@ -153,13 +156,9 @@ let
       keepInterface pkg wrapped;
 in
 # Do not filterAttrs over `prev` — that forces every nixpkgs attribute.
-# Wrap the electron alias plus the versioned slots this config actually
-# runs (42 = pocket-casts, 43 = signal/bitwarden). New Electron apps that
-# pin some other slot need their slot added here (or wrap the leaf app).
-(lib.genAttrs [
-  "electron"
-  "electron_42"
-  "electron_43"
+# Wrap leaf apps, not the electron interpreter (see header). New Electron
+# apps that ship their own launcher script should be added here.
+lib.genAttrs [
   "firefox"
   "firefox-bin"
   "thunderbird"
@@ -170,9 +169,4 @@ in
   "signal-desktop"
   "bitwarden-desktop"
   "pocket-casts"
-] (n: hideSystemMalloc prev.${n}))
-# aagl overlay (Cyrene) runs before this mkAfter overlay; other hosts have
-# no such attr, and prev.sleepy-launcher would eval-fail there.
-// lib.optionalAttrs (prev ? sleepy-launcher) {
-  sleepy-launcher = hideSystemMalloc prev.sleepy-launcher;
-}
+] (n: hideSystemMalloc prev.${n})
