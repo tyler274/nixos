@@ -94,6 +94,10 @@
       # see the file for per-package details.
       cudaFixOverlay = import ./overlays/cuda-fixes.nix;
 
+      # Null-deref / tbbmalloc mixing fixes for bambu-studio slicing crashes
+      # under mimalloc-secure; see the file.
+      bambuStudioFixOverlay = import ./overlays/bambu-studio-fixes.nix;
+
       # Skips a nix unit test that can't pass on the XFS-backed build
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
@@ -129,6 +133,7 @@
                 nixpkgs.overlays = [
                   pkgsOverlay
                   cudaFixOverlay
+                  bambuStudioFixOverlay
                   llvmFixOverlay
                   znver5FixOverlay
                   nodejsFixOverlay

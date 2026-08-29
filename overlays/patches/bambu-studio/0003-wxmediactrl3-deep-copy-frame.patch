@@ -1,0 +1,28 @@
+diff --git a/src/slic3r/GUI/wxMediaCtrl3.cpp b/src/slic3r/GUI/wxMediaCtrl3.cpp
+index be2e00985..6463c469f 100644
+--- a/src/slic3r/GUI/wxMediaCtrl3.cpp
++++ b/src/slic3r/GUI/wxMediaCtrl3.cpp
+@@ -3,6 +3,7 @@
+ #include "I18N.hpp"
+ #include "libslic3r/Utils.hpp"
+ #include <boost/log/trivial.hpp>
++#include <memory>
+ #include <wx/dcclient.h>
+ #include <wx/dcgraph.h>
+ #ifdef __WIN32__
+@@ -156,7 +157,15 @@ void wxMediaCtrl3::paintEvent(wxPaintEvent &evt)
+         if (!m_frame.IsOk()) {
+             return;
+         }
++        // wxImage is refcounted. GetFrameThread replaces m_frame while the UI
++        // thread is in wxBitmap::InitFromImage / DrawBitmap, which memcpy the
++        // pixel buffer; a shallow copy would share storage that can be
++        // unshared or freed mid-paint (SIGSEGV / SEGV_ACCERR on Linux).
++#ifdef _WIN32
+         current_frame = m_frame;
++#else
++        current_frame = m_frame.Copy();
++#endif
+     }
+     wxSize frame_size;
+     {

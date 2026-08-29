@@ -1,0 +1,46 @@
+diff --git a/src/libslic3r/CMakeLists.txt b/src/libslic3r/CMakeLists.txt
+index 23159281d..5e6f186ae 100644
+--- a/src/libslic3r/CMakeLists.txt
++++ b/src/libslic3r/CMakeLists.txt
+@@ -619,7 +619,6 @@ target_link_libraries(libslic3r
+     qhull
+     semver
+     TBB::tbb
+-    TBB::tbbmalloc
+     libslic3r_cgal
+     ${CMAKE_DL_LIBS}
+     PNG::PNG
+diff --git a/src/libslic3r/JumpPointSearch.cpp b/src/libslic3r/JumpPointSearch.cpp
+index f8ef2ff10..fb0b1d2d2 100644
+--- a/src/libslic3r/JumpPointSearch.cpp
++++ b/src/libslic3r/JumpPointSearch.cpp
+@@ -19,7 +19,6 @@
+ #include <unordered_map>
+ #include <vector>
+ 
+-#include <oneapi/tbb/scalable_allocator.h>
+ 
+ //#define DEBUG_FILES
+ #ifdef DEBUG_FILES
+diff --git a/src/libslic3r/Support/SupportLayer.hpp b/src/libslic3r/Support/SupportLayer.hpp
+index cc2888aea..dc5f03394 100644
+--- a/src/libslic3r/Support/SupportLayer.hpp
++++ b/src/libslic3r/Support/SupportLayer.hpp
+@@ -1,6 +1,5 @@
+ #pragma once
+ 
+-#include <oneapi/tbb/scalable_allocator.h>
+ #include <oneapi/tbb/spin_mutex.h>
+ #include "../PrintConfig.hpp"
+ #include "../Slicing.hpp"
+@@ -144,9 +143,7 @@ public:
+ 	}
+ 
+ private:
+-	template<typename BaseType>
+-	using Allocator = tbb::scalable_allocator<BaseType>;
+-	Slic3r::deque<SupportGeneratorLayer, Allocator<SupportGeneratorLayer>> 		m_storage;
++	Slic3r::deque<SupportGeneratorLayer> m_storage;
+ 	tbb::spin_mutex                         									m_mutex;
+ };
+ 	using SupportGeneratorLayersPtr = std::vector<SupportGeneratorLayer*>;

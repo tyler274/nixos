@@ -25,14 +25,17 @@
 # programs.firejail wrappers (see desktop-common.nix); without it, firejail
 # noroot blocks the inner bwrap.
 #
-# Do not wrap `electron` / `electron_N`: leaf apps (Signal, Bitwarden, …)
-# exec those binaries, so wrapping the launcher is enough - the child
-# inherits the mount namespace. Wrapping electron itself also catches
-# Mullvad's GUI. bwrap's user namespace makes the daemon socket look
-# unowned ("Failed to verify root ownership of socket"); unwrapped
-# Electron SIGTRAPs under mimalloc. Mullvad is wrapped with a
-# CAP_SYS_ADMIN helper that only unshares the mount namespace (see
-# hide-system-malloc.c and security.wrappers in common.nix).
+# Wrap `electron` / `electron_N` with the CAP_SYS_ADMIN helper, not
+# bwrap. Leaf-app launchers (Signal, Bitwarden, …) still get bwrap so
+# vendored copies of Electron are covered; nixpkgs apps such as Mullvad
+# bake `${electron}/bin/electron` into makeWrapper, which then execs
+# electron-unwrapped's libexec ELF. bwrap around electron maps uid 0 out
+# of the user namespace and Mullvad reports "Failed to verify root
+# ownership of socket". The helper only unshares a mount namespace (see
+# hide-system-malloc.c and security.wrappers in common.nix). Wrapping
+# both `$out/bin/electron` and `$out/libexec/electron/electron` is
+# required: the crash command line is the libexec path, and symlinkJoin
+# otherwise leaves that as a symlink into electron-unwrapped.
 #
 # Do not wrap sleepy-launcher (or other aagl launchers). They already run
 # inside steam-run's FHS bwrap, whose tmpfs /etc omits ld-nix.so.preload,
@@ -126,6 +129,8 @@ let
     }
     // lib.optionalAttrs (orig ? sandbox) { inherit (orig) sandbox; }
     // lib.optionalAttrs (orig ? browser) { inherit (orig) browser; }
+    # unwrapped is re-wrapped for electron in wrapElectron; other packages
+    # keep the original (firefox-bin.unwrapped, etc.).
     // lib.optionalAttrs (orig ? unwrapped) { inherit (orig) unwrapped; };
 
   wrapWith =
@@ -144,18 +149,49 @@ let
           meta = pkg.meta or { };
           postBuild = ''
             shopt -s nullglob
-            for bin in "$out"/bin/*; do
-              [ -e "$bin" ] || continue
-              [ -d "$bin" ] && continue
-              case "$(basename "$bin")" in
-                *sandbox*) continue ;;
+
+            wrap_file() {
+              local dest=$1
+              [ -e "$dest" ] || [ -L "$dest" ] || return 0
+              [ -d "$dest" ] && return 0
+              case "$(basename "$dest")" in
+                *sandbox*) return 0 ;;
               esac
-              [ -x "$bin" ] || continue
-              real=$(readlink -f "$bin")
-              rm -f "$bin"
-              substitute ${template} "$bin" --subst-var-by real "$real"
-              chmod +x "$bin"
+              local real
+              real=$(readlink -f "$dest")
+              [ -n "$real" ] && [ -x "$real" ] || return 0
+              mkdir -p "$(dirname "$dest")"
+              rm -f "$dest"
+              substitute ${template} "$dest" --subst-var-by real "$real"
+              chmod +x "$dest"
+            }
+
+            # electron's $out/libexec is a symlink into electron-unwrapped.
+            # Replace store-symlinked dirs with a directory of symlinks so
+            # wrap_file can override the ELF without copying the tree.
+            relink_dir() {
+              local dir=$1
+              [ -L "$dir" ] || return 0
+              local target
+              target=$(readlink -f "$dir")
+              [ -d "$target" ] || return 0
+              rm -f "$dir"
+              mkdir -p "$dir"
+              local e
+              for e in "$target"/*; do
+                [ -e "$e" ] || [ -L "$e" ] || continue
+                ln -s "$e" "$dir/$(basename "$e")"
+              done
+            }
+
+            for bin in "$out"/bin/*; do
+              wrap_file "$bin"
             done
+
+            relink_dir "$out/libexec"
+            relink_dir "$out/libexec/electron"
+            wrap_file "$out/libexec/electron/electron"
+            wrap_file "$out/libexec/electron/chrome"
 
             # Edge (and some Chromium builds) bake absolute store paths into
             # .desktop Exec= lines. aagl's wrapAAGL points Exec at the inner
@@ -183,14 +219,37 @@ let
 
   hideSystemMalloc = wrapWith wrapperTemplate;
   hideSystemMallocNoUserns = wrapWith capWrapperTemplate;
+
+  # Preserve passthru.unwrapped as a wrapped derivation so consumers that
+  # exec electron-unwrapped's libexec path still go through the helper.
+  wrapElectron =
+    pkg:
+    if !lib.isDerivation pkg then
+      pkg
+    else
+      let
+        wrapped = hideSystemMallocNoUserns pkg;
+      in
+      wrapped
+      // lib.optionalAttrs (pkg ? unwrapped && lib.isDerivation pkg.unwrapped) {
+        unwrapped = hideSystemMallocNoUserns pkg.unwrapped;
+      };
 in
 {
   hide-system-malloc-exec = hideSystemMallocExec;
   mullvad-vpn = hideSystemMallocNoUserns prev.mullvad-vpn;
 }
 # Do not filterAttrs over `prev` - that forces every nixpkgs attribute.
-# Wrap leaf apps, not the electron interpreter (see header). New Electron
-# apps that ship their own launcher script should be added here.
+# Electron itself uses the mount-ns helper (no user ns). Leaf apps that
+# vendor their own Electron still need the bwrap wrap below.
+#
+# Wrap versioned slots only, not `electron`. all-packages sets
+# `electron = electron_43` against the final pkgs, so overlaying both
+# wraps the alias a second time (helper's real= becomes another wrap).
+// lib.genAttrs [
+  "electron_42"
+  "electron_43"
+] (n: wrapElectron prev.${n})
 // lib.genAttrs [
   "firefox"
   "firefox-bin"
