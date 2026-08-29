@@ -87,13 +87,15 @@
   # Swap on the Samsung 990 PRO (took over swap+scratch duty from the 980
   # PRO, which now holds the persistent ccache - see ccache.nix).
   # part1 = 512 GiB swap; part2 = Nix build scratch (see scratch.nix).
-  # Encrypted with a fresh random key on every boot so no sensitive data is
-  # written to disk in plaintext. zswap (zfs/boot.nix) requires at least one
-  # physical swap device as its backing store, so this must stay non-empty.
+  # Encrypted with a fresh random key on every boot (crypttab in scratch.nix)
+  # so no sensitive data is written to disk in plaintext. zswap (zfs/boot.nix)
+  # requires at least one physical swap device as its backing store, so this
+  # must stay non-empty. Do not switch this back to randomEncryption: that
+  # path waits on systemd-modules-load, which NVIDIA regularly overruns.
   swapDevices = [
     {
-      device = "/dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part1";
-      randomEncryption.enable = true;
+      device = "/dev/mapper/swap";
+      options = [ "x-systemd.requires=systemd-cryptsetup@swap.service" ];
     }
   ];
 

@@ -16,8 +16,8 @@
   # landing on rpool/nixos/root and therefore inside every snapshot again.
   # Offload them to the Samsung 990 PRO (which took over swap+scratch duty
   # from the 980 PRO; the 980 now holds the persistent ccache - ccache.nix):
-  #   part1: 512 GiB swap  (randomEncryption - see swapDevices in default.nix)
-  #   part2: ~1.3 TiB Nix build scratch (this file)
+  #   part1: 512 GiB swap   (crypttab mapping "swap"; swapDevices in default.nix)
+  #   part2: ~1.3 TiB Nix build scratch (crypttab mapping "scratch")
   #
   # Losing this on reboot costs nothing: completed derivations are registered
   # into /nix/store (rpool) the moment they finish, and Nix cannot resume a
@@ -46,8 +46,13 @@
   # overlays/nix-fixes.nix. Revisit once nixpkgs picks up a nix release
   # with that upstream fix; the skip can be dropped then.
   #
-  # The mapping is named "scratch" deliberately - no dash, so the systemd unit
-  # is plain systemd-cryptsetup@scratch.service with no \x2d escaping needed.
+  # Both mappings are named without dashes so the units are plain
+  # systemd-cryptsetup@swap.service / @scratch.service with no \x2d escaping.
+  # crypttab (not swapDevices.randomEncryption) so systemd-cryptsetup starts
+  # in parallel with modules-load: randomEncryption's mkswap unit is
+  # After=systemd-modules-load, and this host's NVIDIA probe overruns that
+  # unit's 90s timeout, so swap.target used to fail before the mapper existed.
+  # The crypttab `swap` option makes systemd-cryptsetup run mkswap after open.
   #
   # sector-size=4096 requires the partition SIZE to be a multiple of 8×512 B
   # sectors, or systemd-cryptsetup fails at boot with "Device size is not
@@ -55,6 +60,7 @@
   # the partition must be created with `sgdisk --align-end` (-I) so the end
   # doesn't run to the disk's unaligned last usable sector.
   environment.etc.crypttab.text = ''
+    swap /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part1 /dev/urandom plain,cipher=aes-xts-plain64,size=512,sector-size=4096,discard,swap
     scratch /dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S73WNJ0TA08364H-part2 /dev/urandom plain,cipher=aes-xts-plain64,size=512,sector-size=4096,discard,tmp=xfs
   '';
 
