@@ -113,8 +113,20 @@ index 9d429b07d..bbdd09d13 100644
          }
          // 计算排序
          filament_sequences = execute_filament_ordering(
+diff --git a/src/libslic3r/GCode/ToolOrdering.hpp b/src/libslic3r/GCode/ToolOrdering.hpp
+index 8735207f5..3829f66a7 100644
+--- a/src/libslic3r/GCode/ToolOrdering.hpp
++++ b/src/libslic3r/GCode/ToolOrdering.hpp
+@@ -300,6 +300,7 @@ public:
+         m_stats_by_single_extruder.clear();
+         m_stats_by_multi_extruder_best.clear();
+         m_stats_by_multi_extruder_curr.clear();
++        m_nozzle_group_result = {};
+     }
+ 
+     // Only valid for non-sequential print:
 diff --git a/src/libslic3r/Print.cpp b/src/libslic3r/Print.cpp
-index dc4806b10..987ff4624 100644
+index dc4806b10..91b434c2c 100644
 --- a/src/libslic3r/Print.cpp
 +++ b/src/libslic3r/Print.cpp
 @@ -1170,6 +1170,8 @@ int Print::get_nozzle_config_index(int filament_id, int layer_id)
@@ -158,21 +170,24 @@ index dc4806b10..987ff4624 100644
      wipe_tower.set_shared_print_bed(this->get_extruder_shared_printable_polygon());
      // Set the extruder & material properties at the wipe tower object.
      for (size_t i = 0; i < number_of_extruders; ++ i)
-@@ -3780,7 +3788,7 @@ void Print::_make_wipe_tower()
+@@ -3780,7 +3788,8 @@ void Print::_make_wipe_tower()
          int layer_idx = -1;
  
          unsigned int old_filament_id = m_wipe_tower_data.tool_ordering.first_extruder();
 -        nozzle_recorder.set_nozzle_status(group_result->get_nozzle_for_filament(old_filament_id, layer_idx)->group_id, old_filament_id);
-+        nozzle_recorder.set_nozzle_status(group_result.get_nozzle_for_filament(old_filament_id, layer_idx)->group_id, old_filament_id);
++        if (auto first_nozzle = group_result.get_nozzle_for_filament(old_filament_id, layer_idx))
++            nozzle_recorder.set_nozzle_status(first_nozzle->group_id, old_filament_id);
  
          for (auto& layer_tools : m_wipe_tower_data.tool_ordering.layer_tools()) { // for all layers
              ++layer_idx;
-@@ -3795,7 +3803,7 @@ void Print::_make_wipe_tower()
+@@ -3795,7 +3804,9 @@ void Print::_make_wipe_tower()
                  if (filament_id == old_filament_id)
                      continue;
  
 -                auto nozzle_info = group_result->get_nozzle_for_filament(filament_id, layer_idx);
 +                auto nozzle_info = group_result.get_nozzle_for_filament(filament_id, layer_idx);
++                if (!nozzle_info)
++                    continue;
  
                  int extruder_id = nozzle_info->extruder_id;
                  int nozzle_id = nozzle_info->group_id;

@@ -1,5 +1,33 @@
+diff --git a/src/slic3r/GUI/AVVideoDecoder.cpp b/src/slic3r/GUI/AVVideoDecoder.cpp
+index f2d41a43f..1741c4240 100644
+--- a/src/slic3r/GUI/AVVideoDecoder.cpp
++++ b/src/slic3r/GUI/AVVideoDecoder.cpp
+@@ -1,6 +1,7 @@
+ #include "AVVideoDecoder.hpp"
+ 
+ #include <assert.h>
++#include <cstring>
+ 
+ extern "C"
+ {
+@@ -134,11 +135,13 @@ bool AVVideoDecoder::toWxImage(wxImage &image, wxSize const &size2)
+     if (result_h != size.GetHeight()) {
+         return false;
+     }
+-    image = wxImage(size.GetWidth(), size.GetHeight(), bits_.data(), true);
+-    if (!image.IsOk()) {
++    // static_data=true would alias bits_, which the next decode overwrites or
++    // frees; wxMediaCtrl3 then Copy()/DrawBitmap's a dangling buffer (SEGV_ACCERR).
++    if (!image.Create(size.GetWidth(), size.GetHeight(), false) || !image.IsOk()) {
+         fprintf(stderr, "AVVideoDecoder: image not ok %dx%d\n", size.GetWidth(), size.GetHeight());
+         return false;
+     }
++    std::memcpy(image.GetData(), bits_.data(), length);
+     return true;
+ }
+ 
 diff --git a/src/slic3r/GUI/wxMediaCtrl3.cpp b/src/slic3r/GUI/wxMediaCtrl3.cpp
-index 8f8f29e96..d9f1d25e9 100644
+index 8f8f29e96..c91c84384 100644
 --- a/src/slic3r/GUI/wxMediaCtrl3.cpp
 +++ b/src/slic3r/GUI/wxMediaCtrl3.cpp
 @@ -3,6 +3,7 @@
@@ -53,3 +81,12 @@ index 8f8f29e96..d9f1d25e9 100644
      if (is_idle) {
          // Draw the static idle image through wxGraphicsContext with high-quality
          // interpolation. wxDC::SetUserScale + DrawBitmap uses GDI StretchBlt
+@@ -668,7 +681,7 @@ void wxMediaCtrl3::PlayThread()
+                         lastSecondTime = now;
+                     }
+ 
+-                    m_frame_buffer.enqueue(bm);
++                    m_frame_buffer.enqueue(bm.Copy());
+                 } else if (decode_ret == 0) {
+                     ++m_render_error_count;
+                 }
