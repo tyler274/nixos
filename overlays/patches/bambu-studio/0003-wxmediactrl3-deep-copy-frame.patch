@@ -1,5 +1,5 @@
 diff --git a/src/slic3r/GUI/wxMediaCtrl3.cpp b/src/slic3r/GUI/wxMediaCtrl3.cpp
-index be2e00985..6463c469f 100644
+index 8f8f29e96..d9f1d25e9 100644
 --- a/src/slic3r/GUI/wxMediaCtrl3.cpp
 +++ b/src/slic3r/GUI/wxMediaCtrl3.cpp
 @@ -3,6 +3,7 @@
@@ -9,20 +9,47 @@ index be2e00985..6463c469f 100644
 +#include <memory>
  #include <wx/dcclient.h>
  #include <wx/dcgraph.h>
- #ifdef __WIN32__
-@@ -156,7 +157,15 @@ void wxMediaCtrl3::paintEvent(wxPaintEvent &evt)
+ #include <wx/graphics.h>
+@@ -183,18 +184,30 @@ void wxMediaCtrl3::paintEvent(wxPaintEvent &evt)
+         return;
+     PlayFrame current_frame;
+     bool      current_is_default_bg;
++    std::shared_ptr<wxURI> current_url;
++    wxSize frame_size;
+     {
+         std::unique_lock<std::mutex> lk(m_ui_mutex);
          if (!m_frame.IsOk()) {
              return;
          }
+-        current_frame         = m_frame;
 +        // wxImage is refcounted. GetFrameThread replaces m_frame while the UI
 +        // thread is in wxBitmap::InitFromImage / DrawBitmap, which memcpy the
 +        // pixel buffer; a shallow copy would share storage that can be
 +        // unshared or freed mid-paint (SIGSEGV / SEGV_ACCERR on Linux).
 +#ifdef _WIN32
-         current_frame = m_frame;
++        current_frame = m_frame;
 +#else
 +        current_frame = m_frame.Copy();
 +#endif
+         current_is_default_bg = m_frame_is_default_bg;
      }
-     wxSize frame_size;
+-    wxSize frame_size;
++    if (!current_frame.IsOk())
++        return;
      {
+         std::unique_lock<std::mutex> lk(m_mutex);
+-        frame_size = m_frame_size;
++        frame_size  = m_frame_size;
++        current_url = m_url;
+     }
+     auto size2 = current_frame.GetSize();
+     if (size2.x != frame_size.x && size2.y == frame_size.y)
+@@ -202,7 +215,7 @@ void wxMediaCtrl3::paintEvent(wxPaintEvent &evt)
+ 
+     // Treat the default background as idle content so the bg and its logo are always
+     // drawn together, even if m_url flips to playing before the first video frame arrives.
+-    const bool is_idle = (m_url == nullptr) || current_is_default_bg;
++    const bool is_idle = (current_url == nullptr) || current_is_default_bg;
+     if (is_idle) {
+         // Draw the static idle image through wxGraphicsContext with high-quality
+         // interpolation. wxDC::SetUserScale + DrawBitmap uses GDI StretchBlt

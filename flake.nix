@@ -94,8 +94,8 @@
       # see the file for per-package details.
       cudaFixOverlay = import ./overlays/cuda-fixes.nix;
 
-      # Null-deref / tbbmalloc mixing fixes for bambu-studio slicing crashes
-      # under mimalloc-secure; see the file.
+      # Bump bambu-studio to v02.08.02.61 and keep the mimalloc-secure
+      # slicing/paint crash fixes; see overlays/bambu-studio-fixes.nix.
       bambuStudioFixOverlay = import ./overlays/bambu-studio-fixes.nix;
 
       # Skips a nix unit test that can't pass on the XFS-backed build

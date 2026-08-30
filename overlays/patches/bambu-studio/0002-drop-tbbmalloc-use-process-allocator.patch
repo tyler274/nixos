@@ -1,8 +1,8 @@
 diff --git a/src/libslic3r/CMakeLists.txt b/src/libslic3r/CMakeLists.txt
-index 23159281d..5e6f186ae 100644
+index a432007fd..7d5388fd2 100644
 --- a/src/libslic3r/CMakeLists.txt
 +++ b/src/libslic3r/CMakeLists.txt
-@@ -619,7 +619,6 @@ target_link_libraries(libslic3r
+@@ -637,7 +637,6 @@ target_link_libraries(libslic3r
      qhull
      semver
      TBB::tbb
@@ -11,17 +11,18 @@ index 23159281d..5e6f186ae 100644
      ${CMAKE_DL_LIBS}
      PNG::PNG
 diff --git a/src/libslic3r/JumpPointSearch.cpp b/src/libslic3r/JumpPointSearch.cpp
-index f8ef2ff10..fb0b1d2d2 100644
+index f8ef2ff10..dcd0b58c1 100644
 --- a/src/libslic3r/JumpPointSearch.cpp
 +++ b/src/libslic3r/JumpPointSearch.cpp
-@@ -19,7 +19,6 @@
+@@ -19,8 +19,6 @@
  #include <unordered_map>
  #include <vector>
  
 -#include <oneapi/tbb/scalable_allocator.h>
- 
+-
  //#define DEBUG_FILES
  #ifdef DEBUG_FILES
+ #include "libslic3r/SVG.hpp"
 diff --git a/src/libslic3r/Support/SupportLayer.hpp b/src/libslic3r/Support/SupportLayer.hpp
 index cc2888aea..dc5f03394 100644
 --- a/src/libslic3r/Support/SupportLayer.hpp

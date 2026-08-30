@@ -22,14 +22,35 @@ index 530d81bfc..53dbdf3bc 100644
          print->update_filament_maps_to_config(FilamentGroupUtils::update_used_filament_values(print->config().filament_map.values, grouping_result->get_extruder_map(false),
                                                                                                grouping_result->get_used_filaments()),
 diff --git a/src/libslic3r/GCode/GCodeProcessor.cpp b/src/libslic3r/GCode/GCodeProcessor.cpp
-index 433e05171..116cce210 100644
+index 2a6909b5c..5a972e63c 100644
 --- a/src/libslic3r/GCode/GCodeProcessor.cpp
 +++ b/src/libslic3r/GCode/GCodeProcessor.cpp
-@@ -2710,7 +2710,15 @@ void GCodeProcessor::finalize(bool post_process)
+@@ -2756,28 +2756,37 @@ void GCodeProcessor::finalize(bool post_process)
  #endif // ENABLE_GCODE_VIEWER_DATA_CHECKING
      if (post_process){
          constexpr float inject_time_threshold = 0.f;
 -        MultiNozzleUtils::LayeredNozzleGroupResult result = *std::dynamic_pointer_cast<MultiNozzleUtils::LayeredNozzleGroupResult>(m_nozzle_group_result);
+-        TimeProcessContext context(
+-            m_used_filaments,
+-            m_filament_lists,
+-            result,
+-            m_filament_types,
+-            m_filament_nozzle_temp,
+-            m_physical_extruder_map,
+-            m_layer_id,
+-            m_hotend_cooling_rate,
+-            m_hotend_heating_rate,
+-            m_filament_pre_cooling_temp,
+-            inject_time_threshold,
+-            m_enable_pre_heating,
+-            m_handle_hotend_as_extruder,
+-            m_has_filament_switcher,
+-            m_extruder_max_nozzle_count,
+-            m_filament_preheat_temperature_delta,
+-            m_result.extruder_types,
+-            m_nozzle_diameter
+-        );
+-        m_time_processor.post_process(m_result.filename, m_result.moves, m_result.lines_ends, context);
 +        auto layered = std::dynamic_pointer_cast<MultiNozzleUtils::LayeredNozzleGroupResult>(m_nozzle_group_result);
 +        if (!layered) {
 +            ensure_nozzle_group_result(static_cast<int>(m_result.filaments_count));
@@ -38,23 +59,37 @@ index 433e05171..116cce210 100644
 +        if (!layered) {
 +            BOOST_LOG_TRIVIAL(error) << "GCodeProcessor::finalize: no layered nozzle group result, skipping time post-process";
 +        } else {
-+        MultiNozzleUtils::LayeredNozzleGroupResult result = *layered;
-         TimeProcessContext context(
-             m_used_filaments,
-             m_filament_lists,
-@@ -2732,6 +2740,7 @@ void GCodeProcessor::finalize(bool post_process)
-             m_nozzle_diameter
-         );
-         m_time_processor.post_process(m_result.filename, m_result.moves, m_result.lines_ends, context);
++            MultiNozzleUtils::LayeredNozzleGroupResult result = *layered;
++            TimeProcessContext context(
++                m_used_filaments,
++                m_filament_lists,
++                result,
++                m_filament_types,
++                m_filament_nozzle_temp,
++                m_physical_extruder_map,
++                m_layer_id,
++                m_hotend_cooling_rate,
++                m_hotend_heating_rate,
++                m_filament_pre_cooling_temp,
++                inject_time_threshold,
++                m_enable_pre_heating,
++                m_handle_hotend_as_extruder,
++                m_has_filament_switcher,
++                m_extruder_max_nozzle_count,
++                m_filament_preheat_temperature_delta,
++                m_result.extruder_types,
++                m_nozzle_diameter
++            );
++            m_time_processor.post_process(m_result.filename, m_result.moves, m_result.lines_ends, context);
 +        }
      }
  
-     //update times for results
+     m_result.pause_printing.clear();
 diff --git a/src/libslic3r/GCode/ToolOrdering.cpp b/src/libslic3r/GCode/ToolOrdering.cpp
-index 19e1b0f10..aa43cb179 100644
+index 9d429b07d..bbdd09d13 100644
 --- a/src/libslic3r/GCode/ToolOrdering.cpp
 +++ b/src/libslic3r/GCode/ToolOrdering.cpp
-@@ -2736,8 +2736,21 @@ void ToolOrdering::reorder_extruders_for_minimum_flush_volume(bool reorder_first
+@@ -2748,8 +2748,21 @@ void ToolOrdering::reorder_extruders_for_minimum_flush_volume(bool reorder_first
              );
          }
          else{
@@ -79,10 +114,10 @@ index 19e1b0f10..aa43cb179 100644
          // 计算排序
          filament_sequences = execute_filament_ordering(
 diff --git a/src/libslic3r/Print.cpp b/src/libslic3r/Print.cpp
-index a62d5b94f..a927c3e69 100644
+index dc4806b10..987ff4624 100644
 --- a/src/libslic3r/Print.cpp
 +++ b/src/libslic3r/Print.cpp
-@@ -1163,6 +1163,8 @@ int Print::get_nozzle_config_index(int filament_id, int layer_id)
+@@ -1170,6 +1170,8 @@ int Print::get_nozzle_config_index(int filament_id, int layer_id)
  int Print::get_config_index(int filament_id, int layer_id, const std::vector<std::string> &variant_list, const std::vector<int>& self_index_list, FilamentIndexMap &index_map)
  {
      auto group_result = get_layered_nozzle_group_result();
@@ -91,7 +126,7 @@ index a62d5b94f..a927c3e69 100644
      auto nozzle_info  = group_result->get_nozzle_for_filament(filament_id, layer_id);
      if (!nozzle_info.has_value()) {
          BOOST_LOG_TRIVIAL(error) << __FUNCTION__
-@@ -1188,6 +1190,8 @@ int Print::get_config_index(int filament_id, int layer_id, const std::vector<std
+@@ -1195,6 +1197,8 @@ int Print::get_config_index(int filament_id, int layer_id, const std::vector<std
  int Print::get_config_index(int filament_id, int layer_id, const std::vector<std::string> &variant_list, const std::vector<int>& self_index_list, PrintIndexMap &index_map)
  {
      auto group_result = get_layered_nozzle_group_result();
@@ -100,7 +135,7 @@ index a62d5b94f..a927c3e69 100644
      auto nozzle_info  = group_result->get_nozzle_for_filament(filament_id, layer_id);
      if (!nozzle_info.has_value()) {
          BOOST_LOG_TRIVIAL(error) << __FUNCTION__
-@@ -3305,15 +3309,18 @@ void Print::_make_wipe_tower()
+@@ -3739,15 +3743,19 @@ void Print::_make_wipe_tower()
      }
      this->throw_if_canceled();
  
@@ -118,7 +153,26 @@ index a62d5b94f..a927c3e69 100644
      wipe_tower.set_first_layer_flow_ratio(m_default_region_config.initial_layer_flow_ratio);
      wipe_tower.set_has_tpu_filament(this->has_tpu_filament());
 -    wipe_tower.set_nozzle_group_result(*group_result);
-+    wipe_tower.set_nozzle_group_result(m_wipe_tower_data.tool_ordering.get_layered_nozzle_group_result());
++    const auto &group_result = m_wipe_tower_data.tool_ordering.get_layered_nozzle_group_result();
++    wipe_tower.set_nozzle_group_result(group_result);
      wipe_tower.set_shared_print_bed(this->get_extruder_shared_printable_polygon());
      // Set the extruder & material properties at the wipe tower object.
      for (size_t i = 0; i < number_of_extruders; ++ i)
+@@ -3780,7 +3788,7 @@ void Print::_make_wipe_tower()
+         int layer_idx = -1;
+ 
+         unsigned int old_filament_id = m_wipe_tower_data.tool_ordering.first_extruder();
+-        nozzle_recorder.set_nozzle_status(group_result->get_nozzle_for_filament(old_filament_id, layer_idx)->group_id, old_filament_id);
++        nozzle_recorder.set_nozzle_status(group_result.get_nozzle_for_filament(old_filament_id, layer_idx)->group_id, old_filament_id);
+ 
+         for (auto& layer_tools : m_wipe_tower_data.tool_ordering.layer_tools()) { // for all layers
+             ++layer_idx;
+@@ -3795,7 +3803,7 @@ void Print::_make_wipe_tower()
+                 if (filament_id == old_filament_id)
+                     continue;
+ 
+-                auto nozzle_info = group_result->get_nozzle_for_filament(filament_id, layer_idx);
++                auto nozzle_info = group_result.get_nozzle_for_filament(filament_id, layer_idx);
+ 
+                 int extruder_id = nozzle_info->extruder_id;
+                 int nozzle_id = nozzle_info->group_id;
