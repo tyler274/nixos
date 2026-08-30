@@ -79,7 +79,9 @@
   # Enable mimalloc's hardened build: randomises heap segment placement,
   # adds guard pages, and validates free-list integrity. Trades a small
   # amount of throughput for meaningful use-after-free/heap-overflow
-  # detection. See: https://github.com/microsoft/mimalloc#secure-mode
+  # detection. `pkgs.mimalloc` is the Rust rewrite (flake overlay); mitigations
+  # are always on there, and `secureBuild` is accepted so this override
+  # still evaluates. See: https://github.com/microsoft/mimalloc#secure-mode
   nixpkgs.overlays = [
     (final: prev: {
       mimalloc = prev.mimalloc.override { secureBuild = true; };

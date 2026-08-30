@@ -148,6 +148,24 @@
         "url": "https://github.com/nix-community/lanzaboote.git"
       }
     },
+    "mimalloc-rs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay_3"
+      },
+      "locked": {
+        "lastModified": 1788132893,
+        "narHash": "sha256-z7v0axlWXDFUO7xI5Q2rCXyOMvonoDOO3Vt+gSH3qiQ=",
+        "path": "/home/luluco/code/mimalloc",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/luluco/code/mimalloc",
+        "type": "path"
+      }
+    },
     "mini-diarium": {
       "inputs": {
         "nixpkgs": [
@@ -316,6 +334,7 @@
         "home-manager": "home-manager",
         "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
+        "mimalloc-rs": "mimalloc-rs",
         "mini-diarium": "mini-diarium",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
@@ -359,6 +378,27 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "rev": "f60c1b57ff805a46b5175c76fc981fb4f81efbcc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_3": {
+      "inputs": {
+        "nixpkgs": [
+          "mimalloc-rs",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787993548,
+        "narHash": "sha256-+IAEnmmx5YIhUWo0lp15jLLHchnXo5yKgWsi6C6Cf+0=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "996e9b0b019a4a9eb9e9a5641aefa06d801b5895",
         "type": "github"
       },
       "original": {

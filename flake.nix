@@ -50,6 +50,12 @@
       url = "github:tyler274/mini-diarium/nix-flake-packaging";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Rust mimalloc rewrite: replaces pkgs.mimalloc so
+    # environment.memoryAllocator.provider = "mimalloc" preloads the rewrite.
+    mimalloc-rs = {
+      url = "path:/home/luluco/code/mimalloc";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -138,6 +144,10 @@
                   znver5FixOverlay
                   nodejsFixOverlay
                   nixFixOverlay
+                  # Replaces pkgs.mimalloc (and statically links mold-unwrapped)
+                  # with the Rust rewrite. common.nix still sets
+                  # memoryAllocator.provider = "mimalloc" and secureBuild.
+                  inputs.mimalloc-rs.overlays.default
                 ];
               }
             )
