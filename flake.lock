@@ -156,14 +156,17 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1788271518,
-        "narHash": "sha256-HNWK7y/mm2nlcfWvTCmUysgcGlcz1OHdPm4U9eTYYzs=",
-        "path": "/home/luluco/code/mimalloc",
-        "type": "path"
+        "lastModified": 1788273411,
+        "narHash": "sha256-CBETGx1FAn5cOutwUcwUa1+LftzusJTaBb1VQnImTC4=",
+        "ref": "refs/heads/rust3write",
+        "rev": "03f3ece6dba37b29d238b976fd670a62f6c9326b",
+        "revCount": 4353,
+        "type": "git",
+        "url": "file:///home/luluco/code/mimalloc"
       },
       "original": {
-        "path": "/home/luluco/code/mimalloc",
-        "type": "path"
+        "type": "git",
+        "url": "file:///home/luluco/code/mimalloc"
       }
     },
     "mini-diarium": {
