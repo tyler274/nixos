@@ -74,6 +74,22 @@
     enable = true;
   };
 
+  # Chromium is wrapped with bwrap so PartitionAlloc does not see
+  # /etc/ld-nix.so.preload. nixpkgs' flaresolverr unit uses DynamicUser,
+  # PrivateUsers, RestrictNamespaces=user, and CapabilityBoundingSet
+  # without CAP_SYS_ADMIN, so that bwrap cannot clone a user namespace
+  # and the service crash-loops ("Chrome / Chromium version not
+  # detected"). Hide the preload in the unit's mount namespace instead;
+  # the wrapper then execs Chromium directly (see allocator-exclusions.nix).
+  systemd.services.flaresolverr.serviceConfig.BindReadOnlyPaths =
+    let
+      empty = pkgs.writeText "empty-ld-nix.so.preload" "";
+    in
+    [
+      "${empty}:/etc/ld-nix.so.preload"
+      "${empty}:/etc/static/ld-nix.so.preload"
+    ];
+
   programs.obs-studio = {
     enable = true;
     enableVirtualCamera = true;

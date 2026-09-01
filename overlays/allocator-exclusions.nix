@@ -63,6 +63,15 @@ let
       exec "$real" "$@"
     fi
 
+    # systemd BindReadOnlyPaths (and tests) can already hide the preload
+    # with an empty file. Skip bwrap in that case: services such as
+    # flaresolverr set RestrictNamespaces=user and drop CAP_SYS_ADMIN, so
+    # clone(CLONE_NEWUSER) fails ("No permissions to create a new
+    # namespace") and Chromium never starts.
+    if [ ! -s /etc/ld-nix.so.preload ]; then
+      exec "$real" "$@"
+    fi
+
     binds=()
     add_bind() {
       local f=$1
