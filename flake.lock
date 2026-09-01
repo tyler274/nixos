@@ -156,11 +156,11 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1788273411,
-        "narHash": "sha256-CBETGx1FAn5cOutwUcwUa1+LftzusJTaBb1VQnImTC4=",
+        "lastModified": 1788279032,
+        "narHash": "sha256-ZWiHG9+0SBM9woabPSwq118dMTy2z3Dx7twTrcPWdRk=",
         "ref": "refs/heads/rust3write",
-        "rev": "03f3ece6dba37b29d238b976fd670a62f6c9326b",
-        "revCount": 4353,
+        "rev": "7473c72919801f526c2a4fb8e5bc0b8d266177fc",
+        "revCount": 4439,
         "type": "git",
         "url": "file:///home/luluco/code/mimalloc"
       },
