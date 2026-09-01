@@ -53,7 +53,7 @@
     # Rust mimalloc rewrite: replaces pkgs.mimalloc so
     # environment.memoryAllocator.provider = "mimalloc" preloads the rewrite.
     mimalloc-rs = {
-      url = "path:/home/luluco/code/mimalloc";
+      url = "git+file:///home/luluco/code/mimalloc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
