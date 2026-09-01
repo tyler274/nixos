@@ -156,8 +156,8 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1788267455,
-        "narHash": "sha256-mFCWv+7upnLuSqtNbMj4uGyNL2yduQcy7HGQzIY+Wao=",
+        "lastModified": 1788268438,
+        "narHash": "sha256-U7awKop/0mj5ISRnFmDPk35oJ5dezPe29WUdeb1hJXA=",
         "path": "/home/luluco/code/mimalloc",
         "type": "path"
       },
