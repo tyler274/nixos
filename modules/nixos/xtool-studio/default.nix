@@ -139,11 +139,11 @@
 let
   cfg = config.programs.xtool-studio;
 
-  version = "1.7.30";
+  version = "1.8.22";
 
   installer = pkgs.fetchurl {
-    url = "https://storage.atomm.com/efficacy/atomm-package/prod/packages/109/ef6aeb53-66ee-455c-a8ad-8a0e9486857e/xTool-Studio-x64-${version}.exe";
-    hash = "sha256-62BwXAS3SjgkdIwxZVpd7qH1oHLRZFj+CMxj30P3H4s=";
+    url = "https://storage.atomm.com/efficacy/atomm-package/prod/packages/109/48515b41-1f8b-422d-b7af-8d26eaca3c86/xTool-Studio-x64-${version}.exe";
+    hash = "sha256-5n+xo/JjO9NBeBf/Ih6n0GQcoWWaz/5TMKBD30KSjjg=";
   };
 
   # 64-bit-only Wine is sufficient: the payload is x64 and pulls no 32-bit
