@@ -54,6 +54,21 @@ in
       bitwarden-cli
     ];
 
+    # Bitwarden writes this file to the unwrapped store path (app.getPath("exe")).
+    # Point autostart at the wrap so login does not inject ld.so.preload into Electron.
+    xdg.configFile."autostart/bitwarden.desktop" = {
+      force = true;
+      text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Bitwarden
+        Comment=Bitwarden startup script
+        Exec=${pkgs.bitwarden-desktop}/bin/bitwarden --autostart
+        StartupNotify=false
+        Terminal=false
+      '';
+    };
+
     home.sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
 
     xdg.mimeApps.defaultApplications."x-scheme-handler/bitwarden" = [ "bitwarden.desktop" ];

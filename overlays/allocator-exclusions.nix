@@ -199,6 +199,9 @@ let
 
             relink_dir "$out/libexec"
             relink_dir "$out/libexec/electron"
+            for f in "$out"/libexec/*; do
+              wrap_file "$f"
+            done
             wrap_file "$out/libexec/electron/electron"
             wrap_file "$out/libexec/electron/chrome"
 
@@ -268,6 +271,14 @@ in
   "microsoft-edge"
   "discord"
   "signal-desktop"
-  "bitwarden-desktop"
   "pocket-casts"
 ] (n: hideSystemMalloc prev.${n})
+# Bitwarden patches `app.getPath("exe")` to its own `$out/bin/bitwarden` and
+# writes that path into `~/.config/autostart/bitwarden.desktop`. A symlinkJoin
+# wrap around `prev.bitwarden-desktop` is skipped on login. Rebuild against
+# wrapped `electron_43` so the inner launcher still hides ld.so.preload.
+// {
+  bitwarden-desktop = hideSystemMalloc (
+    prev.bitwarden-desktop.override { electron_43 = final.electron_43; }
+  );
+}
