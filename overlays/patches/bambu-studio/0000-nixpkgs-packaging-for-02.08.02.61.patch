@@ -209,7 +209,7 @@ diff --git a/src/slic3r/GUI/DeviceWeb/CMakeLists.txt b/src/slic3r/GUI/DeviceWeb/
 index 2b1e8a3..06684d4 100644
 --- a/src/slic3r/GUI/DeviceWeb/CMakeLists.txt
 +++ b/src/slic3r/GUI/DeviceWeb/CMakeLists.txt
-@@ -3,246 +3,11 @@
+@@ -3,246 +3,10 @@
  # date -- 2025.01.01
  # status -- Building
  
@@ -453,11 +453,10 @@ index 2b1e8a3..06684d4 100644
 -
 -# Not ALL: rebuilt only when a dependent target (libslic3r_gui / BambuStudio) is built.
 -add_custom_target(device_page_build DEPENDS "${DEVICE_PAGE_BUILD_STAMP}")
-+# NOTE (nixpkgs): the device_page frontend build has been removed.
-+# Upstream downloads Node.js + pnpm at configure time and runs `pnpm install`
-+# and `pnpm run build` at build time, none of which works in the offline Nix
-+# sandbox. The C++ GUI sources below are still compiled; only the web resource
-+# bundle (resources/web/device_page/dist) is not produced.
++# NOTE (nixpkgs): do not download Node.js/pnpm here. The Nix overlay builds
++# the device_page Vite bundle offline (fetchPnpmDeps + pnpm 10) and copies
++# it into resources/web/device_page/dist before CMake configure. The C++
++# GUI sources below are still compiled.
  
  list(APPEND SLIC3R_GUI_SOURCES
      GUI/DeviceWeb/DeviceHttpServer.cpp

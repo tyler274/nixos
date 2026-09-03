@@ -34,6 +34,23 @@ final: prev: {
     };
   });
 
+  # ada-url 4.0.0: the AVX-512 IPv4 fast path (ADA_AVX512, gated on
+  # AVX512BW+VL so -march=znver5 always compiles it; Hydra x86_64-linux
+  # stays on the scalar kernel) treats any host with 3 dots as four
+  # octets, including WHATWG trailing-dot 3-component forms like
+  # "192.168.0.". parse_ipv4_decimal_trusted then over-reads the trailing
+  # '.' as a fourth octet (NUL-'0' -> 0xffffffd0) and parse_host stores a
+  # non-canonical host; re-parsing the href canonicalizes to 192.168.0.0
+  # and basic_fuzzer aborts ("href not idempotent"). Not an allocator
+  # issue: same HIT/fail split under glibc and mimalloc. Upstream main
+  # strips the trailing dot before counting separators; backport that
+  # check. Tests stay enabled.
+  ada = prev.ada.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      ./patches/ada/0001-fix-avx512-ipv4-trailing-dot.patch
+    ];
+  });
+
   # simde is header-only, but its meson build compiles a large native +
   # emulated test suite by default (the only compiled artifacts), and the
   # AVX-512 tests fail to compile with gcc 15 at -march=znver5. -Dtests=false

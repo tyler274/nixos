@@ -1,0 +1,24 @@
+--- a/include/ada/checkers-inl.h
++++ b/include/ada/checkers-inl.h
+@@ -161,13 +161,16 @@ ada_really_inline uint64_t try_parse_ipv4_avx512(const char* data,
+   const unsigned dot_count =
+       static_cast<unsigned>(_mm_popcnt_u32(static_cast<unsigned>(is_dot)));
+   size_t effective_len = len;
+-  if (dot_count == 3) {
+-    // ok
+-  } else if (dot_count == 4 && data[len - 1] == '.') {
+-    effective_len = len - 1;  // strip trailing dot for convert
+-  } else {
++  unsigned effective_dots = dot_count;
++  if (data[len - 1] == '.') {
++    effective_len = len - 1;
++    effective_dots -= 1;
++  }
++  if (effective_dots != 3 || effective_len < 7 || data[0] == '.' ||
++      (static_cast<unsigned>(is_dot) &
++       (static_cast<unsigned>(is_dot) << 1))) {
+     return ipv4_fast_fail;
+   }
+   // Convert from a tiny stack copy so trusted peeks stay in-bounds.
+   alignas(16) char buf[16]{};
+   std::memcpy(buf, data, effective_len);
