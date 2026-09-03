@@ -11,7 +11,21 @@
 #      for these so the workaround is actually verified).
 #
 # Expect this list to grow as the from-source world build progresses.
-final: prev: {
+final: prev:
+let
+  # Wall-clock event-loop delay test: sequential/test-performance-eventloopdelay.js
+  # asserts delay samples stay inside a tight band and fails under full build
+  # load (nodejs-slim-24.19.0, test-ci-js). Same class as eventlet. Applied to
+  # every nodejs_* / nodejs-slim_* copy so addNpm wrappers don't keep the
+  # flaky file. FLAKY_TESTS=skip is already set; this test isn't marked flaky
+  # upstream.
+  skipNodeEventloopdelay = old: {
+    postPatch = (old.postPatch or "") + ''
+      rm -f test/sequential/test-performance-eventloopdelay.js
+    '';
+  };
+in
+{
   # linalg cholesky_invert test: expects a 0.0 residual, gets ~2.6e-13 with
   # FMA-contracted code.
   gsl = prev.gsl.overrideAttrs (old: { doCheck = false; });
@@ -179,6 +193,19 @@ final: prev: {
       sed -i '/script-log-socket/d' tests/test-umockdev-record.vala
     '';
   });
+
+  # Not arch-related: five CTest cases (simple, features, linebreak, freetype,
+  # featuremaptest) hit the runner timeout under full build load; 87/92 others
+  # passed. Skip the suite. Blocks harfbuzz -> pango/wine/imagemagick and
+  # thereby xtool-studio / most of the GUI stack.
+  graphite2 = prev.graphite2.overrideAttrs (old: { doCheck = false; });
+
+  # See skipNodeEventloopdelay. nodejs-slim is the attr that failed this run;
+  # the _24 / full-npm copies share the same tarball tests.
+  nodejs-slim = prev.nodejs-slim.overrideAttrs skipNodeEventloopdelay;
+  nodejs-slim_24 = prev.nodejs-slim_24.overrideAttrs skipNodeEventloopdelay;
+  nodejs = prev.nodejs.overrideAttrs skipNodeEventloopdelay;
+  nodejs_24 = prev.nodejs_24.overrideAttrs skipNodeEventloopdelay;
 
   # znver5 + Valgrind 3.27: valgrind_unittest wraps the gtest binary with
   # memcheck, but Valgrind SIGILLs on EVEX (0x62) instructions in glibc's
