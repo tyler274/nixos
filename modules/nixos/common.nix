@@ -93,6 +93,10 @@
     ssh.startAgent = true;
     direnv.enable = true;
     nh.enable = true;
+    git = {
+      enable = true;
+      lfs.enable = true;
+    };
   };
 
   environment.systemPackages = with pkgs; [
