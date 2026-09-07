@@ -81,4 +81,22 @@ in
       ];
     }
   );
+
+  # SuiteSparse 7.10 switched to CMake. CHOLMOD/SPQR GPU targets
+  # unconditionally link CUDA::nvrtc (and CUDA 12's nvrtc NEEDs
+  # libnvJitLink), but nixpkgs' package only lists cudart/cccl/cublas.
+  # FindCUDAToolkit therefore never creates the imported target and
+  # configure dies with "Target ... links to: CUDA::nvrtc but the
+  # target was not found." Adding the split packages lets the
+  # setup-cuda-hook fold them into CUDAToolkit_ROOT. GraphBLAS CUDA
+  # stays off upstream (production default), so cuda_driver is not
+  # required. Drop once nixpkgs' suitesparse CUDA inputs include nvrtc.
+  suitesparse = prev.suitesparse.overrideAttrs (old: {
+    buildInputs =
+      (old.buildInputs or [ ])
+      ++ final.lib.optionals (final.config.cudaSupport or false) [
+        final.cudaPackages.cuda_nvrtc
+        final.cudaPackages.libnvjitlink
+      ];
+  });
 }
