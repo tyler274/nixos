@@ -92,10 +92,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1788355065,
-        "narHash": "sha256-gAz5oTI7ur34CfuakQduiQd/2ZhO62Bn2XXg08nZYYQ=",
+        "lastModified": 1788651960,
+        "narHash": "sha256-v9wJd32eZ2bvhBzVOd7TIjLQd011P7nwOhjKtWlci5I=",
         "ref": "master",
-        "rev": "d9d750e4fc11c10cab2da677bdd31e427f3a3a71",
+        "rev": "2c0350c759688177331b8f5242311fae8877bdb3",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -110,11 +110,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1788347845,
-        "narHash": "sha256-A2HVfz/4QbkOZcFRsDxabKuk3taEwu3GyHrEmNk1ARo=",
+        "lastModified": 1788661313,
+        "narHash": "sha256-JNovVrGW7/sAX4RCz0qLQP0ld1nZ2TRpbnKfDOG7Sa0=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "705b826f9410b181f5fde7d03d4b94fefe66b15d",
+        "rev": "54d1f5af8ddbdbc486fcde2a1575aedf28d6a3e7",
         "type": "github"
       },
       "original": {
@@ -156,11 +156,11 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1788394602,
-        "narHash": "sha256-WLyBQXhADmWF0g1XUhXs9Xv770ANNOyJU+MlnMS33do=",
+        "lastModified": 1788467328,
+        "narHash": "sha256-KUvA356AauDVey8ZztPDgOIbqHXGr24/d+TbFj9QR/A=",
         "ref": "refs/heads/rust3write",
-        "rev": "f56dad284260e5f0fe3a0dfdeefe5118c19ca5bd",
-        "revCount": 4447,
+        "rev": "cb5ba10e7c91e00af0b87ead03bf23bc219be54c",
+        "revCount": 4452,
         "type": "git",
         "url": "file:///home/luluco/code/mimalloc"
       },
@@ -237,10 +237,10 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1788179007,
-        "narHash": "sha256-hn1oU2rue2SYK8dAr8+WNZWtbsz1S2W5mnHlSEuh3bo=",
+        "lastModified": 1788614874,
+        "narHash": "sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg=",
         "ref": "nixos-unstable",
-        "rev": "34ab99075ac4f7e40cf037eef32cb1c360bb85e9",
+        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -254,10 +254,10 @@
     },
     "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1788297115,
-        "narHash": "sha256-Z+vUNbfd2FIKkWOTkcT7RYlh3oFCnig/d2eXD1SWf2E=",
+        "lastModified": 1788584326,
+        "narHash": "sha256-Fd3OB8J9JhgliQwOKcqx4M672CInxi1I5VnwsaXeSQo=",
         "ref": "nixos-26.05",
-        "rev": "a3116115851d68b8952a2a4221cc25a84e56b532",
+        "rev": "6713828a351efa628b025a1adf7f43cbf8597513",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -271,10 +271,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1788395163,
-        "narHash": "sha256-DJNK7MTwU4uSAP442UD16JH31rn3Og15XKHs+M8/Az4=",
+        "lastModified": 1788740845,
+        "narHash": "sha256-G9BkCCufBvMPSKFgYsYV99HXwhkxnBj7Fp2GiUsHSIw=",
         "ref": "staging",
-        "rev": "259a3d71dcaf26fb290888bf5ffec8cff73f7322",
+        "rev": "8d729f45a91ef46d373cc207f8417164c665a3c9",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
