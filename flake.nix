@@ -104,6 +104,9 @@
       # slicing/paint crash fixes; see overlays/bambu-studio-fixes.nix.
       bambuStudioFixOverlay = import ./overlays/bambu-studio-fixes.nix;
 
+      # Snapmaker Orca Slicer AppImage (GitHub releases) + updater.
+      snapmakerOrcaOverlay = import ./overlays/snapmaker-orca/overlay.nix;
+
       # Skips a nix unit test that can't pass on the XFS-backed build
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
@@ -140,6 +143,7 @@
                   pkgsOverlay
                   cudaFixOverlay
                   bambuStudioFixOverlay
+                  snapmakerOrcaOverlay
                   llvmFixOverlay
                   znver5FixOverlay
                   nodejsFixOverlay

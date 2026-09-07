@@ -46,16 +46,17 @@ in
 
   config = lib.mkIf cfg.enable {
     bitwarden.liberaPasswordScript = bitwardenLib.passwordScript;
-    bitwarden.liberaPasswordCommand =
-      "${pkgs.bash}/bin/bash ${bitwardenLib.passwordScript}";
+    bitwarden.liberaPasswordCommand = "${pkgs.bash}/bin/bash ${bitwardenLib.passwordScript}";
 
     home.packages = with pkgs; [
       bitwarden-desktop
       bitwarden-cli
     ];
 
-    # Bitwarden writes this file to the unwrapped store path (app.getPath("exe")).
-    # Point autostart at the wrap so login does not inject ld.so.preload into Electron.
+    # Bitwarden writes this file from `app.getPath("exe")`. Keep HM as the
+    # owner so login always uses the electron-wrapped launcher. force=true
+    # used to leave `bitwarden.desktop.hm-backup` behind; systemd's xdg
+    # autostart generator still starts that leftover (unwrapped) copy.
     xdg.configFile."autostart/bitwarden.desktop" = {
       force = true;
       text = ''
@@ -68,6 +69,17 @@ in
         Terminal=false
       '';
     };
+
+    home.activation.cleanupBitwardenAutostartBackup = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      backup="${config.home.homeDirectory}/.config/autostart/bitwarden.desktop.hm-backup"
+      if [ -e "$backup" ]; then
+        run rm -f "$backup"
+      fi
+      if command -v systemctl >/dev/null 2>&1; then
+        run systemctl --user stop 'app-bitwarden.desktop.hm-backup@autostart.service' || true
+        run systemctl --user reset-failed 'app-bitwarden@autostart.service' || true
+      fi
+    '';
 
     home.sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
 

@@ -64,6 +64,8 @@
     lycheeslicer
     cura-appimage
     orca-slicer
+    snapmaker-orca
+    snapmaker-orca-update
 
     vlc
     mpv

@@ -273,12 +273,17 @@ in
   "signal-desktop"
   "pocket-casts"
 ] (n: hideSystemMalloc prev.${n})
-# Bitwarden patches `app.getPath("exe")` to its own `$out/bin/bitwarden` and
-# writes that path into `~/.config/autostart/bitwarden.desktop`. A symlinkJoin
-# wrap around `prev.bitwarden-desktop` is skipped on login. Rebuild against
-# wrapped `electron_43` so the inner launcher still hides ld.so.preload.
+# Bitwarden is makeWrapper'd onto `${electron}/bin/electron`. Do not wrap
+# the leaf launcher with bwrap: systemd xdg-autostart then execs that wrap,
+# bwrap's user namespace strips file capabilities, and the inner Electron
+# cap helper cannot unshare a mount ns ("failed to inherit capabilities").
+# The wrapped autostart unit exits in milliseconds; Home Manager's
+# `bitwarden.desktop.hm-backup` (unwrapped electron) is what actually
+# stays running and SIGTRAPs under mimalloc. Rebuild against wrapped
+# `electron_43` so `$out/bin/bitwarden` hides ld.so.preload without a
+# user namespace.
 // {
-  bitwarden-desktop = hideSystemMalloc (
-    prev.bitwarden-desktop.override { electron_43 = final.electron_43; }
-  );
+  bitwarden-desktop = prev.bitwarden-desktop.override {
+    electron_43 = final.electron_43;
+  };
 }
