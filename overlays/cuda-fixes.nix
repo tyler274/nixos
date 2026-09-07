@@ -82,21 +82,64 @@ in
     }
   );
 
-  # SuiteSparse 7.10 switched to CMake. CHOLMOD/SPQR GPU targets
-  # unconditionally link CUDA::nvrtc (and CUDA 12's nvrtc NEEDs
-  # libnvJitLink), but nixpkgs' package only lists cudart/cccl/cublas.
-  # FindCUDAToolkit therefore never creates the imported target and
-  # configure dies with "Target ... links to: CUDA::nvrtc but the
-  # target was not found." Adding the split packages lets the
-  # setup-cuda-hook fold them into CUDAToolkit_ROOT. GraphBLAS CUDA
-  # stays off upstream (production default), so cuda_driver is not
-  # required. Drop once nixpkgs' suitesparse CUDA inputs include nvrtc.
-  suitesparse = prev.suitesparse.overrideAttrs (old: {
-    buildInputs =
-      (old.buildInputs or [ ])
+  # SuiteSparse 7.10 switched to CMake. Two CUDA packaging holes:
+  #
+  # 1. CHOLMOD/SPQR GPU targets unconditionally link CUDA::nvrtc (and
+  #    CUDA 12's nvrtc NEEDs libnvJitLink), but nixpkgs only lists
+  #    cudart/cccl/cublas. FindCUDAToolkit never creates the imported
+  #    target and configure dies with "Target ... links to: CUDA::nvrtc
+  #    but the target was not found."
+  # 2. cholmod.h bakes in #define CHOLMOD_HAS_CUDA and #include
+  #    <cublas_v2.h> / <cuda_runtime.h> in the public API, so every
+  #    consumer needs those headers. SuiteSparseQR.hpp also
+  #    unconditionally #define SUITESPARSE_GPU_EXTERN_ON before
+  #    including cholmod.h, which *skips* those includes while still
+  #    requiring cublasHandle_t/cudaStream_t. Ceres (blender) includes
+  #    SuiteSparseQR.hpp without -DSPQR_HAS_CUDA, so it never included
+  #    cublas first either and failed with "'cublasHandle_t' does not
+  #    name a type". Drop the suppress so cholmod.h can include CUDA
+  #    itself (the CUDA headers have include guards), and propagate
+  #    the public CUDA deps. GraphBLAS CUDA stays off upstream.
+  # Drop once nixpkgs' suitesparse CUDA inputs include nvrtc and
+  # propagate cudart/cublas.
+  suitesparse =
+    let
+      cuda = final.config.cudaSupport or false;
+    in
+    prev.suitesparse.overrideAttrs (old: {
+      buildInputs =
+        (old.buildInputs or [ ])
+        ++ final.lib.optionals cuda [
+          final.cudaPackages.cuda_nvrtc
+          final.cudaPackages.libnvjitlink
+        ];
+      propagatedBuildInputs =
+        (old.propagatedBuildInputs or [ ])
+        ++ final.lib.optionals cuda [
+          # Public cholmod.h includes cublas_v2.h / cuda_runtime.h, and
+          # those pull crt/host_defines.h from nvcc's include tree.
+          final.cudaPackages.cuda_cudart
+          final.cudaPackages.libcublas
+          final.cudaPackages.cuda_nvcc
+        ];
+      postPatch =
+        (old.postPatch or "")
+        + final.lib.optionalString cuda ''
+          sed -i '/^#define SUITESPARSE_GPU_EXTERN_ON$/d' SPQR/Include/SuiteSparseQR.hpp
+        '';
+    });
+
+  # Ceres defaults USE_CUDA=ON. Once suitesparse propagates nvcc (needed
+  # for cholmod.h -> crt/host_defines.h), FindCUDAToolkit succeeds and
+  # Ceres tries to link CUDA::cusolver, which nixpkgs' ceres-solver does
+  # not list. Keep Ceres on its historical CPU+SuiteSparse path; the
+  # CUDA headers still flow in via suitesparse for cholmod.h. Blocks
+  # blender. Drop if nixpkgs grows a CUDA-enabled ceres.
+  ceres-solver = prev.ceres-solver.overrideAttrs (old: {
+    cmakeFlags =
+      (old.cmakeFlags or [ ])
       ++ final.lib.optionals (final.config.cudaSupport or false) [
-        final.cudaPackages.cuda_nvrtc
-        final.cudaPackages.libnvjitlink
+        (final.lib.cmakeBool "USE_CUDA" false)
       ];
   });
 }
