@@ -93,7 +93,7 @@
       znver5FixOverlay = import ./overlays/znver5-fixes.nix;
 
       # One-time escape hatch for a local Nix daemon output-validation bug
-      # hit on nodejs-slim; see the file for details.
+      # hit on nodejs-slim and postgresql; see the file for details.
       nodejsFixOverlay = import ./overlays/nodejs-fixes.nix;
 
       # nvcc-on-PATH/CUDAToolkit_ROOT workarounds for CMake's FindCUDAToolkit;
