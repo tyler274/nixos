@@ -128,6 +128,7 @@
     vulnix
     inspec
     brush
+    valgrind
   ];
 
   boot.loader.grub.memtest86.enable = true;
