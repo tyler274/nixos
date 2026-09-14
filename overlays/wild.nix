@@ -73,10 +73,8 @@ let
   # wrapBintoolsWith (its stdenvNoCC is not the Wild stdenv).
   ldWrapper = "${pkgsForWild.path}/pkgs/build-support/bintools-wrapper/ld-wrapper.sh";
   targetPrefix = pkgsForWild.stdenv.cc.bintools.targetPrefix;
-in
-{
-  wild-unwrapped = wildUnwrapped;
-  wild = pkgsForWild.wrapBintoolsWith {
+
+  wildWrapped = pkgsForWild.wrapBintoolsWith {
     bintools = wildUnwrapped;
     extraBuildCommands = ''
       wrap wild ${ldWrapper} ${lib.getExe wildUnwrapped}
@@ -85,20 +83,28 @@ in
       wrap ${targetPrefix}ld ${ldWrapper} ${lib.getExe wildUnwrapped}
     '';
   };
+in
+{
+  wild-unwrapped = wildUnwrapped;
+  wild = wildWrapped;
 
-  # Unwrapped Wild for stdenv mkDerivation injection. The full bintools
-  # wrap above cannot go in every nativeBuildInputs: it carries a libc
-  # and loops Cyrene's bintools-wrapper.
+  # Injection helper for stdenv mkDerivation. The full wrap above cannot
+  # go in every nativeBuildInputs: its setup hook carries a libc and
+  # loops Cyrene's bintools-wrapper.
   #
-  # `bin/` has `wild` / `ld.wild` for PATH lookups (clang, meson, rustc).
-  # `ld` stays out of `bin/` so we do not shadow the nix ld-wrapper.
-  # GCC 15 has no `-fuse-ld=wild` (whitelist is bfd/gold/lld/mold);
-  # collect2 honours `-B` and looks for `ld` in `ld-prefix/`.
+  # `bin/` has unwrapped `wild` / `ld.wild` for PATH lookups (clang,
+  # meson, rustc). `ld` stays out of `bin/` so PATH's nix ld-wrapper is
+  # not shadowed.
+  #
+  # `ld-prefix/ld` is the *wrapped* Wild: nix's ld-wrapper scans `-L`
+  # and emits DT_RUNPATH, then execs Wild. Unwrapped Wild here is what
+  # dropped libgmp from gcc's cc1 and libz from binutils `size`. GCC 15
+  # has no `-fuse-ld=wild`; collect2 honours `-B` and looks for `ld`.
   wild-ld = pkgsForWild.runCommand "wild-ld" { } ''
     mkdir -p $out/bin $out/ld-prefix
     ln -s ${lib.getExe wildUnwrapped} $out/bin/wild
     ln -s ${lib.getExe wildUnwrapped} $out/bin/ld.wild
-    ln -s ${lib.getExe wildUnwrapped} $out/ld-prefix/ld
-    ln -s ${lib.getExe wildUnwrapped} $out/ld-prefix/ld.wild
+    ln -s ${wildWrapped}/bin/${targetPrefix}ld $out/ld-prefix/ld
+    ln -s ${wildWrapped}/bin/${targetPrefix}ld.wild $out/ld-prefix/ld.wild
   '';
 }

@@ -10,34 +10,42 @@ let
   # `-B` makes collect2 search this directory for `ld` without replacing
   # PATH's nix ld-wrapper. Absolute store path, so this is also the
   # build-time reference that keeps wild-ld alive.
+  #
+  # ld-prefix/ld is Wild behind nix's ld-wrapper, so `-L` becomes
+  # DT_RUNPATH (needed for gcc's cc1 / libgmp, binutils `size` / libz,
+  # and the rest of bootstrap).
   wildBflags = wildLd: " -B${wildLd}/ld-prefix";
 
   # Do not call `stdenv.override` on Cyrene: `hostPlatform.gcc.arch = znver5`
   # makes that reconstruct gcc with the stdenv we are defining.
-  # Patch `mkDerivation` instead so every package gets Wild on PATH and
-  # `-B…/ld-prefix`, without rebuilding the compiler.
+  # Patch `mkDerivation` instead so every package — gcc, binutils, glibc,
+  # the kernel, bootstrap stages — gets Wild without rebuilding the
+  # compiler just to swap `ld`.
   injectWild =
     wildLd: stdenv:
     let
       oldMk = stdenv.mkDerivation;
       addWild =
         args:
-        let
-          nbi = args.nativeBuildInputs or [ ];
-          already = builtins.elem wildLd nbi;
-          existing = toString (
-            (args.env or { }).NIX_CFLAGS_LINK or (args.NIX_CFLAGS_LINK or "")
-          );
-        in
-        # Drop a top-level NIX_CFLAGS_LINK so it cannot overlap `env`
-        # (stdenv rejects that when structuredAttrs is on).
-        (removeAttrs args [ "NIX_CFLAGS_LINK" ])
-        // {
-          nativeBuildInputs = if already then nbi else nbi ++ [ wildLd ];
-          env = (args.env or { }) // {
-            NIX_CFLAGS_LINK = if already then existing else existing + wildBflags wildLd;
+        if args.dontUseWildLinker or false then
+          args
+        else
+          let
+            nbi = args.nativeBuildInputs or [ ];
+            already = builtins.elem wildLd nbi;
+            existing = toString (
+              (args.env or { }).NIX_CFLAGS_LINK or (args.NIX_CFLAGS_LINK or "")
+            );
+          in
+          # Drop a top-level NIX_CFLAGS_LINK so it cannot overlap `env`
+          # (stdenv rejects that when structuredAttrs is on).
+          (removeAttrs args [ "NIX_CFLAGS_LINK" ])
+          // {
+            nativeBuildInputs = if already then nbi else nbi ++ [ wildLd ];
+            env = (args.env or { }) // {
+              NIX_CFLAGS_LINK = if already then existing else existing + wildBflags wildLd;
+            };
           };
-        };
     in
     stdenv
     // {
