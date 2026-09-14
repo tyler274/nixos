@@ -86,12 +86,19 @@ in
     '';
   };
 
-  # Unwrapped `ld.wild` on PATH for stdenv mkDerivation injection. The
-  # full bintools wrap above cannot go in every nativeBuildInputs: it
-  # carries a libc and loops Cyrene's bintools-wrapper.
+  # Unwrapped Wild for stdenv mkDerivation injection. The full bintools
+  # wrap above cannot go in every nativeBuildInputs: it carries a libc
+  # and loops Cyrene's bintools-wrapper.
+  #
+  # `bin/` has `wild` / `ld.wild` for PATH lookups (clang, meson, rustc).
+  # `ld` stays out of `bin/` so we do not shadow the nix ld-wrapper.
+  # GCC 15 has no `-fuse-ld=wild` (whitelist is bfd/gold/lld/mold);
+  # collect2 honours `-B` and looks for `ld` in `ld-prefix/`.
   wild-ld = pkgsForWild.runCommand "wild-ld" { } ''
-    mkdir -p $out/bin
+    mkdir -p $out/bin $out/ld-prefix
     ln -s ${lib.getExe wildUnwrapped} $out/bin/wild
     ln -s ${lib.getExe wildUnwrapped} $out/bin/ld.wild
+    ln -s ${lib.getExe wildUnwrapped} $out/ld-prefix/ld
+    ln -s ${lib.getExe wildUnwrapped} $out/ld-prefix/ld.wild
   '';
 }

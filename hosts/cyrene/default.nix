@@ -206,11 +206,14 @@
     ];
     home.stateVersion = "25.11";
 
-    # Interactive Meson/CMake linker. System packages use Wild via
-    # useWildLinker (modules/nixos/wild.nix); other hosts keep CC_LD=mold.
+    # Interactive Meson/CMake linker. GCC 15 rejects `-fuse-ld=wild`, so
+    # do not set CC_LD=wild (Meson would pass that flag). Empty CC_LD
+    # leaves collect2 in charge; NIX_CFLAGS_LINK `-B` points it at Wild.
+    # System packages use the same `-B` via modules/nixos/wild.nix.
     home.sessionVariables = {
-      CC_LD = lib.mkForce "wild";
-      CXX_LD = lib.mkForce "wild";
+      CC_LD = lib.mkForce "";
+      CXX_LD = lib.mkForce "";
+      NIX_CFLAGS_LINK = "-B${pkgs.wild-ld}/ld-prefix";
     };
 
     home.packages = with pkgs; [

@@ -6,22 +6,36 @@
 }:
 
 let
+  # GCC 15 rejects `-fuse-ld=wild` (only bfd/gold/lld/mold are named).
+  # `-B` makes collect2 search this directory for `ld` without replacing
+  # PATH's nix ld-wrapper. Absolute store path, so this is also the
+  # build-time reference that keeps wild-ld alive.
+  wildBflags = wildLd: " -B${wildLd}/ld-prefix";
+
   # Do not call `stdenv.override` on Cyrene: `hostPlatform.gcc.arch = znver5`
   # makes that reconstruct gcc with the stdenv we are defining.
   # Patch `mkDerivation` instead so every package gets Wild on PATH and
-  # `-fuse-ld=wild`, without rebuilding the compiler.
+  # `-B…/ld-prefix`, without rebuilding the compiler.
   injectWild =
     wildLd: stdenv:
     let
       oldMk = stdenv.mkDerivation;
       addWild =
         args:
-        args
+        let
+          nbi = args.nativeBuildInputs or [ ];
+          already = builtins.elem wildLd nbi;
+          existing = toString (
+            (args.env or { }).NIX_CFLAGS_LINK or (args.NIX_CFLAGS_LINK or "")
+          );
+        in
+        # Drop a top-level NIX_CFLAGS_LINK so it cannot overlap `env`
+        # (stdenv rejects that when structuredAttrs is on).
+        (removeAttrs args [ "NIX_CFLAGS_LINK" ])
         // {
-          nativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ [ wildLd ];
+          nativeBuildInputs = if already then nbi else nbi ++ [ wildLd ];
           env = (args.env or { }) // {
-            NIX_CFLAGS_LINK =
-              toString ((args.env or { }).NIX_CFLAGS_LINK or (args.NIX_CFLAGS_LINK or "")) + " -fuse-ld=wild";
+            NIX_CFLAGS_LINK = if already then existing else existing + wildBflags wildLd;
           };
         };
     in
@@ -50,7 +64,7 @@ in
     ))
     # Same ccache.packageNames hook mold.nix used. Cyrene's list is
     # commented out, so this is currently a no-op; keep it so a future
-    # packageNames entry gets `-fuse-ld=wild` as well as the stdenv swap.
+    # packageNames entry gets `-B` as well as the stdenv swap.
     (
       final: prev:
       let
@@ -61,8 +75,8 @@ in
         withWild =
           pkg:
           pkg.overrideAttrs (old: {
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.wild-ld or prev.wild ];
-            NIX_CFLAGS_LINK = toString (old.NIX_CFLAGS_LINK or "") + " -fuse-ld=wild";
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.wild-ld ];
+            NIX_CFLAGS_LINK = toString (old.NIX_CFLAGS_LINK or "") + wildBflags final.wild-ld;
           });
       in
       builtins.listToAttrs (
