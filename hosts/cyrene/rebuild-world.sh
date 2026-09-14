@@ -2,7 +2,11 @@
 # Cyrene from-source znver5 world-rebuild - run from /etc/nixos (or anywhere,
 # via a symlink/alias) on Cyrene itself. Wraps `nixos-rebuild boot` with the
 # flags this rebuild campaign needs; see hosts/cyrene/default.nix for why
-# each one is set the way it is:
+# each one is set the way it is.
+#
+# stdenv uses the local Wild linker (modules/nixos/wild.nix) and glibc
+# malloc is the Rust mimalloc rewrite (/etc/ld-nix.so.preload). Changing
+# either invalidates the world the same way gcc.arch = znver5 does.
 #
 #   extra-system-features gccarch-znver5   opt into -march=znver5 builds
 #                                           (declared in default.nix's

@@ -56,6 +56,15 @@
       url = "git+file:///home/luluco/code/mimalloc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Local Wild linker. git+file (not path:) so gitignored `target/` is
+    # not copied into the Nix store. overlays/wild.nix builds it with
+    # crane from Wild's own flake.lock against prev.stdenv; do not use
+    # overlays.default (that overlay takes `pkgs = final` and would
+    # recurse once Cyrene swaps stdenv's linker).
+    wild = {
+      url = "git+file:///home/luluco/code/wild";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -116,6 +125,10 @@
       # mkAfter so this wraps the packages ccache/znver5 overlays produce.
       allocatorExclusionOverlay = import ./overlays/allocator-exclusions.nix;
 
+      # Local Wild + rewrite mimalloc, built against prev.stdenv. Cyrene
+      # then swaps stdenv's linker in modules/nixos/wild.nix.
+      wildOverlay = import ./overlays/wild.nix inputs;
+
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
       # from the 6.7 branch. KF6 (6.26) and KDE Gear (26.04) are unchanged, so
       # only the Plasma set rebuilds. This is the real fix for the KWin DRM
@@ -152,6 +165,10 @@
                   # with the Rust rewrite. common.nix still sets
                   # memoryAllocator.provider = "mimalloc" and secureBuild.
                   inputs.mimalloc-rs.overlays.default
+                  # After mimalloc-rs. Builds local Wild in a nested
+                  # nixpkgs (see overlays/wild.nix). Does not change
+                  # stdenv (see modules/nixos/wild.nix).
+                  wildOverlay
                 ];
               }
             )

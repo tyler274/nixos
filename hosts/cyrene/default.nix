@@ -11,7 +11,7 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop-common.nix
     ../../modules/nixos/amd.nix
-    ../../modules/nixos/mold.nix
+    ../../modules/nixos/wild.nix
     # Superseded by the Plasma 6.7 overlay (flake.nix): 6.7 rewrote the DRM
     # color pipeline, so the manual KWin source patching is no longer needed
     # and its 6.6-era patch would fail to apply against 6.7 sources.
@@ -68,6 +68,8 @@
   # -march=znver5. Requires the gccarch-znver5 system-feature (common.nix) so
   # the daemon accepts derivations marked with that requirement. Note: the
   # resulting system will not boot on pre-Zen-5 (no AVX-512/newer ISA) CPUs.
+  # modules/nixos/wild.nix then replaces this stdenv's linker with local Wild
+  # (another world-rebuild; same campaign as znver5).
   nixpkgs.hostPlatform = {
     system = "x86_64-linux";
     gcc.arch = "znver5";
@@ -196,13 +198,20 @@
     mkdir -p "$HOME/.local/state/nix/profiles"
   '';
 
-  home-manager.users.luluco = { ... }: {
+  home-manager.users.luluco = { lib, ... }: {
     imports = [
       ../../modules/home/common.nix
       ../../modules/home/desktop.nix
       ../../modules/home/plasma.nix
     ];
     home.stateVersion = "25.11";
+
+    # Interactive Meson/CMake linker. System packages use Wild via
+    # useWildLinker (modules/nixos/wild.nix); other hosts keep CC_LD=mold.
+    home.sessionVariables = {
+      CC_LD = lib.mkForce "wild";
+      CXX_LD = lib.mkForce "wild";
+    };
 
     home.packages = with pkgs; [
       nvtopPackages.nvidia

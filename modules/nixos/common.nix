@@ -65,6 +65,14 @@
   # and Electron, while graphene survived the same smoke tests.
   environment.memoryAllocator.provider = "mimalloc";
 
+  # NixOS writes only libmimalloc.so. Also preload the secure SONAME so
+  # binaries that DT_NEEDED libmimalloc-secure.so.3 (nixpkgs mold, etc.)
+  # bind the Rust rewrite instead of C mimalloc via RUNPATH.
+  environment.etc."ld-nix.so.preload".text = lib.mkForce ''
+    ${pkgs.mimalloc}/lib/libmimalloc.so
+    ${pkgs.mimalloc}/lib/libmimalloc-secure.so.3
+  '';
+
   # Mount-namespace helper used by the Electron and Mullvad wraps
   # (allocator-exclusions.nix). Needs CAP_SYS_ADMIN so it can unshare a
   # mount ns without a user ns - bwrap's user ns makes /run/mullvad-vpn

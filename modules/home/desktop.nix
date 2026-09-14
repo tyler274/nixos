@@ -45,6 +45,7 @@
     pkg-config
     freetype
     mold
+    wild
     rustup
     dotnet-sdk_10
 
