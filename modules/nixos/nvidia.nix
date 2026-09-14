@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   nixpkgs.config.cudaSupport = true;
 
@@ -13,6 +13,10 @@
     graphics = {
       enable = true;
       enable32Bit = true;
+      # Khronos loader is not part of nvidia-x11 / Mesa's `/run/opengl-driver`
+      # tree. cargo/iced `dlopen("libvulkan.so.1")` needs it next to
+      # `libGLX_nvidia.so.0` so `nvidia_icd.json` can be loaded.
+      extraPackages = [ pkgs.vulkan-loader ];
     };
 
     nvidia = {

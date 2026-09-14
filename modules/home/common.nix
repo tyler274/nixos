@@ -32,6 +32,7 @@
     gh
     fastfetch
     ripgrep
+    vulkan-loader
 
     # Nix language tooling, available on every host so the Cursor/VS Code
     # Nix IDE extension (see .vscode/settings.json) can launch the LSP and
