@@ -43,4 +43,4 @@ sudo nixos-rebuild boot --flake /etc/nixos#Cyrene \
   --option max-jobs 8 --option cores 16 \
   --option substituters https://cache.nixos.org \
   --option narinfo-cache-negative-ttl 86400 \
-  --log-format internal-json -v "$@" |& nom --json
+  --log-format internal-json -v "$@" |& sudo nom --json
