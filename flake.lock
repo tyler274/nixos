@@ -434,11 +434,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789397783,
-        "narHash": "sha256-bEpX3Y36MSKOoudZMWwlLhHoWjyyrNys7fZGTpPf+1g=",
+        "lastModified": 1789443969,
+        "narHash": "sha256-w7ht5QsLyfVUR/udqzQYzB3BrB3y8Y8iUuMcqOdC3tA=",
         "ref": "refs/heads/kernel-lto-incremental",
-        "rev": "993bd08508e40df3e51384d117a6f5d9d326bbcc",
-        "revCount": 2639,
+        "rev": "78f3f64d7926540c4e603f425091aaffb30ab0a5",
+        "revCount": 2640,
         "type": "git",
         "url": "file:///home/luluco/code/wild"
       },
