@@ -171,11 +171,11 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1788828018,
-        "narHash": "sha256-PIrb/tAhKfNFQvIdn2j/2b5km7O1HZqXmmFZtFHPenI=",
+        "lastModified": 1789467611,
+        "narHash": "sha256-F5inj/BAtF5Jrev+tmPwR+X2VCoVTdjgHgIuf1LHZzY=",
         "ref": "refs/heads/rust3write",
-        "rev": "a0d6697b878fd6fcec4c4a6684f6c57a499d343f",
-        "revCount": 4453,
+        "rev": "dfb2df149a391c48b7e3fdc8f065157ebe2011e3",
+        "revCount": 4579,
         "type": "git",
         "url": "file:///home/luluco/code/mimalloc"
       },
@@ -434,11 +434,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789465539,
-        "narHash": "sha256-QGJLsiQzSm7i+vG/4nYbwU4ZA8Q2OlwgkXPY4nY9QaE=",
+        "lastModified": 1789472082,
+        "narHash": "sha256-G1AzcbZBnAfoJa35N4oCRaeqhIW1GJrUbRYuJt6S3HU=",
         "ref": "refs/heads/kernel-lto-incremental",
-        "rev": "d245ca8bb0275550f835558977532c93e2982078",
-        "revCount": 2644,
+        "rev": "dfd967e83d10995fea9caa7df033a2414a71a79f",
+        "revCount": 2645,
         "type": "git",
         "url": "file:///home/luluco/code/wild"
       },
