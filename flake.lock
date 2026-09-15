@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789482910,
-        "narHash": "sha256-pGwcX9V4lolXMrxAB0/Mx0wFjA2pymeR/n1JlC+ULZ8=",
+        "lastModified": 1789488665,
+        "narHash": "sha256-tVxfPTiN2wOrZlQ/2w5g4ml3m4HYnEZEK8hMHDG/r/4=",
         "owner": "tyler274",
         "repo": "ElyLD",
-        "rev": "3894fcb513f027563801060b271b74688d139c54",
+        "rev": "16adc07650080d99ba32836e340481864d63833a",
         "type": "github"
       },
       "original": {
@@ -81,11 +81,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1789483166,
-        "narHash": "sha256-NbPfVb/XLfUxpojIr+K6qZtaf28zjaR0TuNyYQXO0T0=",
+        "lastModified": 1789496434,
+        "narHash": "sha256-6FUOfpu79g/dxPt3LPyJt+zjsDQqpT0s9ixqqU2wX0U=",
         "owner": "tyler274",
         "repo": "ElyMalloc",
-        "rev": "20a3fdb023908590db8723a0790862c9ddaa3a41",
+        "rev": "1eed1453a098fa69c1766447fbba9b1e15c1897e",
         "type": "github"
       },
       "original": {
@@ -307,10 +307,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1789479732,
-        "narHash": "sha256-3CwEAd93SA3KTnQGLB/SnXmDUZ58+xY+QY4Ira3l0Cw=",
+        "lastModified": 1789495847,
+        "narHash": "sha256-vpwqknwfdDCUq6Rjy+sCscMmlwf3EeLw1bo5GWLaFmQ=",
         "ref": "staging",
-        "rev": "44778ad15e951a5e98ae126373e75681518b213c",
+        "rev": "14d9dae8f60e1105f76c383fff0af2fd5e18a91e",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
