@@ -52,6 +52,26 @@
         "type": "github"
       }
     },
+    "elymalloc": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay_2"
+      },
+      "locked": {
+        "dirtyRev": "0d0887974240771cd17698bb4d492287e9c50c6d-dirty",
+        "dirtyShortRev": "0d08879-dirty",
+        "lastModified": 1789481389,
+        "narHash": "sha256-NbPfVb/XLfUxpojIr+K6qZtaf28zjaR0TuNyYQXO0T0=",
+        "type": "git",
+        "url": "file:///home/luluco/code/mimalloc"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/luluco/code/mimalloc"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -146,7 +166,7 @@
           "nixpkgs"
         ],
         "pre-commit": "pre-commit",
-        "rust-overlay": "rust-overlay_2"
+        "rust-overlay": "rust-overlay_3"
       },
       "locked": {
         "lastModified": 1788769372,
@@ -161,27 +181,6 @@
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/lanzaboote.git"
-      }
-    },
-    "mimalloc-rs": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay_3"
-      },
-      "locked": {
-        "lastModified": 1789467611,
-        "narHash": "sha256-F5inj/BAtF5Jrev+tmPwR+X2VCoVTdjgHgIuf1LHZzY=",
-        "ref": "refs/heads/rust3write",
-        "rev": "dfb2df149a391c48b7e3fdc8f065157ebe2011e3",
-        "revCount": 4579,
-        "type": "git",
-        "url": "file:///home/luluco/code/mimalloc"
-      },
-      "original": {
-        "type": "git",
-        "url": "file:///home/luluco/code/mimalloc"
       }
     },
     "mini-diarium": {
@@ -349,10 +348,10 @@
     "root": {
       "inputs": {
         "aagl": "aagl",
+        "elymalloc": "elymalloc",
         "home-manager": "home-manager",
         "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
-        "mimalloc-rs": "mimalloc-rs",
         "mini-diarium": "mini-diarium",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
@@ -387,6 +386,27 @@
     "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
+          "elymalloc",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787993548,
+        "narHash": "sha256-+IAEnmmx5YIhUWo0lp15jLLHchnXo5yKgWsi6C6Cf+0=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "996e9b0b019a4a9eb9e9a5641aefa06d801b5895",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_3": {
+      "inputs": {
+        "nixpkgs": [
           "lanzaboote",
           "nixpkgs"
         ]
@@ -405,27 +425,6 @@
         "type": "github"
       }
     },
-    "rust-overlay_3": {
-      "inputs": {
-        "nixpkgs": [
-          "mimalloc-rs",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1787993548,
-        "narHash": "sha256-+IAEnmmx5YIhUWo0lp15jLLHchnXo5yKgWsi6C6Cf+0=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "996e9b0b019a4a9eb9e9a5641aefa06d801b5895",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
     "wild": {
       "inputs": {
         "crane": "crane_2",
@@ -434,17 +433,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1789472082,
-        "narHash": "sha256-G1AzcbZBnAfoJa35N4oCRaeqhIW1GJrUbRYuJt6S3HU=",
-        "ref": "refs/heads/kernel-lto-incremental",
-        "rev": "dfd967e83d10995fea9caa7df033a2414a71a79f",
-        "revCount": 2645,
-        "type": "git",
-        "url": "file:///home/luluco/code/wild"
+        "lastModified": 1789479013,
+        "narHash": "sha256-bDJg530WFsWTIukGoR6EWnNT8V1vUk+oc/nEOoLkufE=",
+        "owner": "tyler274",
+        "repo": "ElyLD",
+        "rev": "e7462fdb117b45203dd536291997b61359deec20",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/luluco/code/wild"
+        "owner": "tyler274",
+        "repo": "ElyLD",
+        "type": "github"
       }
     }
   },

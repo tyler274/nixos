@@ -49,7 +49,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 
 The flake exposes these `nixosConfigurations` (the attribute name is the deploy target):
 
-- **Cyrene** (`./hosts/cyrene`) - AMD Zen 5 (znver5), NVIDIA RTX 4090 (latest driver, CUDA), encrypted ZFS rpool with lanzaboote Secure Boot, sanoid + syncoid to rsync.net and a local-backup pool, NUT/UPS, Postgres, Jellyfin, full Plasma 6 desktop. stdenv linker is local Wild; glibc malloc is the Rust mimalloc rewrite. Adds the `lanzaboote` module.
+- **Cyrene** (`./hosts/cyrene`) - AMD Zen 5 (znver5), NVIDIA RTX 4090 (latest driver, CUDA), encrypted ZFS rpool with lanzaboote Secure Boot, sanoid + syncoid to rsync.net and a local-backup pool, NUT/UPS, Postgres, Jellyfin, full Plasma 6 desktop. stdenv linker is local Wild; glibc malloc is ElyMalloc (`environment.memoryAllocator.provider = "elymalloc"`). Adds the `lanzaboote` module.
 - **CyreneMinimal** (`./hosts/cyrene/minimal.nix`) - same hardware, stripped bootstrap config (SSH + ZFS home only). Install this first, boot in, then `nixos-rebuild switch` to the full `Cyrene`.
 - **eula** (`./hosts/wsl`) - NixOS-WSL on Windows. Carries the bash wrapper + nix-ld + `wsl.{wrapBinSh,extraBin}` block that Cursor IDE's remote server depends on, plus `cuda.nix` for GPU passthrough. No desktop, no system services.
 - **Laptop** (`./hosts/laptop`) - placeholder. Imports the desktop stack but is gated behind a real `hardware-configuration.nix` before it can build. Replace `networking.hostName` and the hardware config after first install.
@@ -80,7 +80,7 @@ nrs   # = sudo nixos-rebuild switch --flake ~/code/nixos#$(hostname)
 nix flake update --flake ~/code/nixos
 ```
 
-The lockfile is committed. The flake's inputs are `nixpkgs` (`nixos-unstable`, the primary tree), `nixpkgs-stable` (`nixos-26.05`) and `nixpkgs-staging` (both exposed to packages as `stable-pkgs` / `staging-pkgs` via an overlay), `nixos-hardware`, `nixos-wsl`, `home-manager` (`master`), `lanzaboote`, `aagl` (anime game launchers), `kwin-src`, `plasma-manager`, `mimalloc-rs` (`git+file:///home/luluco/code/mimalloc`), and `wild` (`git+file:///home/luluco/code/wild`).
+The lockfile is committed. The flake's inputs are `nixpkgs` (`nixos-unstable`, the primary tree), `nixpkgs-stable` (`nixos-26.05`) and `nixpkgs-staging` (both exposed to packages as `stable-pkgs` / `staging-pkgs` via an overlay), `nixos-hardware`, `nixos-wsl`, `home-manager` (`master`), `lanzaboote`, `aagl` (anime game launchers), `kwin-src`, `plasma-manager`, `elymalloc` (`git+file:///home/luluco/code/mimalloc`), and `wild` (`git+file:///home/luluco/code/wild`).
 
 ## Add a new host
 

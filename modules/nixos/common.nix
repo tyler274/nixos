@@ -10,6 +10,7 @@
   imports = [
     ./hardening.nix
     ./dns-over-tls.nix
+    inputs.elymalloc.nixosModules.malloc
   ];
 
   nix.settings = {
@@ -61,17 +62,10 @@
   # Chromium, and Electron apps are opted out in overlays/allocator-exclusions.nix
   # (and firejail --blacklist of that path in desktop-common.nix). Switching
   # this to graphene-hardened / graphene-hardened-light does not need more
-  # package wraps; mimalloc is the one that currently SIGSEGV/SIGTRAPs Edge
+  # package wraps; C mimalloc is the one that currently SIGSEGV/SIGTRAPs Edge
   # and Electron, while graphene survived the same smoke tests.
-  environment.memoryAllocator.provider = "mimalloc";
-
-  # NixOS writes only libmimalloc.so. Also preload the secure SONAME so
-  # binaries that DT_NEEDED libmimalloc-secure.so.3 (nixpkgs mold, etc.)
-  # bind the Rust rewrite instead of C mimalloc via RUNPATH.
-  environment.etc."ld-nix.so.preload".text = lib.mkForce ''
-    ${pkgs.mimalloc}/lib/libmimalloc.so
-    ${pkgs.mimalloc}/lib/libmimalloc-secure.so.3
-  '';
+  # `"elymalloc"` is ElyMalloc (NixOS enum values are lowercase, like jemalloc).
+  environment.memoryAllocator.provider = "elymalloc";
 
   # Mount-namespace helper used by the Electron and Mullvad wraps
   # (allocator-exclusions.nix). Needs CAP_SYS_ADMIN so it can unshare a
@@ -83,18 +77,6 @@
     group = "root";
     capabilities = "cap_sys_admin+ep";
   };
-
-  # Enable mimalloc's hardened build: randomises heap segment placement,
-  # adds guard pages, and validates free-list integrity. Trades a small
-  # amount of throughput for meaningful use-after-free/heap-overflow
-  # detection. `pkgs.mimalloc` is the Rust rewrite (flake overlay); mitigations
-  # are always on there, and `secureBuild` is accepted so this override
-  # still evaluates. See: https://github.com/microsoft/mimalloc#secure-mode
-  nixpkgs.overlays = [
-    (final: prev: {
-      mimalloc = prev.mimalloc.override { secureBuild = true; };
-    })
-  ];
 
   programs = {
     nix-ld.enable = true;

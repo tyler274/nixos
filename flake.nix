@@ -50,19 +50,20 @@
       url = "github:tyler274/mini-diarium/nix-flake-packaging";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Rust mimalloc rewrite: replaces pkgs.mimalloc so
-    # environment.memoryAllocator.provider = "mimalloc" preloads the rewrite.
-    mimalloc-rs = {
+    # ElyMalloc: pkgs.elymalloc + malloc.nix so
+    # environment.memoryAllocator.provider = "elymalloc". C pkgs.mimalloc
+    # stays Microsoft mimalloc. git+file while iterating; github:tyler274/ElyMalloc
+    # for a published pin.
+    elymalloc = {
       url = "git+file:///home/luluco/code/mimalloc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Local Wild linker. git+file (not path:) so gitignored `target/` is
-    # not copied into the Nix store. overlays/wild.nix builds it with
-    # crane from Wild's own flake.lock against prev.stdenv; do not use
-    # overlays.default (that overlay takes `pkgs = final` and would
-    # recurse once Cyrene swaps stdenv's linker).
+    # ElyLD linker. overlays/wild.nix builds it with crane from ElyLD's
+    # own flake.lock against prev.stdenv; do not use overlays.default
+    # (that overlay takes `pkgs = final` and would recurse once Cyrene
+    # swaps stdenv's linker).
     wild = {
-      url = "git+file:///home/luluco/code/wild";
+      url = "github:tyler274/ElyLD";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -125,8 +126,8 @@
       # mkAfter so this wraps the packages ccache/znver5 overlays produce.
       allocatorExclusionOverlay = import ./overlays/allocator-exclusions.nix;
 
-      # Local Wild + rewrite mimalloc, built against prev.stdenv. Cyrene
-      # then swaps stdenv's linker in modules/nixos/wild.nix.
+      # ElyLD + rewrite mimalloc, built against prev.stdenv. Cyrene then
+      # swaps stdenv's linker in modules/nixos/wild.nix.
       wildOverlay = import ./overlays/wild.nix inputs;
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
@@ -161,11 +162,11 @@
                   znver5FixOverlay
                   nodejsFixOverlay
                   nixFixOverlay
-                  # Replaces pkgs.mimalloc (and statically links mold-unwrapped)
-                  # with the Rust rewrite. common.nix still sets
-                  # memoryAllocator.provider = "mimalloc" and secureBuild.
-                  inputs.mimalloc-rs.overlays.default
-                  # After mimalloc-rs. Builds local Wild in a nested
+                  # Adds pkgs.elymalloc and statically links mold-unwrapped.
+                  # common.nix sets memoryAllocator.provider = "elymalloc"
+                  # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).
+                  inputs.elymalloc.overlays.default
+                  # After elymalloc. Builds local ElyLD in a nested
                   # nixpkgs (see overlays/wild.nix). Does not change
                   # stdenv (see modules/nixos/wild.nix).
                   wildOverlay

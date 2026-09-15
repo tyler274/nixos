@@ -56,7 +56,7 @@ let
           versionCheckProgramArg = "--version";
           meta = {
             description = "A very fast linker for Linux";
-            homepage = "https://github.com/tyler274/wild";
+            homepage = "https://github.com/tyler274/ElyLD";
             license = [
               lib.licenses.asl20
               lib.licenses.mit
