@@ -27,24 +27,18 @@ let
       oldMk = stdenv.mkDerivation;
       addWild =
         args:
-        if args.dontUseWildLinker or false then
+        if args.dontUseWildLinker or args.dontUseElyldLinker or false then
           args
         else
           let
             nbi = args.nativeBuildInputs or [ ];
-            already = builtins.elem wildLd nbi;
-            existing = toString (
-              (args.env or { }).NIX_CFLAGS_LINK or (args.NIX_CFLAGS_LINK or "")
-            );
           in
-          # Drop a top-level NIX_CFLAGS_LINK so it cannot overlap `env`
-          # (stdenv rejects that when structuredAttrs is on).
-          (removeAttrs args [ "NIX_CFLAGS_LINK" ])
+          # Always append. `builtins.elem wildLd nbi` compares derivations by
+          # outPath and loops LLVM 21 (lld → llvm → nativeBuildInputs → elem).
+          # `elyld-ld`'s setup hook exports `NIX_CFLAGS_LINK=-B…/ld-prefix`.
+          args
           // {
-            nativeBuildInputs = if already then nbi else nbi ++ [ wildLd ];
-            env = (args.env or { }) // {
-              NIX_CFLAGS_LINK = if already then existing else existing + wildBflags wildLd;
-            };
+            nativeBuildInputs = nbi ++ [ wildLd ];
           };
     in
     stdenv

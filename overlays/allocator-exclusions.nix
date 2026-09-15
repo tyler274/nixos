@@ -126,15 +126,21 @@ let
 
   # Preserve callPackage/wrapFirefox surface so later overlays and HM
   # (`package.override`, chromium.sandbox, firefox-bin.unwrapped) keep working
-  # on top of the symlinkJoin.
+  # on top of the symlinkJoin. `args: …` has empty `functionArgs`; HM's
+  # firefox module only reconfigures when `functionArgs` contains `cfg`.
   keepInterface =
     wrapFn: orig: wrapped:
+    let
+      rewrap = newPkg: keepInterface wrapFn newPkg (wrapFn newPkg);
+    in
     wrapped
     // lib.optionalAttrs (orig ? override) {
-      override = args: wrapFn (orig.override args);
+      override = lib.setFunctionArgs (args: rewrap (orig.override args)) (
+        lib.functionArgs orig.override
+      );
     }
     // lib.optionalAttrs (orig ? overrideAttrs) {
-      overrideAttrs = f: wrapFn (orig.overrideAttrs f);
+      overrideAttrs = f: rewrap (orig.overrideAttrs f);
     }
     // lib.optionalAttrs (orig ? sandbox) { inherit (orig) sandbox; }
     // lib.optionalAttrs (orig ? browser) { inherit (orig) browser; }

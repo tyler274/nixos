@@ -96,12 +96,16 @@ let
   # and emits DT_RUNPATH, then execs ElyLD. Unwrapped ElyLD here is what
   # dropped libgmp from gcc's cc1 and libz from binutils `size`. GCC 15
   # has no `-fuse-ld=elyld`; collect2 honours `-B` and looks for `ld`.
+  # Setup hook, not `env.NIX_CFLAGS_LINK` on every mkDerivation: LLVM 21's
+  # lld/llvm-binutils use finalAttrs, and copying NIX_CFLAGS_LINK onto the
+  # drv loops outPath (Home Manager hits this via Firefox native messaging).
   elyldLd = pkgsForWild.runCommand "elyld-ld" { } ''
-    mkdir -p $out/bin $out/ld-prefix
+    mkdir -p $out/bin $out/ld-prefix $out/nix-support
     ln -s ${lib.getExe elyldUnwrapped} $out/bin/elyld
     ln -s ${lib.getExe elyldUnwrapped} $out/bin/ld.elyld
     ln -s ${elyldWrapped}/bin/${targetPrefix}ld $out/ld-prefix/ld
     ln -s ${elyldWrapped}/bin/${targetPrefix}ld.elyld $out/ld-prefix/ld.elyld
+    echo 'export NIX_CFLAGS_LINK="''${NIX_CFLAGS_LINK-} -B'"$out"'/ld-prefix"' > $out/nix-support/setup-hook
   '';
 in
 {
