@@ -1,5 +1,5 @@
-# Local ElyLD linker, built in a *nested* nixpkgs so Cyrene can swap stdenv's
-# linker without: stdenv -> elyld -> rustc/mimalloc -> stdenv.
+# ElyLD from github:tyler274/ElyLD, built in a *nested* nixpkgs so Cyrene
+# can swap stdenv's linker without: stdenv -> elyld -> rustc/mimalloc -> stdenv.
 #
 # Plain x86_64-linux, not Cyrene's znver5 hostPlatform: a nested znver5
 # stdenv would rebuild gcc/glibc from source (cache.nixos.org has no
@@ -14,9 +14,9 @@
 # (the rewrite); in the Nix sandbox there is no preload and glibc malloc
 # is used.
 #
-# Do not use `inputs.wild.overlays.default`: that overlay takes
-# `pkgs = final` (the stdenv cycle) and its fileset is `gitTracked`
-# (fails on a flake input with no `.git`).
+# Do not use `inputs.elyld.overlays.default` on Cyrene: that overlay
+# takes `pkgs = final` (znver5 stdenv cycle) and would rebuild ElyLD
+# with gcc.arch. This nested import stays on plain x86_64-linux.
 inputs: final: prev:
 let
   inherit (prev) lib;
@@ -26,14 +26,14 @@ let
     system = prev.stdenv.hostPlatform.system;
   };
 
-  craneLib = import inputs.wild.inputs.crane { pkgs = pkgsForWild; };
+  craneLib = import inputs.elyld.inputs.crane { pkgs = pkgsForWild; };
 
-  cargoToml = builtins.fromTOML (builtins.readFile "${inputs.wild}/Cargo.toml");
+  cargoToml = builtins.fromTOML (builtins.readFile "${inputs.elyld}/Cargo.toml");
 
   commonArgs = {
     pname = "elyld-unwrapped";
     inherit (cargoToml.workspace.package) version;
-    src = inputs.wild;
+    src = inputs.elyld;
     strictDeps = true;
     cargoExtraArgs = "--offline --no-default-features --features fork,plugins,zstd";
     nativeBuildInputs = [ pkgsForWild.pkg-config ];

@@ -4,7 +4,7 @@
 # flags this rebuild campaign needs; see hosts/cyrene/default.nix for why
 # each one is set the way it is.
 #
-# stdenv uses the local Wild linker (modules/nixos/wild.nix) and glibc
+# stdenv uses ElyLD from github:tyler274/ElyLD (modules/nixos/wild.nix) and glibc
 # malloc is the Rust mimalloc rewrite (/etc/ld-nix.so.preload). Changing
 # either invalidates the world the same way gcc.arch = znver5 does.
 #

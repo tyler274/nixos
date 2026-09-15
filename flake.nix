@@ -52,17 +52,18 @@
     };
     # ElyMalloc: pkgs.elymalloc + malloc.nix so
     # environment.memoryAllocator.provider = "elymalloc". C pkgs.mimalloc
-    # stays Microsoft mimalloc. git+file while iterating; github:tyler274/ElyMalloc
-    # for a published pin.
+    # stays Microsoft mimalloc.
     elymalloc = {
-      url = "git+file:///home/luluco/code/mimalloc";
+      url = "github:tyler274/ElyMalloc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # ElyLD linker. overlays/wild.nix builds it with crane from ElyLD's
-    # own flake.lock against prev.stdenv; do not use overlays.default
-    # (that overlay takes `pkgs = final` and would recurse once Cyrene
-    # swaps stdenv's linker).
-    wild = {
+    # ElyLD linker from github:tyler274/ElyLD. overlays/wild.nix builds it
+    # in a nested nixpkgs (plain x86_64, no mimalloc crate) so Cyrene can
+    # swap stdenv's linker without stdenv → elyld → rustc → stdenv, and
+    # without a znver5 world rebuild of the linker. Do not use
+    # overlays.default here: that overlay takes `pkgs = final` of the
+    # consumer and would pick up Cyrene's gcc.arch.
+    elyld = {
       url = "github:tyler274/ElyLD";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -126,8 +127,8 @@
       # mkAfter so this wraps the packages ccache/znver5 overlays produce.
       allocatorExclusionOverlay = import ./overlays/allocator-exclusions.nix;
 
-      # ElyLD + rewrite mimalloc, built against prev.stdenv. Cyrene then
-      # swaps stdenv's linker in modules/nixos/wild.nix.
+      # ElyLD + rewrite mimalloc, built against a nested nixpkgs. Cyrene
+      # then swaps stdenv's linker in modules/nixos/wild.nix.
       wildOverlay = import ./overlays/wild.nix inputs;
 
       # Plasma 6.7 (beta): replace the entire `kdePackages` scope with the one
@@ -166,7 +167,7 @@
                   # common.nix sets memoryAllocator.provider = "elymalloc"
                   # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).
                   inputs.elymalloc.overlays.default
-                  # After elymalloc. Builds local ElyLD in a nested
+                  # After elymalloc. Builds GitHub ElyLD in a nested
                   # nixpkgs (see overlays/wild.nix). Does not change
                   # stdenv (see modules/nixos/wild.nix).
                   wildOverlay

@@ -68,8 +68,8 @@
   # -march=znver5. Requires the gccarch-znver5 system-feature (common.nix) so
   # the daemon accepts derivations marked with that requirement. Note: the
   # resulting system will not boot on pre-Zen-5 (no AVX-512/newer ISA) CPUs.
-  # modules/nixos/wild.nix then replaces this stdenv's linker with local Wild
-  # (another world-rebuild; same campaign as znver5).
+  # modules/nixos/wild.nix then replaces this stdenv's linker with ElyLD
+  # from github:tyler274/ElyLD (another world-rebuild; same campaign as znver5).
   nixpkgs.hostPlatform = {
     system = "x86_64-linux";
     gcc.arch = "znver5";
