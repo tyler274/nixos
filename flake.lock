@@ -167,11 +167,11 @@
     "kwin-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1789474789,
-        "narHash": "sha256-mcsyWwnmiQ6lMhzpRt1FkJPYLWO0lKm95EhPSSfVL4E=",
+        "lastModified": 1789523537,
+        "narHash": "sha256-bUOl9NI1f0nzg0M4wdUt9Kb3BzT36kMqhxCFsf4IW6k=",
         "owner": "KDE",
         "repo": "kwin",
-        "rev": "015662b4cb5dc25b236fcafcfa1a6129c4c2eb8d",
+        "rev": "b6dfa4158d2683787a7868c3ee0c71f901075880",
         "type": "github"
       },
       "original": {
