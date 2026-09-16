@@ -14,10 +14,24 @@
 inputs: final: prev:
 let
   inherit (prev) lib;
-  elymallocCore = "${inputs.elymalloc}/rust/crates/elymalloc-core";
-  mallocRs = ./rustc-elymalloc-malloc.rs;
+  # This overlay is applied to every package set, including rustc's
+  # wasm32-wasip1 targetPackages. `overrideAttrs` on that rustc forces
+  # `configureFlags` → wasm clang-wrapper → wasilibc → wasm-tools →
+  # wasm rustc (Home Manager hits this via Firefox native-messaging-hosts).
+  # Only wrap the native Linux rustc Cyrene actually runs.
+  nativeLinux =
+    (prev.stdenv.buildPlatform.system or "") == (prev.stdenv.hostPlatform.system or "")
+    && (prev.stdenv.hostPlatform.system or "") == (prev.stdenv.targetPlatform.system or "")
+    && (prev.stdenv.hostPlatform.isLinux or false);
 in
-{
+if !nativeLinux then
+  { }
+else
+  let
+    elymallocCore = "${inputs.elymalloc}/rust/crates/elymalloc-core";
+    mallocRs = ./rustc-elymalloc-malloc.rs;
+  in
+  {
   rustc-unwrapped = prev.rustc-unwrapped.overrideAttrs (old: {
     configureFlags = (old.configureFlags or [ ]) ++ [ "--set=rust.jemalloc=false" ];
     postPatch =
