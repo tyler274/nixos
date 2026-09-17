@@ -175,11 +175,12 @@
           unwrapped = old.unwrapped.override { stdenv = final.ccacheStdenv; };
         });
 
-        firefox-unwrapped = prev.firefox-unwrapped.overrideAttrs (old: {
-          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
-          configureFlags = (old.configureFlags or [ ]) ++ [ "--with-ccache=ccache" ];
-          env = (old.env or { }) // ccacheEnv;
-        });
+        # firefox-unwrapped.overrideAttrs (even without `env`) still forces
+        # LLVM wasi-sysroot / wasm32 clang-wrapper outPath recursion.
+        # firefox-unwrapped = prev.firefox-unwrapped.overrideAttrs (old: {
+        #   nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.ccache ];
+        #   configureFlags = (old.configureFlags or [ ]) ++ [ "--with-ccache=ccache" ];
+        # });
 
         blender = ccacheCmakeBuild prev.blender;
 

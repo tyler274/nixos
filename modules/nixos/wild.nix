@@ -27,15 +27,27 @@ let
       oldMk = stdenv.mkDerivation;
       addWild =
         args:
-        if args.dontUseWildLinker or args.dontUseElyldLinker or false then
+        let
+          pname = args.pname or "";
+          name = args.name or "";
+          # Compiler / bintools wrappers are finalAttrs derivations. Their
+          # `env` / `bintools` close over the wrapper being defined; adding
+          # elyld-ld there loops outPath (wasm32 llvm-binutils-wrapper via
+          # firefox → wasi-sysroot). Wrappers are shell scripts and do not
+          # need ElyLD. gcc, binutils, glibc, kernel, bootstrap still get it.
+          isWrapper =
+            lib.hasInfix "wrapper" pname
+            || lib.hasInfix "wrapper" name
+            || (args ? isClang)
+            || (args ? isGNU)
+            || (args ? bintools && args ? libc);
+        in
+        if args.dontUseWildLinker or args.dontUseElyldLinker or false || isWrapper then
           args
         else
           let
             nbi = args.nativeBuildInputs or [ ];
           in
-          # Always append. `builtins.elem wildLd nbi` compares derivations by
-          # outPath and loops LLVM 21 (lld → llvm → nativeBuildInputs → elem).
-          # `elyld-ld`'s setup hook exports `NIX_CFLAGS_LINK=-B…/ld-prefix`.
           args
           // {
             nativeBuildInputs = nbi ++ [ wildLd ];
@@ -60,8 +72,7 @@ in
     # `prev.elyld-ld` is missing. `final.elyld-ld` is the fixpoint either way.
     (lib.mkAfter (
       final: prev: {
-        stdenv = injectWild final.elyld-ld prev.stdenv;
-        clangStdenv = injectWild final.elyld-ld prev.clangStdenv;
+        # Temporarily no stdenv wrap — testing whether injectWild is the NMH loop.
       }
     ))
     # Same ccache.packageNames hook mold.nix used. Cyrene's list is
