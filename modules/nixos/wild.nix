@@ -101,5 +101,7 @@ in
     )
   ];
 
-  environment.systemPackages = [ pkgs.elyld ];
+  # elyld-ld, not wrapBintoolsWith pkgs.elyld: the latter's bin/ld
+  # collides with gcc in home-manager-path (and would shadow PATH ld).
+  environment.systemPackages = [ pkgs.elyld-ld ];
 }

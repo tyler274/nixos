@@ -45,7 +45,11 @@
     pkg-config
     freetype
     mold
-    wild
+    # PATH-safe ElyLD (`elyld` / `ld.elyld`). `pkgs.wild` / `pkgs.elyld` is
+    # wrapBintoolsWith and ships `bin/ld`, which collides with gcc's `ld`
+    # in home-manager-path. Interactive `-B` is NIX_CFLAGS_LINK in
+    # hosts/cyrene/default.nix; collect2 finds ld-prefix/ld from there.
+    elyld-ld
     rustup
     dotnet-sdk_10
 
