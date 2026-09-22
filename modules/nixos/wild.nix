@@ -27,30 +27,17 @@ let
       oldMk = stdenv.mkDerivation;
       addWild =
         args:
-        let
-          pname = args.pname or "";
-          name = args.name or "";
-          # Compiler / bintools wrappers are finalAttrs derivations. Their
-          # `env` / `bintools` close over the wrapper being defined; adding
-          # elyld-ld there loops outPath (wasm32 llvm-binutils-wrapper via
-          # firefox → wasi-sysroot). Wrappers are shell scripts and do not
-          # need ElyLD. gcc, binutils, glibc, kernel, bootstrap still get it.
-          isWrapper =
-            lib.hasInfix "wrapper" pname
-            || lib.hasInfix "wrapper" name
-            || (args ? isClang)
-            || (args ? isGNU)
-            || (args ? bintools && args ? libc);
-        in
-        if args.dontUseWildLinker or args.dontUseElyldLinker or false || isWrapper then
+        # Do not inspect `name`/`pname`: webkitgtk and other finalAttrs
+        # packages compute `name` from `finalAttrs.version`, and hasInfix
+        # on that loops make-derivation's args fixpoint (NMH / Firefox).
+        # cc-wrapper and bintools-wrapper use stdenvNoCC, which this
+        # overlay does not wrap, so they never see elyld-ld.
+        if args.dontUseWildLinker or args.dontUseElyldLinker or false then
           args
         else
-          let
-            nbi = args.nativeBuildInputs or [ ];
-          in
           args
           // {
-            nativeBuildInputs = nbi ++ [ wildLd ];
+            nativeBuildInputs = (args.nativeBuildInputs or [ ]) ++ [ wildLd ];
           };
     in
     stdenv
@@ -72,7 +59,8 @@ in
     # `prev.elyld-ld` is missing. `final.elyld-ld` is the fixpoint either way.
     (lib.mkAfter (
       final: prev: {
-        # Temporarily no stdenv wrap — testing whether injectWild is the NMH loop.
+        stdenv = injectWild final.elyld-ld prev.stdenv;
+        clangStdenv = injectWild final.elyld-ld prev.clangStdenv;
       }
     ))
     # Same ccache.packageNames hook mold.nix used. Cyrene's list is

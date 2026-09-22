@@ -106,6 +106,9 @@ let
     ln -s ${elyldWrapped}/bin/${targetPrefix}ld $out/ld-prefix/ld
     ln -s ${elyldWrapped}/bin/${targetPrefix}ld.elyld $out/ld-prefix/ld.elyld
     echo 'export NIX_CFLAGS_LINK="''${NIX_CFLAGS_LINK-} -B'"$out"'/ld-prefix"' > $out/nix-support/setup-hook
+    # collect2 honours -B; kbuild and other direct `ld` invocations do not.
+    # ld-prefix/ld is already a nix ld-wrapper around ElyLD (DT_RUNPATH).
+    echo 'export PATH="'"$out"'/ld-prefix''${PATH:+:$PATH}"' >> $out/nix-support/setup-hook
   '';
 in
 {
