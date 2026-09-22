@@ -79,6 +79,7 @@
 
     xivlauncher
     lutris
+    faugus-launcher
     chiaki
     protonup-qt
 
