@@ -243,5 +243,9 @@
     ];
   };
 
+  # iPhone USB pairing for xtool. The laser-cutter xtool-studio module is unrelated.
+  services.usbmuxd.enable = true;
+  environment.systemPackages = [ pkgs.libimobiledevice ];
+
   system.stateVersion = "25.11";
 }

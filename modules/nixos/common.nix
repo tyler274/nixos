@@ -79,7 +79,26 @@
   };
 
   programs = {
-    nix-ld.enable = true;
+    nix-ld = {
+      enable = true;
+      # Swift.org toolchains and the xtool AppImage. curl stays off this list
+      # because xtool bundles an older OpenSSL than Nix curl.
+      libraries = with pkgs; [
+        ncurses
+        sqlite
+        libxml2
+        icu
+        xz
+        bzip2
+        libedit
+        gmp
+        e2fsprogs
+        krb5
+        keyutils
+        stdenv.cc.cc.lib
+        zlib
+      ];
+    };
     ssh.startAgent = true;
     direnv.enable = true;
     nh.enable = true;
