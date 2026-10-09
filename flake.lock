@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790180577,
-        "narHash": "sha256-jWaOE99SGEdumMKCf0fHvFA8sXfH3n5U0APMz5B2Qps=",
+        "lastModified": 1791588963,
+        "narHash": "sha256-dW8hahn6jgNXCshOLIaxkt7jGtsQagvyvltgqYL8JSo=",
         "owner": "tyler274",
         "repo": "ElyLD",
-        "rev": "f69c5c50218002164e1adb1b0f7c148ebd01a33b",
+        "rev": "75136ae9931d1b18b7228421a5adacf50387854b",
         "type": "github"
       },
       "original": {
@@ -375,10 +375,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1791581250,
-        "narHash": "sha256-fbiaAU+wYBoTae4F5eaHKfYC26OztMox4wdKD0x5cBw=",
+        "lastModified": 1791589004,
+        "narHash": "sha256-7VfAUljRtIJQme65JM6WbyM0ukHHkKiAbF+Z4Hy6+8Q=",
         "ref": "staging",
-        "rev": "b573389a89321d239b5b2eb50967541312bd055e",
+        "rev": "2ded0326053977dd850a991b12a3416e0a263127",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
