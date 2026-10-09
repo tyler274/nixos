@@ -137,6 +137,9 @@
           --set GALLIUM_DRIVER zink
       '';
     })
+
+    slack
+    #linear
   ];
 
   xdg.mimeApps = {
