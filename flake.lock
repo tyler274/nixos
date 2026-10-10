@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791588963,
-        "narHash": "sha256-dW8hahn6jgNXCshOLIaxkt7jGtsQagvyvltgqYL8JSo=",
+        "lastModified": 1791615435,
+        "narHash": "sha256-9T+X2eYNbPTx0dMDEFkIW6iQFEEmZ2xTJegqDcADmHU=",
         "owner": "tyler274",
         "repo": "ElyLD",
-        "rev": "75136ae9931d1b18b7228421a5adacf50387854b",
+        "rev": "56a7e8b7db02a080e15964cc68689fb979889857",
         "type": "github"
       },
       "original": {
@@ -217,10 +217,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1791569574,
-        "narHash": "sha256-5sViLmjhTCtBTvhjSXXvd5LDrAFMydFFKZQisjE8Vds=",
+        "lastModified": 1791600313,
+        "narHash": "sha256-/2gb2WTztITD/JU1XUCg63vDsIfJGLr0LDsjSCTTJc8=",
         "ref": "master",
-        "rev": "6b88c12cc6d234de4888f5d21076fb11199d0844",
+        "rev": "427c74a88a93cc9f856c8bb99bf6b4a5187a6b33",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
@@ -375,10 +375,10 @@
     },
     "nixpkgs-staging": {
       "locked": {
-        "lastModified": 1791589004,
-        "narHash": "sha256-7VfAUljRtIJQme65JM6WbyM0ukHHkKiAbF+Z4Hy6+8Q=",
+        "lastModified": 1791612946,
+        "narHash": "sha256-JQvuMfj4IQj3LQihzfhspxg3RafYJ74wateTZvs1WCE=",
         "ref": "staging",
-        "rev": "2ded0326053977dd850a991b12a3416e0a263127",
+        "rev": "fae1c936ae50ddb40db0d6ce9d229e5ec0ad123f",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
