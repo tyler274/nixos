@@ -21,9 +21,17 @@ inputs: final: prev:
 let
   inherit (prev) lib;
 
+  # Nested on purpose: host overlays would point this stdenv back at ElyLD.
+  # starlark and rsync still have to be patched here. i686 remarshal (a
+  # crane input) and the ElyLD bootstrap rsync run their upstream checks,
+  # and those checks fail on 32-bit without the overlays below.
   pkgsForWild = import inputs.nixpkgs {
     inherit (prev) config;
     system = prev.stdenv.hostPlatform.system;
+    overlays = [
+      (import ./starlark-fixes.nix)
+      (import ./rsync-fixes.nix)
+    ];
   };
 
   craneLib = import inputs.elyld.inputs.crane { pkgs = pkgsForWild; };
