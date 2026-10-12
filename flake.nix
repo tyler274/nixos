@@ -122,6 +122,12 @@
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
 
+      # starlark 0.5.0 huge-range tests on i686; see the file.
+      starlarkFixOverlay = import ./overlays/starlark-fixes.nix;
+
+      # rsync 3.5.0 partial-retry hook on i686; see the file.
+      rsyncFixOverlay = import ./overlays/rsync-fixes.nix;
+
       # Hides /etc/ld-nix.so.preload for Mozilla/Chromium/Electron launchers
       # so they keep libc malloc when environment.memoryAllocator is set.
       # mkAfter so this wraps the packages ccache/znver5 overlays produce.
@@ -163,6 +169,8 @@
                   znver5FixOverlay
                   nodejsFixOverlay
                   nixFixOverlay
+                  starlarkFixOverlay
+                  rsyncFixOverlay
                   # Adds pkgs.elymalloc and statically links mold-unwrapped.
                   # common.nix sets memoryAllocator.provider = "elymalloc"
                   # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).

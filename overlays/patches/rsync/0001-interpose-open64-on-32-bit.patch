@@ -1,0 +1,67 @@
+--- a/testsuite/partial-protected-regular-retry-linux_test.py
++++ b/testsuite/partial-protected-regular-retry-linux_test.py
+@@ -234,11 +234,11 @@
+ /* ona_open() decides via fstatat(..., AT_SYMLINK_NOFOLLOW) and refuses a
+  * component owned by neither root nor the euid.  Model the attacker as a
+  * different uid so a retry that kept the ownership walk refuses the swap. */
+-static void model_foreign_owner(int rc, const char *path, struct stat *st)
++static void model_foreign_owner(int rc, const char *path, mode_t mode, uid_t *uid)
+ {
+     if (rc == 0 && swapped && path && strcmp(path, "pdir") == 0
+-        && S_ISLNK(st->st_mode)) {
+-        st->st_uid = geteuid() + 1;
++        && S_ISLNK(mode)) {
++        *uid = geteuid() + 1;
+         mark(getenv("RSYNC_PARTIAL_RETRY_FOREIGN_MARKER"));
+     }
+ }
+@@ -254,7 +254,7 @@
+     }
+     rc = real_fstatat(dfd, path, st, flags);
+     saved_errno = errno;
+-    model_foreign_owner(rc, path, st);
++    model_foreign_owner(rc, path, st->st_mode, &st->st_uid);
+     errno = saved_errno;
+     return rc;
+ }
+@@ -271,11 +271,39 @@
+     }
+     rc = real_fxstatat(ver, dfd, path, st, flags);
+     saved_errno = errno;
+-    model_foreign_owner(rc, path, st);
++    model_foreign_owner(rc, path, st->st_mode, &st->st_uid);
+     errno = saved_errno;
+     return rc;
+ }
+ 
++/* 32-bit glibc with _FILE_OFFSET_BITS=64 calls open64/openat64/fstatat64.
++ * Those are distinct symbols from open/openat/fstatat, so a hook that only
++ * interposes the latter never sees the receiver's O_CREAT and the positive
++ * control fails. On LP64 the *64 names are aliases of the plain ones. */
++#if !defined(__LP64__)
++int open64(const char *path, int flags, ...) __attribute__((alias("open")));
++int openat64(int dfd, const char *path, int flags, ...) __attribute__((alias("openat")));
++
++int fstatat64(int dfd, const char *path, struct stat64 *st, int flags)
++{
++    static int (*real_fstatat64)(int, const char *, struct stat64 *, int);
++    int rc, saved_errno;
++
++    hook_resolve();
++    if (!real_fstatat64)
++        real_fstatat64 = dlsym(RTLD_NEXT, "fstatat64");
++    if (!real_fstatat64) {
++        errno = ENOSYS;
++        return -1;
++    }
++    rc = real_fstatat64(dfd, path, st, flags);
++    saved_errno = errno;
++    model_foreign_owner(rc, path, st->st_mode, &st->st_uid);
++    errno = saved_errno;
++    return rc;
++}
++#endif
++
+ __attribute__((constructor)) static void hook_loaded(void)
+ {
+     hook_resolve();

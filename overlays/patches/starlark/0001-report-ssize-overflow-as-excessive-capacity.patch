@@ -1,0 +1,94 @@
+--- a/src/starlark/eval/builtins.py
++++ b/src/starlark/eval/builtins.py
+@@ -12,7 +12,7 @@
+ from typing import Any
+ 
+ from .errors import EvalError
+-from .limits import MAX_CONTAINER_ELEMENTS, check_container_size, check_int_bits
++from .limits import MAX_CONTAINER_ELEMENTS, check_container_size, check_int_bits, measured_len
+ from .mutability import Mutability
+ from .values import (
+     BuiltinFunction,
+@@ -129,10 +129,10 @@
+     `list(range(2**60))` raises a clean error instead of OOM-ing.
+     """
+     # Fast path for known-size containers — check before iterating.
+-    try:
+-        n = len(v)
+-    except TypeError:
+-        n = None
++    # measured_len, not len(): 32-bit CPython's len() raises OverflowError
++    # once the count no longer fits in Py_ssize_t, which hides the capacity
++    # error the tests (and the Java reference) expect.
++    n = measured_len(v)
+     if n is not None:
+         check_container_size(n, label=label)
+         return list(_to_iter(v))
+@@ -155,7 +155,10 @@
+ def b_len(x: Any) -> int:
+     if isinstance(x, str):
+         return len(x)
+-    if isinstance(x, (tuple, StarlarkList, Dict, StarlarkSet, Range)):
++    if isinstance(x, Range):
++        # Same ssize_t trap as measured_len: a huge range still has a length.
++        return x.__len__()
++    if isinstance(x, (tuple, StarlarkList, Dict, StarlarkSet)):
+         return len(x)
+     raise EvalError(
+         f"parameter 'x' got value of type '{starlark_type(x)}', want 'iterable or string'"
+--- a/src/starlark/eval/limits.py
++++ b/src/starlark/eval/limits.py
+@@ -54,6 +54,25 @@
+     return n
+ 
+ 
++def measured_len(value: object) -> int | None:
++    """Return a container's length, or None if it has no length.
++
++    ``len()`` converts the result to a C ``Py_ssize_t``. A length that does
++    not fit (``range(2**40)`` on 32-bit CPython) raises OverflowError before
++    the capacity check can see the count. The Python ``__len__`` still
++    returns that int, so the check can reject it as excessive capacity.
++    """
++    try:
++        return len(value)
++    except TypeError:
++        return None
++    except OverflowError:
++        try:
++            return value.__len__()  # type: ignore[attr-defined]
++        except (AttributeError, TypeError, OverflowError):
++            raise EvalError("excessive capacity requested: index-sized integer") from None
++
++
+ def check_int_bits(bits: int, *, label: str = "integer") -> None:
+     """Reject an integer result whose magnitude exceeds `MAX_INT_BITS`.
+ 
+@@ -161,6 +180,7 @@
+     "check_container_size",
+     "check_int_bits",
+     "check_repeat",
++    "measured_len",
+     "dict_alloc",
+     "int_alloc",
+     "list_alloc",
+--- a/src/starlark/eval/values.py
++++ b/src/starlark/eval/values.py
+@@ -191,13 +191,12 @@
+ 
+     def extend(self, items) -> None:
+         self.mutability.check("list")
+-        from .limits import MAX_CONTAINER_ELEMENTS, check_container_size
++        from .limits import MAX_CONTAINER_ELEMENTS, check_container_size, measured_len
+ 
+         # Pre-check for known-size iterables to avoid OOM on hostile input.
+-        try:
+-            n = len(items)
+-        except TypeError:
+-            n = None
++        # measured_len survives the 32-bit Py_ssize_t overflow that len() raises
++        # for range(2**40), so the capacity check still runs.
++        n = measured_len(items)
+         if n is not None:
+             check_container_size(len(self._data) + n)
+             self._data.extend(items)
