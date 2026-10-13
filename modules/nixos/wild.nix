@@ -21,8 +21,20 @@ let
   # Patch `mkDerivation` instead so every package — gcc, binutils, glibc,
   # the kernel, bootstrap stages — gets Wild without rebuilding the
   # compiler just to swap `ld`.
+  # ElyLD has no elf_i386 backend ("Emulation 'elf_i386' is not yet
+  # supported"). Overlays are re-applied for pkgsi686Linux, so without this
+  # gate every 32-bit derivation (Steam/Wine deps) would link through it
+  # and fail.
+  elyldTargets =
+    p:
+    p.isLinux
+    && (p.isx86_64 || p.isAarch64 || p.isRiscV64 || p.isLoongArch64 || (p.isPower64 && p.isLittleEndian));
+
   injectWild =
     wildLd: stdenv:
+    if !elyldTargets stdenv.hostPlatform then
+      stdenv
+    else
     let
       oldMk = stdenv.mkDerivation;
       addWild =
