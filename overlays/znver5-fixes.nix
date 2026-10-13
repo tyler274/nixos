@@ -48,6 +48,18 @@ in
     };
   });
 
+  # zopfli 1.0.3 GetMatch reads byte buffers through size_t*. GCC 16 at
+  # znver5 takes that as an alignment promise and vectorizes the loop with
+  # vmovdqa64, which faults on the unaligned match pointer
+  # (ZopfliFindLongestMatch SIGSEGV; python3Packages.zopfli PNG tests).
+  # Same crash with a GNU ld build, so not ElyLD. The patch does those reads
+  # with memcpy.
+  zopfli = prev.zopfli.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      ./patches/zopfli/0001-load-match-words-with-memcpy.patch
+    ];
+  });
+
   # ada-url 4.0.0: the AVX-512 IPv4 fast path (ADA_AVX512, gated on
   # AVX512BW+VL so -march=znver5 always compiles it; Hydra x86_64-linux
   # stays on the scalar kernel) treats any host with 3 dots as four

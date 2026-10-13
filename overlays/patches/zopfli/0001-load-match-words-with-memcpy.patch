@@ -1,0 +1,36 @@
+--- a/src/zopfli/lz77.c	2026-10-12 16:25:35.945142241 -0700
++++ b/src/zopfli/lz77.c	2026-10-12 16:25:43.068321938 -0700
+@@ -24,6 +24,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
+ 
+ void ZopfliInitLZ77Store(const unsigned char* data, ZopfliLZ77Store* store) {
+   store->size = 0;
+@@ -299,16 +300,23 @@
+                                      const unsigned char* end,
+                                      const unsigned char* safe_end) {
+ 
++  /* scan and match are byte pointers with no alignment guarantee. Loading
++     them through size_t* lets the compiler assume alignment, and AVX-512
++     vectorization then faults on aligned loads. memcpy keeps the wide
++     compare without that assumption. */
+   if (sizeof(size_t) == 8) {
+     /* 8 checks at once per array bounds check (size_t is 64-bit). */
+-    while (scan < safe_end && *((size_t*)scan) == *((size_t*)match)) {
++    size_t a, b;
++    while (scan < safe_end
++        && (memcpy(&a, scan, 8), memcpy(&b, match, 8), a == b)) {
+       scan += 8;
+       match += 8;
+     }
+   } else if (sizeof(unsigned int) == 4) {
+     /* 4 checks at once per array bounds check (unsigned int is 32-bit). */
++    unsigned int a, b;
+     while (scan < safe_end
+-        && *((unsigned int*)scan) == *((unsigned int*)match)) {
++        && (memcpy(&a, scan, 4), memcpy(&b, match, 4), a == b)) {
+       scan += 4;
+       match += 4;
+     }
