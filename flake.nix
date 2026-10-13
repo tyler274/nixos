@@ -128,6 +128,9 @@
       # rsync 3.5.0 partial-retry hook on i686; see the file.
       rsyncFixOverlay = import ./overlays/rsync-fixes.nix;
 
+      # elfutils 0.195 tests that assume GNU ld defaults; see the file.
+      elfutilsFixOverlay = import ./overlays/elfutils-fixes.nix;
+
       # Hides /etc/ld-nix.so.preload for Mozilla/Chromium/Electron launchers
       # so they keep libc malloc when environment.memoryAllocator is set.
       # mkAfter so this wraps the packages ccache/znver5 overlays produce.
@@ -171,6 +174,7 @@
                   nixFixOverlay
                   starlarkFixOverlay
                   rsyncFixOverlay
+                  elfutilsFixOverlay
                   # Adds pkgs.elymalloc and statically links mold-unwrapped.
                   # common.nix sets memoryAllocator.provider = "elymalloc"
                   # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).
