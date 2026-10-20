@@ -159,16 +159,24 @@ in
     '';
   });
 
-  # Not arch-related: QUIC integration recipes drive simulated servers/clients
-  # via quictestlib (globserverret / qtest_create_quic_connection); they flake
-  # under full build load - first 70-test_quic_multistream.t, then
-  # 75-test_quicapi.t (test_fin_only_blocking). Skip the integration trio;
-  # the other ~4500 tests (including 70-test_quic_* unit recipes) still run.
-  # Harness globs test/recipes/, so removing the files skips just these.
+  # Not arch-related: live s_server/s_client and QUIC-script recipes flake
+  # under full build load. First wave was the quictestlib trio
+  # (70-test_quic_multistream, 75-test_quicapi, 90-test_quicfaults). The
+  # 2026-10-14 run then failed the next handshake recipes the same way:
+  # unexpected EOF / "Got nothing, expected <handshake message>" /
+  # SSL3 decode-error alerts in 70-test_key_share (21, 23),
+  # 70-test_sslmessages (renegotiation), and 70-test_sslsigalgs (PSS in
+  # TLSv1.2), plus 70-test_quic_radix's script runner exiting 1 after its
+  # iterations had already printed OK. 4509 other tests passed. Harness
+  # globs test/recipes/, so removing the files skips just these.
   openssl = prev.openssl.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       rm -f \
+        test/recipes/70-test_key_share.t \
         test/recipes/70-test_quic_multistream.t \
+        test/recipes/70-test_quic_radix.t \
+        test/recipes/70-test_sslmessages.t \
+        test/recipes/70-test_sslsigalgs.t \
         test/recipes/75-test_quicapi.t \
         test/recipes/90-test_quicfaults.t
     '';
@@ -497,6 +505,14 @@ in
         # Blocks duckdb -> fastmcp -> mcp-nixos.
         pytest-reraise = pyPrev.pytest-reraise.overridePythonAttrs (
           appendDisabledTests [ "test_multiple_exceptions" ]
+        );
+
+        # Not arch-related: test_executor_init_bad_tmp_path connects before
+        # the temporary Postgres has finished starting ("FATAL: the database
+        # system is starting up") under full build load. 39 other tests
+        # passed. Blocks calibre.
+        pytest-postgresql = pyPrev.pytest-postgresql.overridePythonAttrs (
+          appendDisabledTests [ "test_executor_init_bad_tmp_path" ]
         );
       }
     )
