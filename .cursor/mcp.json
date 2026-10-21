@@ -1,7 +1,11 @@
 {
   "mcpServers": {
     "nixos": {
-      "command": "mcp-nixos"
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "if [ -x \"$HOME/.local/bin/mcp-nixos\" ]; then exec \"$HOME/.local/bin/mcp-nixos\"; fi; exec mcp-nixos"
+      ]
     }
   }
 }

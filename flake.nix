@@ -217,6 +217,16 @@
         Laptop = mkHost ./hosts/laptop [ ];
       };
 
+      # This Mac is not a NixOS host. Home Manager installs the declarative
+      # mcp-nixos package and writes Cursor's user MCP config.
+      homeConfigurations.macbook = home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          system = "aarch64-darwin";
+          config.allowUnfree = true;
+        };
+        modules = [ ./hosts/macbook/home.nix ];
+      };
+
       devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
         packages = with nixpkgs.legacyPackages.${system}; [
           gptfdisk

@@ -41,8 +41,9 @@
     nixfmt
     nil
 
-    # MCP server exposing NixOS package/option search to AI assistants
-    # (wired into Cursor/clients via their MCP config, e.g. ~/.cursor/mcp.json).
+    # MCP server exposing NixOS package/option search to AI assistants.
+    # Cursor is wired in .cursor/mcp.json. On the Mac, hosts/macbook/home.nix
+    # also writes ~/.cursor/mcp.json with the store path of this package.
     mcp-nixos
   ];
 

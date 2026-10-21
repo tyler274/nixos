@@ -44,7 +44,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
     ├── laptop/                     placeholder for a future portable machine
     ├── phainon/                    work in progress - not yet wired into flake.nix
     ├── sulla/                      work in progress - not yet wired into flake.nix
-    └── macbook/                    macOS user nix.conf (not a nixosConfiguration)
+    └── macbook/                    macOS: user nix.conf + Home Manager (mcp-nixos)
 ```
 
 ## Hosts
@@ -58,11 +58,12 @@ The flake exposes these `nixosConfigurations` (the attribute name is the deploy 
 
 `hosts/phainon` and `hosts/sulla` exist but are **not** referenced in `flake.nix` yet (see Known rough edges).
 
-**macbook** (`./hosts/macbook/nix.conf`) is this Mac, not a NixOS host. Flakes are enabled there for the user client and linked into place:
+**macbook** (`./hosts/macbook`) is this Mac, not a NixOS host. `nix.conf` enables flakes for the user client. `home.nix` is a Home Manager configuration that installs `pkgs.mcp-nixos` (the declarative nixpkgs package) and writes `~/.cursor/mcp.json` so Cursor starts that binary.
 
 ```bash
 mkdir -p ~/.config/nix
 ln -sfn ~/code/nixos/hosts/macbook/nix.conf ~/.config/nix/nix.conf
+nix run home-manager -- switch --flake ~/code/nixos#macbook
 ```
 
 ## Deploy
