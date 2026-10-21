@@ -43,7 +43,8 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
     ├── wsl/                        WSL2 dev box (hostname `eula`, Cursor IDE remote)
     ├── laptop/                     placeholder for a future portable machine
     ├── phainon/                    work in progress - not yet wired into flake.nix
-    └── sulla/                      work in progress - not yet wired into flake.nix
+    ├── sulla/                      work in progress - not yet wired into flake.nix
+    └── macbook/                    macOS user nix.conf (not a nixosConfiguration)
 ```
 
 ## Hosts
@@ -56,6 +57,13 @@ The flake exposes these `nixosConfigurations` (the attribute name is the deploy 
 - **Laptop** (`./hosts/laptop`) - placeholder. Imports the desktop stack but is gated behind a real `hardware-configuration.nix` before it can build. Replace `networking.hostName` and the hardware config after first install.
 
 `hosts/phainon` and `hosts/sulla` exist but are **not** referenced in `flake.nix` yet (see Known rough edges).
+
+**macbook** (`./hosts/macbook/nix.conf`) is this Mac, not a NixOS host. Flakes are enabled there for the user client and linked into place:
+
+```bash
+mkdir -p ~/.config/nix
+ln -sfn ~/code/nixos/hosts/macbook/nix.conf ~/.config/nix/nix.conf
+```
 
 ## Deploy
 
