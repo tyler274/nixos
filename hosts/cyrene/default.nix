@@ -168,6 +168,9 @@
 
   users.users.luluco = {
     isNormalUser = true;
+    # Keep the user systemd manager (and the Hermes Agent units in
+    # modules/home/hermes-agent.nix) running after logout.
+    linger = true;
     extraGroups = [
       "wheel"
       "networkmanager"
@@ -214,6 +217,7 @@
       ../../modules/home/common.nix
       ../../modules/home/desktop.nix
       ../../modules/home/plasma.nix
+      ../../modules/home/hermes-agent.nix
     ];
     home.stateVersion = "25.11";
 

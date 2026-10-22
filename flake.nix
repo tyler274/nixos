@@ -67,6 +67,12 @@
       url = "github:tyler274/ElyLD";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Hermes Agent (Nous Research) - AI agent orchestration. Its Home Manager
+    # module is wired up in modules/home/hermes-agent.nix.
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

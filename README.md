@@ -33,6 +33,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 │       ├── bitwarden.nix           Bitwarden desktop + CLI, SSH agent, Libera item option
 │       ├── halloy.nix              Halloy + Libera SASL via Bitwarden password_command
 │       ├── desktop.nix             GUI apps, dev toolchain, wayland wrappers, mimeApps
+│       ├── hermes-agent.nix        Cyrene: Hermes Agent (Nous Research) gateway + dashboard user services
 │       └── plasma.nix              plasma-manager: look & feel, kwin, screen locker, panels, konsole
 └── hosts/
     ├── cyrene/                     Zen 4 + RTX 4090 workstation, ZFS root, UPS, homelab
