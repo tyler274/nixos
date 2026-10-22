@@ -6,24 +6,23 @@
 }:
 
 let
-  # Mullvad DNS-over-TLS (port 853, hostname dns.mullvad.net). Matches the
-  # Mullvad VPN service already enabled on desktop hosts.
-  mullvadDns = [
-    "194.242.2.2#dns.mullvad.net"
-    "194.242.2.3#dns.mullvad.net"
-  ];
-
-  # Quad9 DNS-over-TLS (https://quad9.net/) - encrypted fallback when Mullvad
-  # resolvers are unreachable. Do not use router/VPN DHCP DNS here; those leak
-  # plaintext and bypass the Mullvad/Quad9 chain.
+  # Quad9 DNS-over-TLS (https://quad9.net/) - primary resolvers.
   quad9Dns = [
     "9.9.9.9#dns.quad9.net"
     "149.112.112.112#dns.quad9.net"
   ];
+
+  # Cloudflare DNS-over-TLS (https://1.1.1.1/) - encrypted fallback when Quad9
+  # is unreachable. Do not use router/VPN DHCP DNS here; those leak plaintext
+  # and bypass the Quad9/Cloudflare chain.
+  cloudflareDns = [
+    "1.1.1.1#cloudflare-dns.com"
+    "1.0.0.1#cloudflare-dns.com"
+  ];
 in
 {
   config = lib.mkIf (config.networking.networkmanager.enable or false) {
-    networking.nameservers = mullvadDns;
+    networking.nameservers = quad9Dns;
 
     # Stop NetworkManager from registering DHCP/VPN resolvers (e.g. 192.168.1.1,
     # 10.64.0.1) with systemd-resolved. Per-link DNS takes precedence over
@@ -54,7 +53,7 @@ in
         DNSSEC = "true";
         # Route all lookups through the encrypted upstream resolvers above.
         Domains = [ "~." ];
-        FallbackDNS = quad9Dns;
+        FallbackDNS = cloudflareDns;
       };
     };
   };
