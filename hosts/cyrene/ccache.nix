@@ -119,7 +119,11 @@
   #   invalidates the entire CUDA subtree (opencv -> frei0r/mlt/jellyfin,
   #   just rebuilt) and risks subtle nvcc host-compiler breakage across all
   #   of it - not worth it mid-campaign. Revisit if torch actually flakes.
-  nixpkgs.overlays = [
+  #
+  # PAUSED with the znver5/ElyLD world rebuild (hosts/cyrene/default.nix):
+  # these wraps change each derivation's hash, so they'd build from source
+  # instead of coming from cache.nixos.org. Flip back to `[ ... ]` to resume.
+  nixpkgs.overlays = lib.optionals false [
     (
       final: prev:
       let

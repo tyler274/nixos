@@ -168,13 +168,19 @@
                   cudaFixOverlay
                   bambuStudioFixOverlay
                   snapmakerOrcaOverlay
-                  llvmFixOverlay
-                  znver5FixOverlay
-                  nodejsFixOverlay
-                  nixFixOverlay
-                  starlarkFixOverlay
-                  rsyncFixOverlay
-                  elfutilsFixOverlay
+                  # Paused with the znver5/ElyLD world rebuild (see
+                  # hosts/cyrene/default.nix): each of these overrides a
+                  # core derivation (openssl, gnutls, llvm, nix, nodejs,
+                  # elfutils, numpy, ...), which changes its hash and misses
+                  # cache.nixos.org for it and everything depending on it.
+                  # Re-enable alongside gcc.arch = "znver5".
+                  # llvmFixOverlay
+                  # znver5FixOverlay
+                  # nodejsFixOverlay
+                  # nixFixOverlay
+                  # starlarkFixOverlay
+                  # rsyncFixOverlay
+                  # elfutilsFixOverlay
                   # Adds pkgs.elymalloc and statically links mold-unwrapped.
                   # common.nix sets memoryAllocator.provider = "elymalloc"
                   # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).
