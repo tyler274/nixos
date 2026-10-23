@@ -187,10 +187,14 @@
                   # starlarkFixOverlay
                   # rsyncFixOverlay
                   # elfutilsFixOverlay
-                  # Adds pkgs.elymalloc and statically links mold-unwrapped.
-                  # common.nix sets memoryAllocator.provider = "elymalloc"
-                  # via elymalloc.nixosModules.malloc (does not hijack pkgs.mimalloc).
-                  inputs.elymalloc.overlays.default
+                  # Keep ElyMalloc available for the runtime allocator, but use
+                  # stock mold for binary-cache compatibility. ElyMalloc's mold
+                  # override passes `mimalloc`, which newer nixpkgs no longer accepts.
+                  (final: prev:
+                    builtins.removeAttrs (inputs.elymalloc.overlays.default final prev) [
+                      "mold-unwrapped"
+                    ]
+                  )
                   # After elymalloc. Builds GitHub ElyLD in a nested
                   # nixpkgs (see overlays/wild.nix). Does not change
                   # stdenv (see modules/nixos/wild.nix).
