@@ -81,11 +81,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1789656206,
-        "narHash": "sha256-6HKd6EVSALrIkgAei6aS/Ga6NRZtfcS988mH07hVrXo=",
+        "lastModified": 1792897514,
+        "narHash": "sha256-36TAt54wqBcOr30D7yXMUYrQ3I9gL21NHgv80+dvkC4=",
         "owner": "tyler274",
         "repo": "ElyMalloc",
-        "rev": "dddf86d87db77f4f6c8dc5a830d9a175e71c8a19",
+        "rev": "cce11466569646e4e1f7afe9b44c6c80dd613b9f",
         "type": "github"
       },
       "original": {

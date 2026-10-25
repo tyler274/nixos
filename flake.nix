@@ -190,24 +190,10 @@
                   # Keep ElyMalloc available for the runtime allocator, but use
                   # stock mold for binary-cache compatibility. ElyMalloc's mold
                   # override passes `mimalloc`, which newer nixpkgs no longer accepts.
-                  #
-                  # PGO is off because nixpkgs rustc 1.99.0's profiler runtime
-                  # segfaults in __llvm_profile_instrument_target for any
-                  # -Cprofile-generate binary (even an empty main), which kills
-                  # ElyMalloc's instrumented build scripts. Re-enable once fixed.
-                  # Checks are off because upstream include/mimalloc.h says
-                  # MI_MALLOC_VERSION 30503 while the Rust crate reports 30502,
-                  # so the theap C-ABI test fails on the version assert alone.
                   (final: prev:
-                    let
-                      ely = inputs.elymalloc.overlays.default final prev;
-                    in
-                    builtins.removeAttrs ely [ "mold-unwrapped" ]
-                    // {
-                      elymalloc = (ely.elymalloc.override { enablePgo = false; }).overrideAttrs (_: {
-                        doCheck = false;
-                      });
-                    }
+                    builtins.removeAttrs (inputs.elymalloc.overlays.default final prev) [
+                      "mold-unwrapped"
+                    ]
                   )
                   # After elymalloc. Builds GitHub ElyLD in a nested
                   # nixpkgs (see overlays/wild.nix). Does not change
