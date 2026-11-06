@@ -143,6 +143,44 @@
     #linear
   ];
 
+  # Editors can export private NSS/GTK libraries that are incompatible with
+  # Firefox. Sanitize only its desktop launch, before its own wrapper runs.
+  xdg.desktopEntries.firefox = {
+    name = "Firefox";
+    genericName = "Web Browser";
+    exec = "${pkgs.coreutils}/bin/env -u LD_LIBRARY_PATH -u LD_PRELOAD firefox --name firefox %U";
+    icon = "firefox";
+    terminal = false;
+    startupNotify = true;
+    settings.StartupWMClass = "firefox";
+    categories = [ "Network" "WebBrowser" ];
+    mimeType = [
+      "text/html"
+      "text/xml"
+      "application/xhtml+xml"
+      "application/vnd.mozilla.xul+xml"
+      "x-scheme-handler/http"
+      "x-scheme-handler/https"
+    ];
+    actions = {
+      new-window = {
+        name = "New Window";
+        exec = "${pkgs.coreutils}/bin/env -u LD_LIBRARY_PATH -u LD_PRELOAD firefox --new-window %U";
+      };
+      new-private-window = {
+        name = "New Private Window";
+        exec = "${pkgs.coreutils}/bin/env -u LD_LIBRARY_PATH -u LD_PRELOAD firefox --private-window %U";
+      };
+      profile-manager-window = {
+        name = "Profile Manager";
+        exec = "${pkgs.coreutils}/bin/env -u LD_LIBRARY_PATH -u LD_PRELOAD firefox --ProfileManager";
+      };
+    };
+  };
+
+  # Replace the live-session repair with the managed entry on activation.
+  xdg.dataFile."applications/firefox.desktop".force = true;
+
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
