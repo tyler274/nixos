@@ -11,6 +11,7 @@
     inputs.mini-diarium.homeModules.default
     ./bitwarden.nix
     ./halloy.nix
+    ./linear.nix
   ];
 
   bitwarden.enable = true;
