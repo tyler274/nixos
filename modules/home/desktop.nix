@@ -178,8 +178,23 @@
     };
   };
 
-  # Replace the live-session repair with the managed entry on activation.
-  xdg.dataFile."applications/firefox.desktop".force = true;
+  # desktopEntries installs a package, not an xdg.dataFile. Explicitly manage
+  # the local override too, so it cannot shadow future launcher updates.
+  xdg.dataFile."applications/firefox.desktop" = {
+    force = true;
+    source =
+      let
+        entry = config.xdg.desktopEntries.firefox;
+        desktop = pkgs.makeDesktopItem {
+          name = "firefox";
+          desktopName = entry.name;
+          inherit (entry) exec icon genericName terminal startupNotify categories actions;
+          mimeTypes = entry.mimeType;
+          extraConfig = entry.settings;
+        };
+      in
+      "${desktop}/share/applications/firefox.desktop";
+  };
 
   xdg.mimeApps = {
     enable = true;
