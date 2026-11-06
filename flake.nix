@@ -124,9 +124,6 @@
       # Snapmaker Orca Slicer AppImage (GitHub releases) + updater.
       snapmakerOrcaOverlay = import ./overlays/snapmaker-orca/overlay.nix;
 
-      # fastmcp (via mcp-nixos) is broken against mcp 2.x; see the file.
-      mcpNixosFixOverlay = import ./overlays/mcp-nixos-fixes.nix;
-
       # Skips a nix unit test that can't pass on the XFS-backed build
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
@@ -177,7 +174,6 @@
                   cudaFixOverlay
                   bambuStudioFixOverlay
                   snapmakerOrcaOverlay
-                  mcpNixosFixOverlay
                   # Paused with the znver5/ElyLD world rebuild (see
                   # hosts/cyrene/default.nix): each of these overrides a
                   # core derivation (openssl, gnutls, llvm, nix, nodejs,
@@ -243,7 +239,6 @@
         pkgs = import nixpkgs {
           system = "aarch64-darwin";
           config.allowUnfree = true;
-          overlays = [ mcpNixosFixOverlay ];
         };
         modules = [ ./hosts/macbook/home.nix ];
       };
