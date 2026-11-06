@@ -64,11 +64,9 @@ in
       enable = true;
       interval = "hourly";
       frequency = 12;
-      settings = {
-        # Hot-reload clamd after each successful signature update instead of
-        # waiting for its ~10 min SelfCheck cycle to notice the new database.
-        NotifyClamd = "/etc/clamav/clamd.conf";
-      };
+      # Do not set NotifyClamd: clamd starts after this oneshot updater, so
+      # notifying its socket here can deadlock boot and Downloads access.
+      # clamd's SelfCheck picks up subsequent database updates.
     };
 
     # Fangfrisch pulls third-party signature feeds that the official freshclam
@@ -103,6 +101,15 @@ in
         "/root"
       ];
     };
+  };
+
+  # A stuck updater must not indefinitely hold clamd's startup ordering.
+  systemd.services.clamav-freshclam.serviceConfig.TimeoutStartSec = "5min";
+
+  # Do not intercept file opens until the scanning daemon has started.
+  systemd.services.clamav-clamonacc = {
+    requires = [ "clamav-daemon.service" ];
+    after = [ "clamav-daemon.service" ];
   };
 
   # clamonacc aborts at startup if a watched path is missing, so make sure
