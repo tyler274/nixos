@@ -218,6 +218,7 @@
       ../../modules/home/desktop.nix
       ../../modules/home/plasma.nix
       ../../modules/home/hermes-agent.nix
+      ../../modules/home/orca.nix
     ];
     home.stateVersion = "25.11";
 
@@ -258,6 +259,15 @@
       #krita
     ];
   };
+
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;
+    # Tailscale's own accept rule would bypass the interface port restriction.
+    extraSetFlags = [ "--netfilter-mode=off" ];
+  };
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 6768 ];
+  networking.firewall.checkReversePath = "loose";
 
   # iPhone USB pairing for xtool. The laser-cutter xtool-studio module is unrelated.
   services.usbmuxd.enable = true;
