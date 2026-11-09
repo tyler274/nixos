@@ -217,6 +217,8 @@
         };
     in
     {
+      checks.${system}.agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
+
       nixosConfigurations = {
         Cyrene = mkHost ./hosts/cyrene [
           lanzaboote.nixosModules.lanzaboote

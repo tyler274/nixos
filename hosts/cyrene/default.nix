@@ -30,6 +30,8 @@
     ./radios.nix
     ./scratch.nix
     ./ccache.nix
+    ./coda-builds.nix
+    ./coda-ci.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
@@ -49,9 +51,12 @@
   # /nix/store`), so there's no actual space pressure justifying daily
   # sweeps right now. Re-enable (`nix.gc.automatic = true;` + a `dates`)
   # once this generation lands and stabilizes, or run
-  # `sudo nix-collect-garbage --delete-older-than 30d` manually if rpool
+  # `sudo nix-collect-garbage --delete-older-than 14d` manually if rpool
   # usage climbs mid-campaign.
   # nix.gc.automatic = lib.mkForce "false";
+
+  # Match ZFS snapshot retention (hosts/cyrene/zfs/lib.nix): two weeks.
+  nix.gc.options = lib.mkForce "--delete-older-than 14d";
 
   # znver5/ElyLD world rebuild is paused, so the common.nix substituters
   # (cache.nixos.org + cachix) apply again. Restore these when re-enabling:
