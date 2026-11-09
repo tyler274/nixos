@@ -40,6 +40,8 @@
     microsoft-edge
     stable-pkgs.telegram-desktop
 
+    wowup-cf
+
     gcc
     cmake
     gnumake
