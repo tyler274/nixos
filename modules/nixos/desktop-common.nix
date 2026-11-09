@@ -31,8 +31,10 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
   };
+
+  # Provides `pw-jack` for running JACK apps on PipeWire on demand.
+  environment.systemPackages = [ pkgs.pipewire.jack ];
 
   hardware = {
     bluetooth = {
