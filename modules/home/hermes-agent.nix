@@ -15,8 +15,9 @@
 # Needs `users.users.luluco.linger = true` (set in hosts/cyrene/default.nix),
 # otherwise systemd stops the user units at logout.
 #
-# Secrets: this repo has no sops-nix/agenix, so the OpenRouter key lives in
-# an untracked file that activation merges into ~/.hermes/.env:
+# Secrets: this repo has no sops-nix/agenix, so API keys (e.g. OpenRouter,
+# for switching off the local model with /model) live in an untracked file
+# that activation merges into ~/.hermes/.env:
 #
 #   install -Dm600 /dev/stdin ~/.config/hermes/env <<< 'OPENROUTER_API_KEY=sk-or-...'
 #   systemctl --user restart hermes-agent hermes-backend
@@ -56,8 +57,15 @@
     };
 
     settings = {
-      # No base_url => OpenRouter (Hermes' default provider).
-      model.default = "anthropic/claude-opus-4.6";
+      # Served by services.ollama (modules/nixos/ollama.nix). 64K is Hermes'
+      # minimum window; at 128K more of the model spills to CPU on the 24 GB
+      # 4090 and generation roughly halves.
+      model = {
+        default = "qwen3.8:27b";
+        provider = "ollama";
+        base_url = "http://127.0.0.1:11434/v1";
+        context_length = 65536;
+      };
       toolsets = [ "all" ];
       terminal = {
         backend = "local";

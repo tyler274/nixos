@@ -23,6 +23,11 @@ in
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
+    # Hermes Agent's main model (modules/home/hermes-agent.nix).
+    loadModels = [ "qwen3.8:27b" ];
+    # Hermes needs a 64K window. Its per-request options.num_ctx is ignored
+    # on Ollama's OpenAI-compatible /v1 route, which otherwise serves 32K.
+    environmentVariables.OLLAMA_CONTEXT_LENGTH = "65536";
   };
 
   services.nextjs-ollama-llm-ui.enable = true;
