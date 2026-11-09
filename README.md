@@ -85,6 +85,28 @@ nrs   # = sudo nixos-rebuild switch --flake ~/code/nixos#$(hostname)
 
 (`nrl` is the same without the `#host` suffix, and `nfu` runs `nix flake update`.)
 
+## Provision Coda build storage on Cyrene
+
+After reviewing and authorizing host activation, run `sudo coda-storage create --confirm-new-image` once. This allocates a 256 GiB LUKS image on the cache NVMe and prompts for its passphrase. It refuses an existing image and never formats the physical drive. Keep the passphrase outside Git and the Nix store.
+
+After each boot, run `sudo coda-storage unlock`. This mounts the encrypted cache and prepares private local and CI directories. `coda-storage status` reports the required mounts. The Coda dev shell refuses the enabled host profile while the cache is locked.
+
+For an existing checkout, run `python3 scripts/build_profile.py --migrate` from that checkout before entering its new dev shell. This renames `target` to `target.coda-backup`, then links a new per-worktree target on scratch. The backup is not copied to ephemeral storage or deleted. To reverse this migration, stop builds, remove only the managed `target` symlink, and rename the backup to `target`. Disable the host profile before re-entering the shell.
+
+Local incremental compilation stays enabled. sccache can reuse eligible non-incremental compilations, but does not cache every compiler invocation or linking operation.
+
+## Enable isolated Coda qualification
+
+The runner module defaults to disabled. It registers disposable JIT runners only for `Coda-Health/coda-rust`, using the repository runner API and its default runner group ID `1`; no organization runner group setup is required. Run-attempt labels route jobs, but labels are not workflow authorization: other workflows in this repository can target the runner. There is no organization-level selected-workflow restriction.
+
+Create the repository environment `cyrene-approval` with required reviewers, prevention of self-review, no administrator bypass, and a custom branch policy allowing only the `main` branch. The controller verifies these settings before registering a runner. These safeguards protect the qualification workflow, not other repository workflows that omit this environment.
+
+Provision the controller's GitHub token through Doppler to a root-only runtime file. Scope the token to `Coda-Health/coda-rust` with repository **Administration: write**, **Actions: read**, and **Environments: read** permissions. Set `services.coda-ci.tokenFile` to that file and `services.coda-ci.enable = true`. Review and authorize host activation separately. The token is passed as a systemd credential and never enters the guest.
+
+Dispatch `Cyrene qualification` on `main` with the full commit SHA. Review that SHA before approving the environment. Each run attempt gets a unique runner label and private cache image. No PR cache is reused by local builds or another run attempt. The controller allows one 16 GiB guest only when at least 24 GiB of host memory is available. CI cache files older than seven days are pruned, and the controller refuses new work above its 100 GiB allocated-cache budget.
+
+Before allowing real PR code, qualify guest boot, checkout, denied host and LAN access, cancellation, controller termination, and post-reboot reconciliation. `ephemeral` registration alone is not evidence of VM isolation. Required Blacksmith CI remains independent. Stop the timer and service before disabling or rolling back this module. Do not remove cache data as part of rollback.
+
 ## Update inputs
 
 ```bash

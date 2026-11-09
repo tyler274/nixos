@@ -30,6 +30,8 @@
     ./radios.nix
     ./scratch.nix
     ./ccache.nix
+    ./coda-builds.nix
+    ./coda-ci.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
