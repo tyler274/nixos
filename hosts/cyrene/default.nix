@@ -155,11 +155,29 @@
 
   # Enable the anime game launchers
   programs.anime-game-launcher.enable = true; # Adds launcher and /etc/hosts rules
-  programs.anime-games-launcher.enable = true;
+  programs.anime-games-launcher = {
+    enable = true;
+    package = pkgs.anime-games-launcher.override {
+      unwrapped = pkgs.anime-games-launcher.unwrapped.overrideAttrs (old: {
+        # The cargo hook forces system AWS-LC, which this package doesn't supply.
+        dontCargoUseSystemLibs = true;
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.cmake ];
+      });
+    };
+  };
   programs.honkers-railway-launcher.enable = true;
   programs.honkers-launcher.enable = true;
   programs.wavey-launcher.enable = true;
-  programs.sleepy-launcher.enable = true;
+  programs.sleepy-launcher = {
+    enable = true;
+    package = pkgs.sleepy-launcher.override {
+      unwrapped = pkgs.sleepy-launcher.unwrapped.overrideAttrs (old: {
+        # Like anime-games-launcher, this needs its bundled AWS-LC.
+        dontCargoUseSystemLibs = true;
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.cmake ];
+      });
+    };
+  };
 
   #nixpkgs.overlays = [
   #  (self: super: {
