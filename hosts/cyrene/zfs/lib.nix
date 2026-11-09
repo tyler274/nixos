@@ -12,16 +12,16 @@ let
   };
 in
 {
-  # 30 days of snapshots, matching the nix.gc --delete-older-than 30d window so
+  # 2 weeks of snapshots, matching the nix.gc --delete-older-than 14d window so
   # every live Nix generation has a corresponding ZFS checkpoint available.
   # nixos generation snapshots (@nixos-*) are pruned separately in maintenance.nix.
   snapshotRetention = {
     hourly = 72;
-    daily = 30;
+    daily = 14;
     monthly = 0;
     yearly = 0;
   };
-  nixosSnapshotRetentionDays = 30;
+  nixosSnapshotRetentionDays = 14;
 
   inherit gameHomeMounts;
   gameHomeDatasets = lib.unique (lib.attrValues gameHomeMounts);
