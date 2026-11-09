@@ -44,6 +44,23 @@
 
   services.hermes-agent = {
     enable = true;
+    # Hermes' header-overlap patch cannot apply to patchelf 0.15.2.
+    # patchelfUnstable already contains it; omit only that duplicate patch
+    # when Hermes overrides the tool. Keep this scoped to its PM packages.
+    package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      pmPackages = lib.filterAttrs (_: lib.isDerivation) (
+        pkgs.callPackage "${inputs.hermes-agent}/nix/pm-packages.nix" {
+          patchelf = pkgs.patchelfUnstable // {
+            overrideAttrs = args:
+              (pkgs.patchelfUnstable.overrideAttrs args).overrideAttrs (old: {
+                patches = builtins.filter
+                  (patch: (patch.name or "") != "patchelf-fix-executable-header-load-overlap.patch")
+                  (old.patches or [ ]);
+              });
+          };
+        }
+      );
+    };
 
     # Long-running gateway: runs cron jobs and scheduled agent work. No
     # messaging platform is configured yet; it keeps running for cron.
