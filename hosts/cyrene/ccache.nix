@@ -1,5 +1,8 @@
 { lib, ... }:
 
+let
+  inherit (import ./zfs/lib.nix { inherit lib; }) agentsPoolCreated;
+in
 {
   # Persistent compiler cache on the Samsung 980 PRO (single partition; it
   # handed swap+scratch duty to the 990 PRO - see scratch.nix/default.nix).
@@ -36,7 +39,11 @@
   # XFS to match the scratch mount (scratch.nix) - the small-object cache
   # workload is indifferent between xfs/ext4, so keep a single filesystem
   # type in play across both NVMe roles.
-  fileSystems."/var/cache/ccache" = {
+  #
+  # Once the 980 PRO becomes the `agents` ZFS pool (zfs/agents.nix), the
+  # cache is the agents/ccache dataset, mounted by agents-pool.service after
+  # boot rather than by an fstab entry.
+  fileSystems."/var/cache/ccache" = lib.mkIf (!agentsPoolCreated) {
     device = "/dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA08502B-part1";
     fsType = "xfs";
     options = [

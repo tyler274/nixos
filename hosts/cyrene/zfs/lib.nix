@@ -32,4 +32,11 @@ in
   # to true once the disk is reattached, then run once:
   #   sudo zpool import -f local-backup
   localBackupAttached = false;
+
+  # Whether the `agents` pool exists on the 980 PRO (see agents.nix). While
+  # false, the 980 PRO stays the XFS ccache disk and nothing references the
+  # pool. Flip to true only after the one-time creation in agents.nix, then
+  # activate with `nixos-rebuild switch` (not `boot`) so a mistake shows up
+  # immediately instead of on the next boot.
+  agentsPoolCreated = false;
 }
