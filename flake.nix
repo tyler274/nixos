@@ -124,6 +124,14 @@
       # Snapmaker Orca Slicer AppImage (GitHub releases) + updater.
       snapmakerOrcaOverlay = import ./overlays/snapmaker-orca/overlay.nix;
 
+      # Cursor ahead of nixos-unstable; bump with `nix run .#update-cursor`.
+      codeCursorOverlay = import ./overlays/code-cursor/overlay.nix;
+      cursorPkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+        overlays = [ codeCursorOverlay ];
+      };
+
       # Skips a nix unit test that can't pass on the XFS-backed build
       # scratch dir until nixpkgs advances past nix 2.34.8; see the file.
       nixFixOverlay = import ./overlays/nix-fixes.nix;
@@ -174,6 +182,7 @@
                   cudaFixOverlay
                   bambuStudioFixOverlay
                   snapmakerOrcaOverlay
+                  codeCursorOverlay
                   # Paused with the znver5/ElyLD world rebuild (see
                   # hosts/cyrene/default.nix): each of these overrides a
                   # core derivation (openssl, gnutls, llvm, nix, nodejs,
@@ -217,6 +226,15 @@
         };
     in
     {
+      packages.${system} = {
+        inherit (cursorPkgs) code-cursor code-cursor-fhs update-cursor;
+      };
+
+      apps.${system}.update-cursor = {
+        type = "app";
+        program = "${cursorPkgs.update-cursor}/bin/update-cursor";
+      };
+
       checks.${system}.agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
 
       nixosConfigurations = {
