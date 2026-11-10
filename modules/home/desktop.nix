@@ -17,7 +17,13 @@
   bitwarden.enable = true;
 
   # Encrypted, local-first journaling app (packaged from the mini-diarium flake).
-  programs.mini-diarium.enable = true;
+  programs.mini-diarium = {
+    enable = true;
+    package = inputs.mini-diarium.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+      # The cargo setup hook selects system SQLite instead of rusqlite's bundled copy.
+      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite ];
+    });
+  };
 
   programs.firefox = {
     enable = true;
