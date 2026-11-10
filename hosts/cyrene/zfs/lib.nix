@@ -38,5 +38,5 @@ in
   # pool. Flip to true only after the one-time creation in agents.nix, then
   # activate with `nixos-rebuild switch` (not `boot`) so a mistake shows up
   # immediately instead of on the next boot.
-  agentsPoolCreated = false;
+  agentsPoolCreated = true;
 }
