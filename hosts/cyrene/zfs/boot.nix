@@ -7,17 +7,42 @@
 
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
-  zfsCompatibleKernelPackages = lib.filterAttrs (
-    name: kernelPackages:
-    (builtins.match "linux_[0-9]+_[0-9]+" name) != null
-    && (builtins.tryEval kernelPackages).success
-    && (!kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}.meta.broken)
-  ) pkgs.linuxKernel.packages;
-  latestKernelPackage = lib.last (
-    lib.sort (a: b: (lib.versionOlder a.kernel.version b.kernel.version)) (
-      builtins.attrValues zfsCompatibleKernelPackages
-    )
+  zfsAttr = config.boot.zfs.package.kernelModuleAttribute;
+  upstreamLinux73 = pkgs.linuxKernel.packages.linux_7_3;
+  # OpenZFS 2.4.4 caps at Linux 7.2, which nixpkgs has dropped. Apply the
+  # 7.3 compat backports Ubuntu ships (see patches/linux-7.3/README.md) to the
+  # kernel module only; userspace stays the cached pkgs.zfs_2_4.
+  linux73Zfs = upstreamLinux73.extend (
+    _: super: {
+      ${zfsAttr} = super.${zfsAttr}.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ./patches/linux-7.3/linux-7.3-iops-create-no-flag.patch
+          ./patches/linux-7.3/linux-7.3-bvec-iter-bi-offset.patch
+          ./patches/linux-7.3/linux-cpu-feature-enabled.patch
+          ./patches/linux-7.3/linux-7.3-kthread-init-fs.patch
+          ./patches/linux-7.3/bump-Linux-Maximum-7.3.patch
+        ];
+        # nixpkgs greps META for the packaged Linux-Maximum; follow the bump.
+        postPatch =
+          let
+            from = "Linux-Maximum: *${lib.escapeRegex "7.2"}$";
+            to = "Linux-Maximum: *${lib.escapeRegex "7.3"}$";
+          in
+          assert lib.assertMsg (lib.hasInfix from old.postPatch)
+            "zfs postPatch no longer checks Linux-Maximum 7.2; revisit hosts/cyrene/zfs/boot.nix";
+          builtins.replaceStrings [ from ] [ to ] old.postPatch;
+        meta = old.meta // {
+          broken = false;
+        };
+      });
+    }
   );
+  kernelPackages =
+    assert lib.assertMsg (lib.versions.majorMinor upstreamLinux73.kernel.version == "7.3")
+      "linux_7_3 is no longer 7.3; revisit hosts/cyrene/zfs/boot.nix";
+    lib.warnIf (!upstreamLinux73.${zfsAttr}.meta.broken)
+      "nixpkgs ZFS now supports Linux 7.3: drop hosts/cyrene/zfs/patches/linux-7.3 and the override in boot.nix"
+      linux73Zfs;
 in
 {
   boot.supportedFilesystems = [
@@ -40,8 +65,9 @@ in
   # one-time `zpool import -f local-backup` after the id changes.
   networking.hostId = "69e5e3ea";
 
-  # Note this might jump back and forth as kernels are added or removed.
-  boot.kernelPackages = latestKernelPackage;
+  # Pinned to 7.3 with patched ZFS until nixpkgs' ZFS supports it; then go back
+  # to picking the newest kernel whose ZFS module isn't marked broken.
+  boot.kernelPackages = kernelPackages;
 
   boot.loader = {
     efi = {
