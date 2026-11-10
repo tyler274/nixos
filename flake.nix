@@ -69,6 +69,10 @@
     };
     # Hermes Agent (Nous Research) - AI agent orchestration. Its Home Manager
     # module is wired up in modules/home/hermes-agent.nix.
+    microvm = {
+      url = "github:microvm-nix/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -235,9 +239,22 @@
         program = "${cursorPkgs.update-cursor}/bin/update-cursor";
       };
 
-      checks.${system}.agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
+      checks.${system} = {
+        coda-firecracker = nixpkgs.legacyPackages.${system}.testers.runNixOSTest
+          (import ./tests/coda-firecracker.nix {
+            guest = self.nixosConfigurations.coda-ci-prototype.config.microvm.declaredRunner;
+          });
+        agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
+      };
 
       nixosConfigurations = {
+        coda-ci-prototype = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            inputs.microvm.nixosModules.microvm
+            ./hosts/cyrene/coda-ci-prototype.nix
+          ];
+        };
         Cyrene = mkHost ./hosts/cyrene [
           lanzaboote.nixosModules.lanzaboote
         ];
