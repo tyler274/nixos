@@ -19,7 +19,7 @@ lib.mkIf agentsPoolCreated {
     hostAddress = "10.233.1.1";
     localAddress = "10.233.1.2";
     autoStart = true;
-    requires = [ "agents-pool.service" ];
+    requires = [ "agents-pool.service" "coda-ci-spool.service" ];
     memoryMax = "24G";
     memoryHigh = "20G";
     authorizedKeys = [
@@ -34,9 +34,10 @@ lib.mkIf agentsPoolCreated {
         hostPath = "/agents/coda/build";
         ownedByAgent = true;
       };
+      # The spool is made by coda-ci-spool.service (coda-ci.nix): the agent
+      # may drop requests there but cannot list or remove anyone else's.
       "/agents/coda/ci/requests" = {
         hostPath = "/agents/coda/ci/spool/requests";
-        ownedByAgent = true;
       };
       "/agents/coda/ci/results" = {
         hostPath = "/agents/coda/ci/spool/results";
@@ -64,12 +65,6 @@ lib.mkIf agentsPoolCreated {
     "d /var/lib/agent-secrets/coda-agent 0750 root ${toString hostUsersGid} -"
     "d /var/lib/coda-carry 0755 root root -"
   ];
-
-  # Spool directories are made after the pool is mounted, never by tmpfiles
-  # at boot (that would write under the empty mountpoints on rpool).
-  systemd.services."container@coda-agent".preStart = lib.mkBefore ''
-    install -d -m 0755 -o root -g root /agents/coda/ci/spool /agents/coda/ci/spool/results
-  '';
 
   environment.etc."coda-agent/uid".text = toString hostAgentUid;
 }

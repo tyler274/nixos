@@ -33,6 +33,7 @@
     ../../modules/nixos/agent-sandbox.nix
     ./agent-container.nix
     ./coda-ci.nix
+    ./coda-carry.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];

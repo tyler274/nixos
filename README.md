@@ -93,7 +93,7 @@ Coding agents work on `coda-rust` inside `coda-agent`, a NixOS container defined
 | --- | --- | --- |
 | `/agents/coda/src` | dataset `agents/coda/src` (hourly snapshots) | read-write |
 | `/agents/coda/build` | dataset `agents/coda/build` (no snapshots) | read-write |
-| `/agents/coda/ci/requests` | `/agents/coda/ci/spool/requests` | read-write |
+| `/agents/coda/ci/requests` | `/agents/coda/ci/spool/requests` | drop-only (mode `1733`) |
 | `/agents/coda/ci/results` | `/agents/coda/ci/spool/results` | read-only |
 | `/agents/coda/carry` | `/var/lib/coda-carry` | read-only |
 | `/run/agent-secrets` | `/var/lib/agent-secrets/coda-agent` | read-only |
@@ -121,18 +121,35 @@ Connect with Remote-SSH to host `coda-agent` (the entry in [modules/home/common.
 
 ### Bringing host worktrees over
 
-`sudo coda-carry` records every host worktree of `~/code/coda/coda-rust` as refs, publishing nothing: `refs/carry/<slug>/head` for its commit and `refs/carry/<slug>/dirty` for a snapshot of uncommitted and untracked files, built with a temporary index so the worktree is untouched. It writes one bundle to `/var/lib/coda-carry/` and lists ignored files outside `target/` beside it. Inside the container, `git fetch /agents/coda/carry/carry.bundle 'refs/carry/*:refs/carry/*'` makes all of it available to `dev/worktree.sh new <slug> --from carry/<slug>/dirty`.
-## Enable isolated Coda qualification
+`sudo -u luluco coda-carry` records every host worktree of `~/code/coda/coda-rust` as refs, publishing nothing: `refs/carry/<slug>/head` for its commit and `refs/carry/<slug>/dirty` for a snapshot of uncommitted and untracked files, built with a temporary index so the worktree is untouched. It runs git as you, then installs one bundle into `/var/lib/coda-carry/` with `ignored.txt` beside it, listing ignored files outside `target/`. Inside the container, `git fetch /agents/coda/carry/carry.bundle 'refs/carry/*:refs/carry/*'` makes all of it available to `dev/worktree.sh new <slug> --from carry/<slug>/dirty`.
 
-The runner module defaults to disabled. It registers disposable JIT runners only for `Coda-Health/coda-rust`, using the repository runner API and its default runner group ID `1`; no organization runner group setup is required. Run-attempt labels route jobs, but labels are not workflow authorization: other workflows in this repository can target the runner. There is no organization-level selected-workflow restriction.
+## Coda CI in Firecracker
 
-Create the repository environment `cyrene-approval` with required reviewers, prevention of self-review, no administrator bypass, and a custom branch policy allowing only the `main` branch. The controller verifies these settings before registering a runner. These safeguards protect the qualification workflow, not other repository workflows that omit this environment.
+`services.coda-ci` ([hosts/cyrene/coda-ci.nix](hosts/cyrene/coda-ci.nix)) runs `coda-rust` CI jobs on Cyrene, one at a time, each in a disposable Firecracker microVM ([hosts/cyrene/coda-ci-guest.nix](hosts/cyrene/coda-ci-guest.nix)). It is disabled by default. Every 15 seconds the controller ([hosts/cyrene/coda_ci.py](hosts/cyrene/coda_ci.py)) takes at most one job from two queues, GitHub first:
 
-Provision the controller's GitHub token through Doppler to a root-only runtime file. Scope the token to `Coda-Health/coda-rust` with repository **Administration: write**, **Actions: read**, and **Environments: read** permissions. Set `services.coda-ci.tokenFile` to that file and `services.coda-ci.enable = true`. Review and authorize host activation separately. The token is passed as a systemd credential and never enters the guest.
+- **GitHub**: a queued job of `Coda-Health/coda-rust` whose `runs-on` is `cyrene-coda`. The controller registers a just-in-time runner with that label and a unique name. Inside the guest the runner runs in the pinned `catthehacker/ubuntu` image, so jobs see the same environment as under `act`. The registration is deleted after the job, whatever happened.
+- **Local**: an `act` request in `/agents/coda/ci/spool/requests`. `coda-ci act [<repo-path-or-commit>] [job]` on the host, and `dev/ci-local.sh [job]` in `coda-agent`, each write a git bundle and a job name there and wait for the result in `spool/results/<id>/{log,status}`. The host copies the bundle without opening it, and the guest runs `act -j <job>` offline, with no secrets and no cache server.
 
-Dispatch `Cyrene qualification` on `main` with the full commit SHA. Review that SHA before approving the environment. Each run attempt gets a unique runner label and private cache image. No PR cache is reused by local builds or another run attempt. The controller allows one 16 GiB guest only when at least 24 GiB of host memory is available. CI cache files older than seven days are pruned, and the controller refuses new work above its 100 GiB allocated-cache budget.
+Each job gets a directory under `/agents/coda/ci/jobs/` holding a reflink clone of `seed/work.img` (Docker's images and a scratch area, so a job costs only the blocks it writes) and a read-only inputs disk. The guest has no other host path, no host secret, and the `fc-coda-ci` tap, whose traffic nftables lets out to the internet but not to the host, the LAN, Tailscale or other private ranges. Its output leaves only over the serial console, which ends with `CODA_JOB_EXIT=<status>`. A job has three hours. Whatever happens, the controller removes the job directory, and on its next start it also removes any leftover directory and idle runner registration.
 
-Before allowing real PR code, qualify guest boot, checkout, denied host and LAN access, cancellation, controller termination, and post-reboot reconciliation. `ephemeral` registration alone is not evidence of VM isolation. Required Blacksmith CI remains independent. Stop the timer and service before disabling or rolling back this module. Do not remove cache data as part of rollback.
+The guest has 8 vCPUs and 12 GiB. A job starts only when the guest plus a 4 GiB margin fit in `MemAvailable`; otherwise it waits for a later pass, and on GitHub the job stays queued.
+
+To enable it:
+
+1. Create a fine-grained token for `Coda-Health/coda-rust` with **Administration: write** (to register runners) and **Actions: read** (to see the queue), and place it in a root-only file:
+
+   ```bash
+   sudo install -d -m 0700 /var/lib/coda-ci
+   sudo install -m 0400 /dev/stdin /var/lib/coda-ci/github-token   # paste, then Ctrl-D
+   ```
+
+   Without a token only local requests run.
+2. Set `services.coda-ci.enable = true` and `services.coda-ci.tokenFile = "/var/lib/coda-ci/github-token"`, then switch. The token reaches the controller as a systemd credential and never enters the guest.
+3. Build the seed: `sudo systemctl start coda-ci-seed`. It boots the guest once to pull the pinned image and the runner into a fresh work disk, then makes it `seed/work.img`. Run it again to pick up a new image.
+4. Check a local run: `coda-ci act ~/code/coda/coda-rust ci`.
+5. Send the repository's `ci` job here by setting the Actions variable `CI_JOB_RUNNER=cyrene-coda`. Deleting the variable sends it back to Blacksmith.
+
+Labels route jobs but do not authorize them: any workflow in the repository that names `cyrene-coda` runs here, including from pull requests by people with write access. Forks' pull requests run only after GitHub's approval for outside contributors. To stop, delete `CI_JOB_RUNNER`, then `sudo systemctl stop coda-ci.timer coda-ci`. `nix build .#checks.x86_64-linux.coda-firecracker -L` runs the module in a throwaway VM with nested KVM: an offline act request end to end, the seed unchanged after a job, the host and private ranges unreachable from the job, and the controller's unit tests.
 
 ## Update inputs
 

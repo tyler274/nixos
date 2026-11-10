@@ -240,19 +240,30 @@
       };
 
       checks.${system} = {
-        coda-firecracker = nixpkgs.legacyPackages.${system}.testers.runNixOSTest
-          (import ./tests/coda-firecracker.nix {
-            guest = self.nixosConfigurations.coda-ci-prototype.config.microvm.declaredRunner;
-          });
+        coda-firecracker = nixpkgs.legacyPackages.${system}.testers.runNixOSTest {
+          imports = [ ./tests/coda-firecracker.nix ];
+          node.specialArgs = { inherit inputs; };
+        };
         agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
+        coda-carry =
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+            carry = pkgs.callPackage ./hosts/cyrene/coda-carry-package.nix { };
+          in
+          pkgs.runCommand "coda-carry-test" { nativeBuildInputs = [ pkgs.git ]; } ''
+            bash ${./tests/coda-carry.sh} ${carry}/bin/coda-carry
+            touch $out
+          '';
       };
 
       nixosConfigurations = {
-        coda-ci-prototype = nixpkgs.lib.nixosSystem {
+        # The CI guest on its own, for building or inspecting it:
+        #   nix build .#nixosConfigurations.coda-ci-guest.config.microvm.declaredRunner
+        coda-ci-guest = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             inputs.microvm.nixosModules.microvm
-            ./hosts/cyrene/coda-ci-prototype.nix
+            ./hosts/cyrene/coda-ci-guest.nix
           ];
         };
         Cyrene = mkHost ./hosts/cyrene [

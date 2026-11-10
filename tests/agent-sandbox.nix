@@ -23,6 +23,8 @@ in
         ../modules/nixos/agent-sandbox.nix
         # The container exactly as Cyrene deploys it.
         ../hosts/cyrene/agent-container.nix
+        # For the CI spool the container binds; the controller stays off.
+        ../hosts/cyrene/coda-ci.nix
       ];
       virtualisation = {
         memorySize = 3072;
@@ -232,6 +234,11 @@ in
         agent_fails("touch /agents/coda/carry/x")
         agent_fails("touch /agents/coda/ci/results/x")
         agent("touch /agents/coda/ci/requests/x")
+        # Drop-only: the agent cannot list or remove other requests.
+        machine.succeed("touch /agents/coda/ci/spool/requests/other")
+        agent_fails("ls /agents/coda/ci/requests")
+        agent_fails("rm -f /agents/coda/ci/requests/other")
+        machine.succeed("test -e /agents/coda/ci/spool/requests/other")
         agent_fails("ls /agents/coda/ci/seed")
   '';
 }

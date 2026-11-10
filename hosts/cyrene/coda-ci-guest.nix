@@ -1,77 +1,171 @@
-{ lib, pkgs, modulesPath, ... }:
+# The disposable Firecracker guest that runs one Coda CI job.
+#
+# The controller (coda_ci.py) gives each boot two raw ext4 disks and nothing
+# else from the host:
+#   work.img    writable; a reflink clone of the seed with Docker's images
+#   inputs.img  read-only; `mode` plus the job's payload:
+#                 github  jit                    (a JIT runner config)
+#                 act     repo.bundle, job       (a bundle with refs/coda-ci/head, a job id)
+#                 seed    nothing                (pull the pinned images)
+# The job's output leaves only over the serial console. Its last line is
+# CODA_JOB_EXIT=<status>, and then the guest reboots, which ends Firecracker.
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.codaCiGuest;
+  runnerVersion = "2.338.2";
+  runnerSha256 = "baebf204307bac6193480852732f0aba2ae97b6c5597c244f4d5558390147c40";
+  runnerTarball = "/work/cache/actions-runner-${runnerVersion}.tar.gz";
+  # Labels the coda-rust workflows run on; act maps all of them to the image.
+  labels = [
+    "ubuntu-latest"
+    "blacksmith-2vcpu-ubuntu-2404"
+    "blacksmith-4vcpu-ubuntu-2404"
+    "blacksmith-8vcpu-ubuntu-2404"
+    "cyrene-coda"
+  ];
+
+  job = pkgs.writeShellApplication {
+    name = "coda-job";
+    runtimeInputs = with pkgs; [ act coreutils curl docker git gnutar gzip ];
+    text = ''
+      mode=$(cat /inputs/mode)
+      install -d /work/cache /work/act /work/runner
+      case "$mode" in
+        seed)
+          ${if cfg.seedArchives == [ ] then ''
+            docker pull ${lib.escapeShellArg cfg.image}
+          '' else lib.concatMapStrings (archive: ''
+            docker load -i ${archive}
+          '') cfg.seedArchives}
+          ${lib.optionalString cfg.seedRunner ''
+            curl -fsSL -o ${runnerTarball}.part \
+              https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-x64-${runnerVersion}.tar.gz
+            echo "${runnerSha256}  ${runnerTarball}.part" | sha256sum -c -
+            mv ${runnerTarball}.part ${runnerTarball}
+          ''}
+          docker image inspect ${lib.escapeShellArg cfg.image} >/dev/null
+          ;;
+        github)
+          if [ ! -e ${runnerTarball} ]; then
+            curl -fsSL -o ${runnerTarball} \
+              https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-x64-${runnerVersion}.tar.gz
+          fi
+          echo "${runnerSha256}  ${runnerTarball}" | sha256sum -c -
+          tar -xzf ${runnerTarball} -C /work/runner
+          # The runner sees the same /work/runner path as the guest's Docker,
+          # so job containers it starts bind real paths.
+          docker run --rm --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /work/runner:/work/runner -w /work/runner \
+            -v /inputs/jit:/run/coda/jit:ro \
+            -e RUNNER_ALLOW_RUNASROOT=1 \
+            --entrypoint /bin/bash \
+            ${lib.escapeShellArg cfg.image} \
+            -c './run.sh --jitconfig "$(cat /run/coda/jit)"'
+          ;;
+        act)
+          job=$(cat /inputs/job)
+          # The bundle carries the commit to test as refs/coda-ci/head.
+          git init --quiet /work/src
+          cd /work/src
+          git fetch --quiet /inputs/repo.bundle refs/coda-ci/head
+          git -c advice.detachedHead=false checkout --quiet --detach FETCH_HEAD
+          # No secrets and no cache server; the image is already local.
+          act -j "$job" \
+            ${lib.concatMapStringsSep " " (label: "-P ${label}=${lib.escapeShellArg cfg.image}") labels} \
+            --pull=false --rm --no-cache-server --action-offline-mode \
+            --action-cache-path /work/act
+          ;;
+        *)
+          echo "unknown mode: $mode" >&2
+          exit 2
+          ;;
+      esac
+    '';
+  };
+in
 {
-  imports = [ (modulesPath + "/virtualisation/qemu-vm.nix") ];
-  system.stateVersion = "26.05";
-  networking.hostName = "coda-ci";
-  networking.firewall.enable = true;
-  networking.nameservers = [ "1.1.1.1" "9.9.9.9" ];
-  networking.dhcpcd.extraConfig = "nohook resolv.conf";
-  services.openssh.enable = false;
-  users.users.runner = { isNormalUser = true; uid = 1000; };
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  environment.systemPackages = with pkgs; [ git nix nodejs_24 bash coreutils sccache gnutar gzip ];
-  virtualisation = {
-    memorySize = 16384;
-    cores = 8;
-    graphics = false;
-    diskSize = 160 * 1024;
-    useNixStoreImage = true;
-    mountHostNixStore = false;
-    writableStore = true;
-    writableStoreUseTmpfs = false;
-    sharedDirectories = lib.mkForce { };
-    qemu.networkingOptions = lib.mkForce [
-      "-netdev user,id=net0,ipv6=off,dns=1.1.1.1"
-      "-device virtio-net-pci,netdev=net0"
-    ];
-    qemu.options = [
-      "-fw_cfg name=opt/coda/jit,file=$CODA_JIT_FILE"
-      "-drive file=$CODA_CACHE_IMAGE,if=none,id=coda-cache,format=qcow2 -device virtio-blk-pci,drive=coda-cache,serial=coda-cache"
-    ];
-  };
-  boot.kernelModules = [ "qemu_fw_cfg" ];
-  boot.kernelParams = [ "console=ttyS0" ];
-  systemd.services.coda-cache = {
-    before = [ "coda-runner.service" ];
-    requiredBy = [ "coda-runner.service" ];
-    serviceConfig.Type = "oneshot";
-    serviceConfig.RemainAfterExit = true;
-    path = with pkgs; [ util-linux e2fsprogs coreutils ];
-    script = ''
-      device=/dev/disk/by-id/virtio-coda-cache
-      test -b "$device"
-      if ! blkid "$device"; then
-        mkfs.ext4 -m 0 "$device"
-      fi
-      mkdir -p /var/cache/sccache
-      mount -o nodev,nosuid,noexec "$device" /var/cache/sccache
-      chown runner:users /var/cache/sccache
-      install -d -o runner -g users -m 0700 /var/lib/coda-runner
-      install -o runner -g users -m 0400 /sys/firmware/qemu_fw_cfg/by_name/opt/coda/jit/raw /var/lib/coda-runner/jit
-    '';
-  };
-  systemd.services.coda-runner = {
-    wantedBy = [ "multi-user.target" ];
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" "coda-cache.service" ];
-    environment = {
-      HOME = "/var/lib/coda-runner";
-      RUNNER_ROOT = "/var/lib/coda-runner";
-      SCCACHE_DIR = "/var/cache/sccache";
-      SCCACHE_CACHE_SIZE = "40G";
-      CARGO_INCREMENTAL = "0";
-      RUSTC_WRAPPER = "sccache";
+  options.codaCiGuest = {
+    image = lib.mkOption {
+      type = lib.types.str;
+      default = "ghcr.io/catthehacker/ubuntu@sha256:62d572b92f9f32d3427b6d220ad1f9dca9c7b6ffad37d295425037dbff78abaf";
+      description = "Job image, pinned by digest; act and the GitHub runner both use it.";
     };
-    path = with pkgs; [ git nix nodejs_24 bash coreutils sccache gnutar gzip ];
-    serviceConfig = {
-      User = "runner";
-      WorkingDirectory = "/var/lib/coda-runner";
-      Restart = "no";
-      RuntimeMaxSec = "3h";
-      ExecStopPost = "+${pkgs.systemd}/bin/systemctl poweroff --no-block";
+    seedArchives = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      description = "Image archives the seed loads instead of pulling the image (for offline tests).";
     };
-    script = ''
-      exec ${pkgs.github-runner}/bin/Runner.Listener run --jitconfig "$(cat jit)"
-    '';
+    seedRunner = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether the seed caches the GitHub runner tarball.";
+    };
+  };
+
+  config = {
+    system.stateVersion = "26.05";
+    networking.hostName = "coda-ci";
+    networking.useDHCP = false;
+    networking.useNetworkd = true;
+    networking.nameservers = [ "1.1.1.1" "9.9.9.9" ];
+    # Firecracker exposes virtio-net over PCI, so the guest names it ens3,
+    # not eth0; match the tap's MAC instead.
+    systemd.network.networks."10-tap" = {
+      matchConfig.MACAddress = "02:00:00:00:01:02";
+      address = [ "10.234.0.2/30" ];
+      routes = [ { Gateway = "10.234.0.1"; } ];
+    };
+    services.openssh.enable = false;
+    users.mutableUsers = false;
+    users.allowNoPasswordLogin = true;
+    systemd.enableEmergencyMode = false;
+
+    microvm = {
+      hypervisor = "firecracker";
+      socket = "firecracker.sock";
+      vcpu = lib.mkDefault 8;
+      mem = lib.mkDefault 12288;
+      shares = [ ];
+      storeOnDisk = true;
+      storeDiskType = "erofs";
+      interfaces = [ { type = "tap"; id = "fc-coda-ci"; mac = "02:00:00:00:01:02"; } ];
+      # Both images are made by the controller in the job directory.
+      volumes = [
+        { image = "work.img"; mountPoint = "/work"; size = 0; autoCreate = false; }
+        { image = "inputs.img"; mountPoint = "/inputs"; size = 0; autoCreate = false; readOnly = true; }
+      ];
+    };
+    fileSystems."/inputs".options = [ "ro" "nodev" "nosuid" "noexec" ];
+
+    virtualisation.docker = {
+      enable = true;
+      daemon.settings.data-root = "/work/docker";
+    };
+    systemd.services.docker.unitConfig.RequiresMountsFor = [ "/work" ];
+
+    systemd.services.coda-job = {
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "docker.service" "network-online.target" ];
+      after = [ "docker.service" "network-online.target" ];
+      unitConfig.RequiresMountsFor = [ "/work" "/inputs" ];
+      environment.HOME = "/root";
+      serviceConfig = {
+        Type = "oneshot";
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
+        TimeoutStartSec = "3h";
+      };
+      # Report the status whatever happened, then end the VM: with reboot=k,
+      # a guest reboot makes Firecracker exit.
+      script = ''
+        set +e
+        ${lib.getExe job}
+        status=$?
+        sync
+        echo "CODA_JOB_EXIT=$status"
+        systemctl reboot --no-block
+      '';
+    };
   };
 }
