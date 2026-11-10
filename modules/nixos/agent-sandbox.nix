@@ -92,6 +92,11 @@ let
           type = lib.types.str;
           default = "24G";
         };
+        memoryHigh = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Throttle point below memoryMax; defaults to memoryMax.";
+        };
         cpuQuota = lib.mkOption {
           type = lib.types.str;
           default = "1600%";
@@ -218,7 +223,7 @@ in
         );
         serviceConfig = {
           MemoryMax = s.memoryMax;
-          MemoryHigh = s.memoryMax;
+          MemoryHigh = if s.memoryHigh != null then s.memoryHigh else s.memoryMax;
           CPUQuota = s.cpuQuota;
           TasksMax = s.tasksMax;
         };

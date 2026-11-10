@@ -85,16 +85,43 @@ nrs   # = sudo nixos-rebuild switch --flake ~/code/nixos#$(hostname)
 
 (`nrl` is the same without the `#host` suffix, and `nfu` runs `nix flake update`.)
 
-## Provision Coda build storage on Cyrene
+## Coda agent sandbox on Cyrene
 
-After reviewing and authorizing host activation, run `sudo coda-storage create --confirm-new-image` once. This allocates a 256 GiB LUKS image on the cache NVMe and prompts for its passphrase. It refuses an existing image and never formats the physical drive. Keep the passphrase outside Git and the Nix store.
+Coding agents work on `coda-rust` inside `coda-agent`, a NixOS container defined in [hosts/cyrene/agent-container.nix](hosts/cyrene/agent-container.nix) on the module [modules/nixos/agent-sandbox.nix](modules/nixos/agent-sandbox.nix). The container has its own user namespace (the agent is host UID 656360), a private network that cannot reach the host, the LAN or Tailscale, no sudo and no Docker. It sees only these host paths:
 
-After each boot, run `sudo coda-storage unlock`. This mounts the encrypted cache and prepares private local and CI directories. `coda-storage status` reports the required mounts. The Coda dev shell refuses the enabled host profile while the cache is locked.
+| Container path | Host path | Access |
+| --- | --- | --- |
+| `/agents/coda/src` | dataset `agents/coda/src` (hourly snapshots) | read-write |
+| `/agents/coda/build` | dataset `agents/coda/build` (no snapshots) | read-write |
+| `/agents/coda/ci/requests` | `/agents/coda/ci/spool/requests` | read-write |
+| `/agents/coda/ci/results` | `/agents/coda/ci/spool/results` | read-only |
+| `/agents/coda/carry` | `/var/lib/coda-carry` | read-only |
+| `/run/agent-secrets` | `/var/lib/agent-secrets/coda-agent` | read-only |
+| `/nix/store`, daemon socket | host store | read-only; the agent is an untrusted daemon user |
 
-For an existing checkout, run `python3 scripts/build_profile.py --migrate` from that checkout before entering its new dev shell. This renames `target` to `target.coda-backup`, then links a new per-worktree target on scratch. The backup is not copied to ephemeral storage or deleted. To reverse this migration, stop builds, remove only the managed `target` symlink, and rename the backup to `target`. Disable the host profile before re-entering the shell.
+Paths equal the host's so the host Nix daemon's GC roots for each worktree's dev shell stay valid. The pool is imported after boot by `agents-pool.service` ([hosts/cyrene/zfs/agents.nix](hosts/cyrene/zfs/agents.nix)); if the disk or key is missing, only that unit and the container fail. `nix build .#checks.x86_64-linux.agent-sandbox -L` runs the container definition in a throwaway VM and checks the boundaries.
 
-Local incremental compilation stays enabled. sccache can reuse eligible non-incremental compilations, but does not cache every compiler invocation or linking operation.
+Host git refuses trees the agent wrote (they belong to another UID). Do not mark them `safe.directory`: a hook or config the agent planted would run as you. Work on them from inside the container, or bring work out as a bundle.
 
+### Agent sandbox credentials
+
+The agent's tokens are files the agent can read and not change. Create a fine-grained GitHub token limited to `Coda-Health/coda-rust` with **Contents: read and write** and **Pull requests: read and write**, and a Doppler service token for the `dev` config (read-only). Then:
+
+```bash
+d=/var/lib/agent-secrets/coda-agent
+sudo install -m 0440 -o root -g 655460 /dev/stdin $d/github-token   # paste, then Ctrl-D
+sudo install -m 0440 -o root -g 655460 /dev/stdin $d/doppler-token  # paste, then Ctrl-D
+```
+
+Inside, git uses the GitHub token over HTTPS (remotes written as `git@github.com:` are rewritten), and `GH_TOKEN` and `DOPPLER_TOKEN` are set for login shells. Revoking either token on GitHub or Doppler is the kill switch.
+
+### Working in the sandbox from Cursor
+
+Connect with Remote-SSH to host `coda-agent` (the entry in [modules/home/common.nix](modules/home/common.nix) uses the dedicated key `~/.ssh/coda-agent`, with agent forwarding off) and open `/agents/coda/src/coda-rust`. Keep these Cursor settings off so no host credential is forwarded: `remote.SSH.enableAgentForwarding`, `git.terminalAuthentication`, `github.gitAuthentication`. `coda-rust`'s `dev/worktree.sh` owns worktrees and their build directories there.
+
+### Bringing host worktrees over
+
+`sudo coda-carry` records every host worktree of `~/code/coda/coda-rust` as refs, publishing nothing: `refs/carry/<slug>/head` for its commit and `refs/carry/<slug>/dirty` for a snapshot of uncommitted and untracked files, built with a temporary index so the worktree is untouched. It writes one bundle to `/var/lib/coda-carry/` and lists ignored files outside `target/` beside it. Inside the container, `git fetch /agents/coda/carry/carry.bundle 'refs/carry/*:refs/carry/*'` makes all of it available to `dev/worktree.sh new <slug> --from carry/<slug>/dirty`.
 ## Enable isolated Coda qualification
 
 The runner module defaults to disabled. It registers disposable JIT runners only for `Coda-Health/coda-rust`, using the repository runner API and its default runner group ID `1`; no organization runner group setup is required. Run-attempt labels route jobs, but labels are not workflow authorization: other workflows in this repository can target the runner. There is no organization-level selected-workflow restriction.

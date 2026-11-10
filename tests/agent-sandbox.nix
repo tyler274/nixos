@@ -6,6 +6,11 @@ let
   disk = "/dev/disk/by-id/virtio-agents";
   uidBase = 655360;
   hostAgent = toString (uidBase + 1000);
+  # Throwaway key for the sshd login check; never used outside this test.
+  testKey = pkgs.runCommand "coda-agent-test-key" { nativeBuildInputs = [ pkgs.openssh ]; } ''
+    mkdir $out
+    ssh-keygen -q -t ed25519 -N "" -C test -f $out/key
+  '';
 in
 {
   name = "agent-sandbox";
@@ -16,6 +21,8 @@ in
       imports = [
         ../hosts/cyrene/zfs/agents.nix
         ../modules/nixos/agent-sandbox.nix
+        # The container exactly as Cyrene deploys it.
+        ../hosts/cyrene/agent-container.nix
       ];
       virtualisation = {
         memorySize = 3072;
@@ -41,7 +48,10 @@ in
         "flakes"
       ];
       nix.settings.allowed-users = [ "@users" ];
-      environment.systemPackages = [ pkgs.gptfdisk ];
+      environment.systemPackages = [
+        pkgs.gptfdisk
+        pkgs.openssh
+      ];
 
       # The VM's virtiofs/overlay store can't be idmapped. Cyrene's store is
       # on ZFS, so after the first boot the test copies the store onto a ZFS
@@ -66,31 +76,14 @@ in
         inherit disk;
       };
 
+      # Sized for the test VM; everything else is Cyrene's definition.
       agentSandbox.containers.coda-agent = {
-        inherit uidBase;
-        autoStart = true;
-        hostAddress = "10.233.1.1";
-        localAddress = "10.233.1.2";
-        requires = [ "agents-pool.service" ];
-        memoryMax = "1G";
-        binds = {
-          "/work/src" = {
-            hostPath = "/agents/coda/src";
-            ownedByAgent = true;
-          };
-          "/work/build" = {
-            hostPath = "/agents/coda/build";
-            ownedByAgent = true;
-          };
-          "/run/agent-secrets" = {
-            hostPath = "/run/agent-secrets/coda-agent";
-            readOnly = true;
-          };
-        };
+        memoryMax = lib.mkForce "1G";
+        memoryHigh = lib.mkForce null;
+        authorizedKeys = lib.mkForce [ (builtins.readFile "${testKey}/key.pub") ];
       };
       systemd.tmpfiles.rules = [
-        "d /run/agent-secrets/coda-agent 0750 ${hostAgent} ${toString (uidBase + 100)} -"
-        "f /run/agent-secrets/coda-agent/token 0440 ${hostAgent} ${toString (uidBase + 100)} - secret"
+        "f /var/lib/agent-secrets/coda-agent/github-token 0440 root ${toString (uidBase + 100)} - secret"
       ];
       # Host services the sandbox must not reach.
       services.nginx = {
@@ -167,7 +160,7 @@ in
         machine.succeed("systemctl start container@coda-agent.service")
 
     with subtest("user namespace: agent is an unmapped high UID on the host"):
-        agent("touch /work/src/probe")
+        agent("touch /agents/coda/src/probe")
         uid = machine.succeed("stat -c %u /agents/coda/src/probe").strip()
         assert uid == "${hostAgent}", uid
         # Only nss-mymachines' synthetic name; no host account.
@@ -175,13 +168,13 @@ in
         machine.succeed("getent passwd ${hostAgent} | grep -q '^vu-coda-agent-1000:'")
 
     with subtest("host git refuses a tree the agent wrote"):
-        agent("git init -q /work/src/repo")
+        agent("git init -q /agents/coda/src/repo")
         machine.fail("su luluco -c 'git -C /agents/coda/src/repo status'")
 
     with subtest("reflink inside the build bind shares blocks"):
-        agent("head -c 64M /dev/urandom > /work/build/seed && sync")
+        agent("head -c 64M /dev/urandom > /agents/coda/build/seed && sync")
         before = int(machine.succeed("zpool get -Hp -o value bclonesaved agents"))
-        agent("cp --reflink=always /work/build/seed /work/build/clone && sync")
+        agent("cp --reflink=always /agents/coda/build/seed /agents/coda/build/clone && sync")
         machine.sleep(6)
         after = int(machine.succeed("zpool get -Hp -o value bclonesaved agents"))
         assert after - before >= 60 * 1024 * 1024, (before, after)
@@ -192,13 +185,13 @@ in
         agent_fails("touch /nix/store/escape")
 
     with subtest("secrets are read-only, home is absent"):
-        agent("cat /run/agent-secrets/token")
+        agent("cat /run/agent-secrets/github-token")
         agent_fails("touch /run/agent-secrets/x")
         agent_fails("ls /home/luluco")
 
     with subtest("Landlock works inside nspawn"):
         agent("${pkgs.landrun}/bin/landrun --best-effort --rox /nix --ro /etc -- ${pkgs.coreutils}/bin/true")
-        agent_fails("${pkgs.landrun}/bin/landrun --best-effort --rox /nix -- ${pkgs.coreutils}/bin/cat /work/src/probe")
+        agent_fails("${pkgs.landrun}/bin/landrun --best-effort --rox /nix -- ${pkgs.coreutils}/bin/cat /agents/coda/src/probe")
 
     with subtest("network: host and private ranges blocked"):
         machine.succeed("curl -s -o /dev/null http://127.0.0.1:8080/")
@@ -214,5 +207,31 @@ in
     with subtest("no privilege inside"):
         agent_fails("sudo true")
         agent_fails("docker ps")
+
+    with subtest("sshd: key login as agent only, no agent forwarding"):
+        machine.succeed("install -m 0600 ${testKey}/key /root/agent-key")
+        ssh = ("ssh -i /root/agent-key -o StrictHostKeyChecking=no"
+               " -o UserKnownHostsFile=/dev/null -o BatchMode=yes ")
+        machine.wait_until_succeeds(ssh + "agent@10.233.1.2 true", timeout=60)
+        out = machine.succeed(ssh + "agent@10.233.1.2 'id -un; echo $SSH_AUTH_SOCK'")
+        assert out.split() == ["agent"], out
+        machine.fail(ssh + "root@10.233.1.2 true")
+        machine.fail(ssh + "-o PubkeyAuthentication=no agent@10.233.1.2 true")
+
+    with subtest("dev tools: direnv, git over HTTPS with the token helper"):
+        agent("command -v direnv")
+        rewritten = agent("git ls-remote --get-url git@github.com:Coda-Health/coda-rust.git").strip()
+        assert rewritten == "https://github.com/Coda-Health/coda-rust.git", rewritten
+        cred = agent("printf 'protocol=https\\nhost=github.com\\n\\n' | git credential fill")
+        assert "password=secret" in cred, cred
+        assert agent("printenv GH_TOKEN").strip() == "secret"
+
+    with subtest("binds: carry and CI results read-only, requests writable"):
+        machine.succeed("echo bundle > /var/lib/coda-carry/probe")
+        agent("cat /agents/coda/carry/probe")
+        agent_fails("touch /agents/coda/carry/x")
+        agent_fails("touch /agents/coda/ci/results/x")
+        agent("touch /agents/coda/ci/requests/x")
+        agent_fails("ls /agents/coda/ci/seed")
   '';
 }

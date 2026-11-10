@@ -30,7 +30,8 @@
     ./radios.nix
     ./scratch.nix
     ./ccache.nix
-    ./coda-builds.nix
+    ../../modules/nixos/agent-sandbox.nix
+    ./agent-container.nix
     ./coda-ci.nix
     ./zfs
     inputs.aagl.nixosModules.default
