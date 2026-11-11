@@ -234,6 +234,13 @@ in
       internalInterfaces = lib.mapAttrsToList (name: _: iface name) cfg.containers;
     };
 
+    # Each end of a veth pair has a /32 address. The Mullvad daemon raises
+    # conf.all.arp_ignore from 0 to 2 at start, which answers ARP only for a
+    # sender in the target's subnet, so neither end answers the other. With 1
+    # set first, Mullvad leaves it alone, and the host still answers only for
+    # addresses on the interface asked. Containers copy the value at start.
+    boot.kernel.sysctl."net.ipv4.conf.all.arp_ignore" = 1;
+
     # Docker's iptables rules set the FORWARD policy to drop, which would also
     # drop the sandboxes' NAT traffic. Docker filters its own bridges anyway.
     virtualisation.docker.daemon.settings = lib.mkIf config.virtualisation.docker.enable {

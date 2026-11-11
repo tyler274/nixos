@@ -121,6 +121,12 @@
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
 
+  # Coda CI in Firecracker (README: "Coda CI in Firecracker").
+  services.coda-ci = {
+    enable = true;
+    tokenFile = "/var/lib/coda-ci/github-token";
+  };
+
   services.earlyoom = {
     enable = false;
     # Kill when free RAM drops below 5% (~3.2 GiB) or free swap below 10%.
