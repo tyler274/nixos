@@ -1,7 +1,8 @@
 { lib, inputs, ... }:
 
 # Cyrene's Coda agent sandbox. The module, its options and its docs live in
-# coda-rust's sandbox/ flake (input coda-sandbox; sandbox/README.md there).
+# coda-rust's crates/workspace-tools/sandbox flake (input coda-sandbox; its
+# README.md there).
 let
   inherit (import ./zfs/lib.nix { inherit lib; }) agentsPoolCreated;
 in
