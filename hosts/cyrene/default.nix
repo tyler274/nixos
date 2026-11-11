@@ -30,10 +30,7 @@
     ./radios.nix
     ./scratch.nix
     ./ccache.nix
-    ../../modules/nixos/agent-sandbox.nix
-    ./agent-container.nix
-    ./coda-ci.nix
-    ./coda-carry.nix
+    ./coda-sandbox.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
@@ -120,12 +117,6 @@
   ];
 
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
-
-  # Coda CI in Firecracker (README: "Coda CI in Firecracker").
-  services.coda-ci = {
-    enable = true;
-    tokenFile = "/var/lib/coda-ci/github-token";
-  };
 
   services.earlyoom = {
     enable = false;

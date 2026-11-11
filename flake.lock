@@ -22,7 +22,47 @@
         "type": "github"
       }
     },
+    "coda-sandbox": {
+      "inputs": {
+        "crane": "crane",
+        "microvm": "microvm",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "sandbox",
+        "lastModified": 1794395779,
+        "narHash": "sha256-iUWBUvll5AMMFFg9kuhVp5oTd2PdDMH/5v3NRtwdbd4=",
+        "ref": "sandbox-module",
+        "rev": "d89479e644af751ee77bd1365475f919ea34bbca",
+        "revCount": 1216,
+        "type": "git",
+        "url": "https://github.com/Coda-Health/coda-rust"
+      },
+      "original": {
+        "dir": "sandbox",
+        "ref": "sandbox-module",
+        "type": "git",
+        "url": "https://github.com/Coda-Health/coda-rust"
+      }
+    },
     "crane": {
+      "locked": {
+        "lastModified": 1793836618,
+        "narHash": "sha256-TREenflwEjxOSq292FYwbc3kEm7TDRtXCZRNWEdjBmg=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "79fd63528501446749c09f08cad486a58c7d173e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
       "locked": {
         "lastModified": 1774313767,
         "narHash": "sha256-hy0XTQND6avzGEUFrJtYBBpFa/POiiaGBr2vpU6Y9tY=",
@@ -37,7 +77,7 @@
         "type": "github"
       }
     },
-    "crane_2": {
+    "crane_3": {
       "locked": {
         "lastModified": 1790899423,
         "narHash": "sha256-THGtz65UGJU+sonZidRboyCMk+9DclpMF7pwL4uDV4M=",
@@ -54,7 +94,7 @@
     },
     "elyld": {
       "inputs": {
-        "crane": "crane",
+        "crane": "crane_2",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -250,7 +290,7 @@
     },
     "lanzaboote": {
       "inputs": {
-        "crane": "crane_2",
+        "crane": "crane_3",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -275,6 +315,7 @@
     "microvm": {
       "inputs": {
         "nixpkgs": [
+          "coda-sandbox",
           "nixpkgs"
         ],
         "spectrum": "spectrum"
@@ -508,13 +549,13 @@
     "root": {
       "inputs": {
         "aagl": "aagl",
+        "coda-sandbox": "coda-sandbox",
         "elyld": "elyld",
         "elymalloc": "elymalloc",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
         "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
-        "microvm": "microvm",
         "mini-diarium": "mini-diarium",
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",

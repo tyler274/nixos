@@ -125,7 +125,7 @@
         IdentityFile = "~/.ssh/id_ed25519";
         IdentitiesOnly = "yes";
       };
-      # Cyrene's agent sandbox (hosts/cyrene/agent-container.nix). Its own
+      # Cyrene's agent sandbox (hosts/cyrene/coda-sandbox.nix). Its own
       # key, and nothing of the host's forwarded into the container.
       "coda-agent" = lib.hm.dag.entryBefore [ "*" ] {
         HostName = "10.233.1.2";

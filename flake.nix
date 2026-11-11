@@ -69,12 +69,14 @@
     };
     # Hermes Agent (Nous Research) - AI agent orchestration. Its Home Manager
     # module is wired up in modules/home/hermes-agent.nix.
-    microvm = {
-      url = "github:microvm-nix/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # Cyrene's Coda agent sandbox: the coda-sandbox binary and its NixOS
+    # module (hosts/cyrene/coda-sandbox.nix sets Cyrene's values).
+    coda-sandbox = {
+      url = "git+https://github.com/Coda-Health/coda-rust?dir=sandbox&ref=sandbox-module";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -239,33 +241,7 @@
         program = "${cursorPkgs.update-cursor}/bin/update-cursor";
       };
 
-      checks.${system} = {
-        coda-firecracker = nixpkgs.legacyPackages.${system}.testers.runNixOSTest {
-          imports = [ ./tests/coda-firecracker.nix ];
-          node.specialArgs = { inherit inputs; };
-        };
-        agent-sandbox = nixpkgs.legacyPackages.${system}.testers.runNixOSTest ./tests/agent-sandbox.nix;
-        coda-carry =
-          let
-            pkgs = nixpkgs.legacyPackages.${system};
-            carry = pkgs.callPackage ./hosts/cyrene/coda-carry-package.nix { };
-          in
-          pkgs.runCommand "coda-carry-test" { nativeBuildInputs = [ pkgs.git ]; } ''
-            bash ${./tests/coda-carry.sh} ${carry}/bin/coda-carry
-            touch $out
-          '';
-      };
-
       nixosConfigurations = {
-        # The CI guest on its own, for building or inspecting it:
-        #   nix build .#nixosConfigurations.coda-ci-guest.config.microvm.declaredRunner
-        coda-ci-guest = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            inputs.microvm.nixosModules.microvm
-            ./hosts/cyrene/coda-ci-guest.nix
-          ];
-        };
         Cyrene = mkHost ./hosts/cyrene [
           lanzaboote.nixosModules.lanzaboote
         ];
