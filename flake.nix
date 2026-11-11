@@ -76,7 +76,7 @@
     # Cyrene's Coda agent sandbox: the coda-sandbox binary and its NixOS
     # module (hosts/cyrene/coda-sandbox.nix sets Cyrene's values).
     coda-sandbox = {
-      url = "git+https://github.com/Coda-Health/coda-rust?dir=crates/workspace-tools/sandbox&ref=sandbox-module";
+      url = "git+ssh://git@github.com/Coda-Health/coda-rust?dir=crates/workspace-tools/sandbox&ref=sandbox-module";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
