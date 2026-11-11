@@ -32,11 +32,11 @@
       },
       "locked": {
         "dir": "sandbox",
-        "lastModified": 1794395779,
-        "narHash": "sha256-iUWBUvll5AMMFFg9kuhVp5oTd2PdDMH/5v3NRtwdbd4=",
+        "lastModified": 1794396743,
+        "narHash": "sha256-N3VuVsvtQSO6OXR3cEpRv8mGXddclfT5l4B4MHPH4eA=",
         "ref": "sandbox-module",
-        "rev": "d89479e644af751ee77bd1365475f919ea34bbca",
-        "revCount": 1216,
+        "rev": "32a0dde4102994835355fe5958688b4f0962b64a",
+        "revCount": 1218,
         "type": "git",
         "url": "https://github.com/Coda-Health/coda-rust"
       },
