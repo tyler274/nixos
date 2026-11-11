@@ -132,10 +132,19 @@
 
       # Cursor ahead of nixos-unstable; bump with `nix run .#update-cursor`.
       codeCursorOverlay = import ./overlays/code-cursor/overlay.nix;
-      cursorPkgs = import nixpkgs {
+
+      # Antigravity hub + IDE ahead of nixos-unstable; bump with
+      # `nix run .#update-antigravity`.
+      antigravityOverlay = import ./overlays/antigravity/overlay.nix;
+
+      # Plain nixpkgs + the pinned-app overlays, for the flake's packages/apps.
+      pinnedPkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ codeCursorOverlay ];
+        overlays = [
+          codeCursorOverlay
+          antigravityOverlay
+        ];
       };
 
       # Skips a nix unit test that can't pass on the XFS-backed build
@@ -189,6 +198,7 @@
                   bambuStudioFixOverlay
                   snapmakerOrcaOverlay
                   codeCursorOverlay
+                  antigravityOverlay
                   # Paused with the znver5/ElyLD world rebuild (see
                   # hosts/cyrene/default.nix): each of these overrides a
                   # core derivation (openssl, gnutls, llvm, nix, nodejs,
@@ -233,12 +243,26 @@
     in
     {
       packages.${system} = {
-        inherit (cursorPkgs) code-cursor code-cursor-fhs update-cursor;
+        inherit (pinnedPkgs)
+          code-cursor
+          code-cursor-fhs
+          update-cursor
+          antigravity-hub
+          antigravity-ide
+          antigravity-ide-fhs
+          update-antigravity
+          ;
       };
 
-      apps.${system}.update-cursor = {
-        type = "app";
-        program = "${cursorPkgs.update-cursor}/bin/update-cursor";
+      apps.${system} = {
+        update-cursor = {
+          type = "app";
+          program = "${pinnedPkgs.update-cursor}/bin/update-cursor";
+        };
+        update-antigravity = {
+          type = "app";
+          program = "${pinnedPkgs.update-antigravity}/bin/update-antigravity";
+        };
       };
 
       nixosConfigurations = {

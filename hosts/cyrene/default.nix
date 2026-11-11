@@ -262,6 +262,8 @@
       gwe
       nut
       code-cursor-fhs
+      antigravity-hub
+      antigravity-ide-fhs
       # Pin CUDA 13.2 (matches NVIDIA cuda-samples upstream target).
       # Re-enable after uncommenting nixpkgs.config.cudaSupport = true above.
       # cudaPackages_13_2.cudatoolkit
