@@ -16,6 +16,25 @@ def atomic_json(path, value):
     os.replace(file.name, path)
 
 
+# Replaced with DXVK when enabled. Removed again, when they are symlinks we
+# created, once DXVK is turned off. Real files are never deleted.
+DXVK_DLLS = ("d3d11", "dxgi", "d3d10core", "d3d9")
+
+
+def identity(spec):
+    """The spec without Nix store paths, which change on every rebuild.
+
+    Graphics parameters are managed state, not a different installation, so a
+    change to them updates the existing bottle instead of refusing it.
+    """
+    spec = {
+        key: value for key, value in spec.items()
+        if key not in ("bottles", "executable", "parameters")
+    }
+    spec["runner"] = {key: value for key, value in spec["runner"].items() if key != "path"}
+    return spec
+
+
 class Installation:
     def __init__(self, spec, root):
         self.spec = spec
@@ -49,58 +68,111 @@ class Installation:
         with (self.root / ".setup.lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             marker = self.root / ".installation.json"
+            previous_runner = None
             if marker.exists():
-                if json.loads(marker.read_text()) != self.spec:
+                previous = json.loads(marker.read_text())
+                if identity(previous) != identity(self.spec):
                     raise RuntimeError(
                         "This data directory belongs to a different Linear installation. "
                         "Use a new LINEAR_BOTTLES_DATA_HOME; existing data was not changed."
                     )
+                previous_runner = previous["runner"].get("path")
             else:
                 if any(p.name != ".setup.lock" for p in self.root.iterdir()):
                     raise RuntimeError("Refusing to adopt a nonempty Linear data directory.")
-                atomic_json(marker, self.spec)
             ready = self.root / ".ready"
-            if ready.exists():
-                if not all((self.prefix / p).is_file() for p in (
-                    "bottle.yml", "system.reg", "user.reg", "drive_c/windows/system32/kernel32.dll"
-                )):
-                    raise RuntimeError("The managed Linear bottle is damaged; refusing to overwrite it.")
-                return
-            runner = self.root / "bottles/runners" / self.spec["runner"]["name"]
-            runner.parent.mkdir(parents=True, exist_ok=True)
-            if not runner.is_symlink():
-                if runner.exists():
-                    raise RuntimeError("Refusing to overwrite an existing runner.")
-                runner.symlink_to(self.spec["runner"]["path"], target_is_directory=True)
-            elif os.readlink(runner) != self.spec["runner"]["path"]:
-                raise RuntimeError("The managed runner link has changed.")
-            self.prefix.mkdir(parents=True, exist_ok=True)
-            config = {
-                "Name": self.spec["bottle"],
-                "Path": self.spec["bottle"],
-                "Runner": self.spec["runner"]["name"],
-                "Environment": "Custom",
-                "Arch": "win64",
-                "Windows": "win10",
-                "Parameters": self.spec["parameters"],
-                "Environment_Variables": {"WINEDLLOVERRIDES": "mscoree,mshtml,winemenubuilder="},
-                "DLL_Overrides": {name: "n,b" for name in ("d3d11", "dxgi", "d3d10core", "d3d9")},
-            }
-            atomic_json(self.prefix / "bottle.yml", config)
-            wineboot = runner / "files/lib/wine/x86_64-windows/wineboot.exe"
-            self.cli(["run", "-b", self.spec["bottle"], "-e", str(wineboot), "--", "-u"], timeout=180)
-            for registry in ("system.reg", "user.reg"):
-                if not (self.prefix / registry).is_file():
-                    raise RuntimeError("Bottles failed to initialize the Linear Wine prefix.")
-            for arch, directory in (("x86_64", "system32"), ("i386", "syswow64")):
-                for name in config["DLL_Overrides"]:
-                    target = runner / f"files/lib/wine/dxvk/{arch}-windows/{name}.dll"
-                    destination = self.prefix / f"drive_c/windows/{directory}/{name}.dll"
-                    temporary = destination.with_suffix(".dll.linear-tmp")
-                    temporary.unlink(missing_ok=True)
-                    temporary.symlink_to(target)
-                    temporary.replace(destination)
-            atomic_json(ready, {"version": self.spec["version"]})
+            if ready.exists() and not all((self.prefix / p).is_file() for p in (
+                "bottle.yml", "system.reg", "user.reg", "drive_c/windows/system32/kernel32.dll"
+            )):
+                raise RuntimeError("The managed Linear bottle is damaged; refusing to overwrite it.")
+            runner = self.link_runner(previous_runner)
+            if not marker.exists() or json.loads(marker.read_text()) != self.spec:
+                atomic_json(marker, self.spec)
+            if not ready.exists():
+                self.prefix.mkdir(parents=True, exist_ok=True)
+                self.write_bottle_config()
+                wineboot = runner / "files/lib/wine/x86_64-windows/wineboot.exe"
+                self.cli(["run", "-b", self.spec["bottle"], "-e", str(wineboot), "--", "-u"], timeout=180)
+                for registry in ("system.reg", "user.reg"):
+                    if not (self.prefix / registry).is_file():
+                        raise RuntimeError("Bottles failed to initialize the Linear Wine prefix.")
+                atomic_json(ready, {"version": self.spec["version"]})
+            self.apply_graphics(runner)
+
+    def bottle_config(self):
+        overrides = {}
+        if self.spec["parameters"].get("dxvk"):
+            overrides = {name: "n,b" for name in DXVK_DLLS}
+        return {
+            "Name": self.spec["bottle"],
+            "Path": self.spec["bottle"],
+            "Runner": self.spec["runner"]["name"],
+            "Environment": "Custom",
+            "Arch": "win64",
+            "Windows": "win10",
+            "Parameters": self.spec["parameters"],
+            "Environment_Variables": {"WINEDLLOVERRIDES": "mscoree,mshtml,winemenubuilder="},
+            "DLL_Overrides": overrides,
+        }
+
+    def write_bottle_config(self):
+        config = self.bottle_config()
+        path = self.prefix / "bottle.yml"
+        if not path.exists() or json.loads(path.read_text()) != config:
+            atomic_json(path, config)
+
+    def apply_graphics(self, runner):
+        """Make an existing bottle match the configured graphics.
+
+        DXVK is a set of DLL symlinks plus the bottle's override list. Both
+        are refreshed on every launch, so turning it off takes effect without
+        recreating the bottle or touching anything else in it.
+        """
+        self.write_bottle_config()
+        enabled = bool(self.spec["parameters"].get("dxvk"))
+        for arch, directory in (("x86_64", "system32"), ("i386", "syswow64")):
+            for name in DXVK_DLLS:
+                destination = self.prefix / f"drive_c/windows/{directory}/{name}.dll"
+                if not enabled:
+                    if destination.is_symlink():
+                        destination.unlink()
+                    continue
+                target = runner / f"files/lib/wine/dxvk/{arch}-windows/{name}.dll"
+                if destination.is_symlink() and os.readlink(destination) == str(target):
+                    continue
+                if destination.exists() and not destination.is_symlink():
+                    raise RuntimeError(f"Refusing to replace {destination.name} with DXVK.")
+                temporary = destination.with_suffix(".dll.linear-tmp")
+                temporary.unlink(missing_ok=True)
+                temporary.symlink_to(target)
+                temporary.replace(destination)
+
+    def link_runner(self, previous_path):
+        """Point the managed runner link at this generation's runner.
+
+        A rebuild moves the runner to a new store path. The link is repointed
+        when it still targets the path this launcher recorded last time, or
+        when its target has been garbage-collected. Any other target was not
+        set by us and is left alone.
+        """
+        runner = self.root / "bottles/runners" / self.spec["runner"]["name"]
+        runner.parent.mkdir(parents=True, exist_ok=True)
+        path = self.spec["runner"]["path"]
+        if not runner.is_symlink():
+            if runner.exists():
+                raise RuntimeError("Refusing to overwrite an existing runner.")
+            runner.symlink_to(path, target_is_directory=True)
+            return runner
+        current = os.readlink(runner)
+        if current == path:
+            return runner
+        if current != previous_path and os.path.exists(current):
+            raise RuntimeError("The managed runner link has changed.")
+        temporary = runner.with_name(runner.name + ".linear-tmp")
+        temporary.unlink(missing_ok=True)
+        temporary.symlink_to(path, target_is_directory=True)
+        temporary.replace(runner)
+        return runner
 
     def launch(self, urls):
         if len(urls) > 1 or any(

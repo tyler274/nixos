@@ -25,8 +25,10 @@ let
     executable = "Linear.exe";
     parameters = {
       custom_dpi = 96;
-      dxvk = true;
-      vkd3d = true;
+      # DXVK's swapchain fails to present on NVIDIA under Wayland, so the
+      # window frame draws and the page stays white. Wine's own graphics works.
+      dxvk = false;
+      vkd3d = false;
       use_runtime = false;
       use_steam_runtime = false;
       sync = "wine";

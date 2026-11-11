@@ -57,6 +57,90 @@ class InstallationTests(unittest.TestCase):
             Installation(changed, self.root).setup()
         self.assertEqual(json.loads((self.root / ".installation.json").read_text()), self.spec)
 
+    def test_rebuilt_store_paths_reuse_the_bottle(self):
+        old_runner = Path(self.temp.name) / "old-ge"
+        new_runner = Path(self.temp.name) / "new-ge"
+        old_runner.mkdir()
+        new_runner.mkdir()
+        self.spec["runner"]["path"] = str(old_runner)
+        installation = Installation(self.spec, self.root)
+        with patch.object(installation, "cli", side_effect=self.initialize):
+            installation.setup()
+        (installation.prefix / "bottle.yml").touch()
+        account = installation.prefix / "account-sentinel"
+        account.write_text("untouched")
+
+        rebuilt = copy.deepcopy(self.spec)
+        rebuilt["bottles"] = "/nix/store/new/bin/bottles-cli"
+        rebuilt["executable"] = "/nix/store/new-linear/Linear.exe"
+        rebuilt["runner"]["path"] = str(new_runner)
+        rebuilt_installation = Installation(rebuilt, self.root)
+        with patch.object(rebuilt_installation, "cli") as cli:
+            rebuilt_installation.setup()
+            cli.assert_not_called()
+        runner = self.root / "bottles/runners/pinned-ge"
+        self.assertEqual(os.readlink(runner), str(new_runner))
+        self.assertEqual(json.loads((self.root / ".installation.json").read_text()), rebuilt)
+        self.assertEqual(account.read_text(), "untouched")
+
+    def test_graphics_change_updates_the_existing_bottle(self):
+        runner = Path(self.temp.name) / "ge"
+        runner.mkdir()
+        self.spec["parameters"] = {"dxvk": True}
+        self.spec["runner"]["path"] = str(runner)
+        installation = Installation(self.spec, self.root)
+        with patch.object(installation, "cli", side_effect=self.initialize):
+            installation.setup()
+        linked = installation.prefix / "drive_c/windows/system32/d3d11.dll"
+        self.assertTrue(linked.is_symlink())
+        account = installation.prefix / "account-sentinel"
+        account.write_text("untouched")
+
+        disabled = copy.deepcopy(self.spec)
+        disabled["parameters"] = {"dxvk": False}
+        disabled_installation = Installation(disabled, self.root)
+        with patch.object(disabled_installation, "cli") as cli:
+            disabled_installation.setup()
+            cli.assert_not_called()
+        self.assertFalse(linked.exists())
+        config = json.loads((installation.prefix / "bottle.yml").read_text())
+        self.assertFalse(config["Parameters"]["dxvk"])
+        self.assertEqual(config["DLL_Overrides"], {})
+        self.assertEqual(account.read_text(), "untouched")
+
+        enabled_installation = Installation(self.spec, self.root)
+        with patch.object(enabled_installation, "cli") as cli:
+            enabled_installation.setup()
+            cli.assert_not_called()
+        self.assertTrue(linked.is_symlink())
+        config = json.loads((installation.prefix / "bottle.yml").read_text())
+        self.assertTrue(config["Parameters"]["dxvk"])
+        self.assertEqual(config["DLL_Overrides"]["d3d11"], "n,b")
+
+    def test_real_graphics_dll_is_not_replaced(self):
+        with patch.object(self.installation, "cli", side_effect=self.initialize):
+            self.installation.setup()
+        self.spec["parameters"] = {"dxvk": True}
+        dll = self.installation.prefix / "drive_c/windows/system32/d3d11.dll"
+        dll.write_text("real")
+        with self.assertRaisesRegex(RuntimeError, "d3d11.dll"):
+            Installation(self.spec, self.root).setup()
+        self.assertEqual(dll.read_text(), "real")
+
+    def test_foreign_runner_link_is_not_repointed(self):
+        foreign = Path(self.temp.name) / "foreign-ge"
+        foreign.mkdir()
+        with patch.object(self.installation, "cli", side_effect=self.initialize):
+            self.installation.setup()
+        runner = self.root / "bottles/runners/pinned-ge"
+        runner.unlink()
+        runner.symlink_to(foreign)
+        rebuilt = copy.deepcopy(self.spec)
+        rebuilt["runner"]["path"] = "/nix/store/new-ge"
+        with self.assertRaisesRegex(RuntimeError, "runner link"):
+            Installation(rebuilt, self.root).setup()
+        self.assertEqual(os.readlink(runner), str(foreign))
+
     def test_failed_initialization_can_be_retried(self):
         with patch.object(self.installation, "cli", side_effect=subprocess.TimeoutExpired("bottles", 1)):
             with self.assertRaises(subprocess.TimeoutExpired):
