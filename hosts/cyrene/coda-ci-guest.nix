@@ -88,7 +88,7 @@ in
   options.codaCiGuest = {
     image = lib.mkOption {
       type = lib.types.str;
-      default = "ghcr.io/catthehacker/ubuntu@sha256:62d572b92f9f32d3427b6d220ad1f9dca9c7b6ffad37d295425037dbff78abaf";
+      default = "ghcr.io/catthehacker/ubuntu@sha256:1d8114fb9c1fa5de85c79a31dc6d24d2128753486e46e1cbad0de98d3f9ae966";
       description = "Job image, pinned by digest; act and the GitHub runner both use it.";
     };
     seedArchives = lib.mkOption {
