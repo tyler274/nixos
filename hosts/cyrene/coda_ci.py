@@ -209,10 +209,37 @@ def claim_request(requests, request_id, destination, max_bundle_bytes):
             path.unlink(missing_ok=True)
 
 
+ARC_EVICTABLE = (
+    "mru_evictable_data",
+    "mru_evictable_metadata",
+    "mfu_evictable_data",
+    "mfu_evictable_metadata",
+)
+
+
+def reclaimable_arc(arcstats=Path("/proc/spl/kstat/zfs/arcstats")):
+    """ZFS ARC the kernel can give back under pressure, which MemAvailable omits.
+
+    Only the evictable lists count, and never below the ARC's floor (c_min).
+    A host without ZFS has none.
+    """
+    try:
+        text = arcstats.read_text()
+    except FileNotFoundError:
+        return 0
+    stats = {}
+    for line in text.splitlines():
+        fields = line.split()
+        if len(fields) == 3 and fields[2].isdigit():
+            stats[fields[0]] = int(fields[2])
+    evictable = sum(stats.get(name, 0) for name in ARC_EVICTABLE)
+    return max(0, min(evictable, stats.get("size", 0) - stats.get("c_min", 0)))
+
+
 def available_memory():
     for line in Path("/proc/meminfo").read_text().splitlines():
         if line.startswith("MemAvailable:"):
-            return int(line.split()[1]) * 1024
+            return int(line.split()[1]) * 1024 + reclaimable_arc()
     raise ValueError("MemAvailable is unavailable")
 
 

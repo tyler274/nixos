@@ -132,7 +132,7 @@ Connect with Remote-SSH to host `coda-agent` (the entry in [modules/home/common.
 
 Each job gets a directory under `/agents/coda/ci/jobs/` holding a reflink clone of `seed/work.img` (Docker's images and a scratch area, so a job costs only the blocks it writes) and a read-only inputs disk. The guest has no other host path, no host secret, and the `fc-coda-ci` tap, whose traffic nftables lets out to the internet but not to the host, the LAN, Tailscale or other private ranges. Its output leaves only over the serial console, which ends with `CODA_JOB_EXIT=<status>`. A job has three hours. Whatever happens, the controller removes the job directory, and on its next start it also removes any leftover directory and idle runner registration.
 
-The guest has 8 vCPUs and 12 GiB. A job starts only when the guest plus a 4 GiB margin fit in `MemAvailable`; otherwise it waits for a later pass, and on GitHub the job stays queued.
+The guest has 8 vCPUs and 12 GiB. A job starts only when the guest plus a 4 GiB margin fit in `MemAvailable` plus the ZFS ARC the kernel can evict above its floor; otherwise it waits for a later pass, and on GitHub the job stays queued.
 
 To enable it:
 

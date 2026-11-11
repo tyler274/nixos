@@ -7,7 +7,8 @@ from unittest.mock import call, patch
 import coda_ci
 from coda_ci import (
     Config, GuestFailed, MIB, REJECTED, GUEST_FAILED, admit, claim_request, next_github_job,
-    next_local_request, one_pass, reconcile, register, run_local, RequestRejected,
+    next_local_request, one_pass, reclaimable_arc, reconcile, register, run_local,
+    RequestRejected,
 )
 
 
@@ -191,6 +192,35 @@ class AdmissionTests(unittest.TestCase):
             config = make_config(directory, guest_mem_mib=12288, margin_mib=4096)
             self.assertTrue(admit(config, 16384 * MIB))
             self.assertFalse(admit(config, 16384 * MIB - 1))
+
+    def test_reclaimable_arc_counts_evictable_lists_above_the_floor(self):
+        def arcstats(directory, **values):
+            path = Path(directory) / "arcstats"
+            lines = ["13 1 0x01 147 39984 0 0", "name                            type data"]
+            lines += [f"{name:<32}4    {value}" for name, value in values.items()]
+            path.write_text("\n".join(lines) + "\n")
+            return path
+
+        with tempfile.TemporaryDirectory() as directory:
+            evictable = dict(
+                mru_evictable_data=1 * MIB,
+                mru_evictable_metadata=2 * MIB,
+                mfu_evictable_data=3 * MIB,
+                mfu_evictable_metadata=4 * MIB,
+            )
+            self.assertEqual(
+                reclaimable_arc(arcstats(directory, size=100 * MIB, c_min=10 * MIB, **evictable)),
+                10 * MIB,
+            )
+            self.assertEqual(
+                reclaimable_arc(arcstats(directory, size=14 * MIB, c_min=10 * MIB, **evictable)),
+                4 * MIB,
+            )
+            self.assertEqual(
+                reclaimable_arc(arcstats(directory, size=5 * MIB, c_min=10 * MIB, **evictable)),
+                0,
+            )
+            self.assertEqual(reclaimable_arc(Path(directory) / "absent"), 0)
 
     def test_unadmitted_request_stays_queued(self):
         with tempfile.TemporaryDirectory() as directory:
