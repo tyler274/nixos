@@ -50,6 +50,14 @@ lib.mkIf agentsPoolCreated {
         hostPath = "/var/lib/coda-carry";
         readOnly = true;
       };
+      # TODO(asap): github-token is the general `gh auth token` (classic:
+      # repo, workflow, admin:org, admin:public_key, gist; every org) as a
+      # stopgap. Anything in the container can read it, so it can push to
+      # any repo, edit any workflow and add an SSH key that outlives the
+      # token. Replace it with the fine-grained coda-rust-only token from
+      # README "Agent sandbox credentials" (owner Coda-Health, approved by
+      # an org owner), then rotate the host login (`gh auth logout`, then
+      # `gh auth login`) so the copy the container saw stops working.
       "/run/agent-secrets" = {
         hostPath = "/var/lib/agent-secrets/coda-agent";
         readOnly = true;

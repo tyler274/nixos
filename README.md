@@ -107,6 +107,8 @@ Host git refuses trees the agent wrote (they belong to another UID). Do not mark
 
 The agent's tokens are files the agent can read and not change. Create a fine-grained GitHub token limited to `Coda-Health/coda-rust` with **Contents: read and write** and **Pull requests: read and write**, and a Doppler service token for the `dev` config (read-only). Then:
 
+> **Stopgap, switch as soon as possible:** `github-token` currently holds the host's general `gh auth token`, a classic token with `repo`, `workflow`, `admin:org`, `admin:public_key` and `gist` across every org. Anything in the container can read it. Replace it with the fine-grained token above, then rotate the host's `gh` login so the copy the container saw stops working.
+
 ```bash
 d=/var/lib/agent-secrets/coda-agent
 sudo install -m 0440 -o root -g 655460 /dev/stdin $d/github-token   # paste, then Ctrl-D
