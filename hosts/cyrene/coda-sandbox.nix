@@ -22,9 +22,8 @@ in
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBeBvlXnNHWV5nhvbyvTG0xe+41dxNtX9l/QRPDqOD8s coda-agent"
     ];
-    ci = {
-      enable = true;
-      tokenFile = "/var/lib/coda-ci/github-token";
-    };
+    # The controller's GitHub token is `github-ci` in luluco's keyring,
+    # served by the token broker.
+    ci.enable = true;
   };
 }
