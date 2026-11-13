@@ -32,17 +32,17 @@
       },
       "locked": {
         "dir": "crates/workspace-tools/sandbox",
-        "lastModified": 1794463910,
-        "narHash": "sha256-LjBT8pKuZxZDCso4ggkzPvygqHncbFbthefcBoCa7yU=",
-        "ref": "main",
-        "rev": "6aba07e65d2b72fa726fa3687c9375f881766697",
-        "revCount": 1250,
+        "lastModified": 1794526659,
+        "narHash": "sha256-HIJSFQ0eyv69xHE9yt8+w9ieL0B3TFMO6lExwztKTmw=",
+        "ref": "sandbox-ungate",
+        "rev": "d989317c7e4cb38c2950dfff68693661132f0d56",
+        "revCount": 1258,
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/coda-rust"
       },
       "original": {
         "dir": "crates/workspace-tools/sandbox",
-        "ref": "main",
+        "ref": "sandbox-ungate",
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/coda-rust"
       }
@@ -562,7 +562,8 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
-        "plasma-manager": "plasma-manager"
+        "plasma-manager": "plasma-manager",
+        "ungate": "ungate"
       }
     },
     "rust-overlay": {
@@ -642,6 +643,27 @@
       "original": {
         "type": "git",
         "url": "https://spectrum-os.org/git/spectrum"
+      }
+    },
+    "ungate": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794526394,
+        "narHash": "sha256-Qwe+VNDxooR9lkbyxs/uk6jItBzL+qJE0wf5ChBFR1o=",
+        "ref": "feat/client-keys",
+        "rev": "838e91dd8c435937a77c339d1d551714ea21c5c1",
+        "revCount": 151,
+        "type": "git",
+        "url": "ssh://git@github.com/Coda-Health/ungate"
+      },
+      "original": {
+        "ref": "feat/client-keys",
+        "type": "git",
+        "url": "ssh://git@github.com/Coda-Health/ungate"
       }
     },
     "uv2nix": {

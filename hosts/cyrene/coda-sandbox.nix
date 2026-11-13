@@ -1,4 +1,9 @@
-{ lib, inputs, ... }:
+{
+  config,
+  lib,
+  inputs,
+  ...
+}:
 
 # Cyrene's Coda agent sandbox. The module, its options and its docs live in
 # coda-rust's crates/workspace-tools/sandbox flake (input coda-sandbox; its
@@ -7,7 +12,22 @@ let
   inherit (import ./zfs/lib.nix { inherit lib; }) agentsPoolCreated;
 in
 {
-  imports = [ inputs.coda-sandbox.nixosModules.default ];
+  imports = [
+    inputs.coda-sandbox.nixosModules.default
+    inputs.ungate.nixosModules.default
+  ];
+
+  # The model proxy: holds the Claude and ChatGPT sign-ins and records usage
+  # per client key. Cursor's extension adopts it on its port; the container
+  # reaches it on hostAddress with the broker's model-proxy key. Its admin
+  # routes answer only on loopback.
+  services.ungate = {
+    enable = agentsPoolCreated;
+    hosts = [
+      "127.0.0.1"
+      "10.233.1.1"
+    ];
+  };
 
   services.coda-sandbox = {
     # The sandbox lives on the agents pool (zfs/agents.nix).
@@ -25,5 +45,11 @@ in
     # The controller's GitHub token is `github-ci` in luluco's keyring,
     # served by the token broker.
     ci.enable = true;
+    # Claude Code and Codex in the container go through ungate above; the
+    # key is `model-proxy` in luluco's keyring.
+    container.modelProxy = {
+      enable = true;
+      port = config.services.ungate.port;
+    };
   };
 }
