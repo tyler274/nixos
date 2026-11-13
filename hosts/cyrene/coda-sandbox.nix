@@ -51,5 +51,13 @@ in
       enable = true;
       port = config.services.ungate.port;
     };
+    # Swarm workers on local models reach Ollama (modules/nixos/ollama.nix)
+    # at http://10.233.1.1:11434.
+    container.hostTcpPorts = [ config.services.ollama.port ];
   };
+
+  # Ollama takes one listen address and 10.233.1.1 exists only while the
+  # container runs, so it listens on every IPv4 address. The host firewall
+  # opens the port on the container's veth alone, not to the LAN or Tailscale.
+  services.ollama.host = lib.mkIf agentsPoolCreated "0.0.0.0";
 }
