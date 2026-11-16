@@ -32,17 +32,16 @@
       },
       "locked": {
         "dir": "crates/workspace-tools/sandbox",
-        "lastModified": 1794526659,
-        "narHash": "sha256-HIJSFQ0eyv69xHE9yt8+w9ieL0B3TFMO6lExwztKTmw=",
-        "ref": "sandbox-ungate",
-        "rev": "d989317c7e4cb38c2950dfff68693661132f0d56",
-        "revCount": 1258,
+        "lastModified": 1794786187,
+        "narHash": "sha256-9ybg4Ci8gvMky7rWhFvu78wm1B2An6KQk4CohOB3zno=",
+        "ref": "refs/heads/main",
+        "rev": "923616a03d08e8c694f66d870ba19f0de2e13071",
+        "revCount": 1296,
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/coda-rust"
       },
       "original": {
         "dir": "crates/workspace-tools/sandbox",
-        "ref": "sandbox-ungate",
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/coda-rust"
       }
@@ -652,16 +651,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1794526394,
-        "narHash": "sha256-Qwe+VNDxooR9lkbyxs/uk6jItBzL+qJE0wf5ChBFR1o=",
-        "ref": "feat/client-keys",
-        "rev": "838e91dd8c435937a77c339d1d551714ea21c5c1",
-        "revCount": 151,
+        "lastModified": 1794549849,
+        "narHash": "sha256-MHKFy6tp4rheOLSRcjoZRBKG/EbT+nbgM6HX1X9/1yk=",
+        "ref": "refs/heads/main",
+        "rev": "dbdd60ae5af76872030dda6e9693e4bcd8e667ea",
+        "revCount": 154,
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/ungate"
       },
       "original": {
-        "ref": "feat/client-keys",
         "type": "git",
         "url": "ssh://git@github.com/Coda-Health/ungate"
       }
