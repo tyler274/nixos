@@ -113,10 +113,5 @@ in
   # The ZVOL swap device is disabled because it was causing issues with the
   # kernel. The ARC cache was not able to keep up with the swap requests, and
   # the kernel was swapping out pages that were still in use. Swap now lives on
-  # the Samsung 990 PRO (see default.nix). Reclaim the unused zvol once:
-  #   swapon --show | grep -q rpool/swap && echo "still in use" && exit 1
-  #   sudo zfs destroy rpool/swap
-  #swapDevices = [
-  #  { device = "/dev/zvol/rpool/swap"; }
-  #];
+  # the Samsung 990 PRO (see default.nix).
 }
