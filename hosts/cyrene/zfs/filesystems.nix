@@ -42,16 +42,9 @@
     # userland is ready - causing the /sysroot/tmp boot error.
   };
 
-  # Docker's zfs storage driver creates one dataset per image/container layer as
-  # a child of whatever dataset holds /var/lib/docker. With the default data root
-  # that dataset was rpool/nixos/var/lib, so every layer landed under the
-  # snapshotted+replicated var tree and flooded sanoid, the generation-snapshot
-  # activation script (zfs snapshot -r rpool/nixos@...), and syncoid with
-  # hundreds of throwaway datasets and snapshots (they even got replicated to
-  # local-backup).
-  #
-  # Give docker a dedicated dataset that lives OUTSIDE rpool/nixos so none of
-  # those mechanisms can reach it:
+  # Docker (overlay2, see modules/nixos/common.nix) gets a dedicated dataset
+  # that lives OUTSIDE rpool/nixos so its churn never reaches snapshots or
+  # replication:
   #   * the generation snapshot is `-r rpool/nixos`           -> rpool/docker is excluded
   #   * sanoid only configures the rpool/nixos/* trees        -> never sees it
   #   * syncoid's source is rpool/nixos                       -> never replicates it
@@ -66,9 +59,6 @@
   #   sudo zfs create -o mountpoint=legacy \
   #                   -o com.sun:auto-snapshot=false \
   #                   rpool/docker
-  # See the one-time docker-storage migration steps committed alongside this
-  # change for destroying the OLD per-layer datasets under rpool/nixos/var/lib
-  # (and their replicas on local-backup) before switching over.
   fileSystems."/var/lib/docker" = {
     device = "rpool/docker";
     fsType = "zfs";

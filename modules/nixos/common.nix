@@ -280,11 +280,10 @@
     };
     docker = {
       enable = true;
-      storageDriver = "zfs";
-      # Rootless can't use the ZFS storage driver.
-      # https://github.com/openzfs/zfs/pull/18167 the fix has been merged,
-      # https://github.com/podman-container-tools/container-libs/issues/147
-      # but not released yet.
+      # overlay2 on top of a single ZFS dataset (supported since OpenZFS 2.2).
+      # The zfs driver created one dataset per image layer and container,
+      # flooding `zfs list` with hundreds of entries.
+      storageDriver = "overlay2";
       # rootless = {
       #   enable = true;
       #   setSocketVariable = true;

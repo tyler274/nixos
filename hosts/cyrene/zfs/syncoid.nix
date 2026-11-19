@@ -92,21 +92,7 @@ in
           # nothing worth backing up there and it could be enormous mid-build.
           "--exclude-datasets=rpool/nixos/tmp"
         ]
-        ++ gameDatasetSyncoidExcludes
-        ++ [
-          # Docker uses the ZFS storage driver (virtualisation.docker.storageDriver
-          # = "zfs") rooted at the rpool/nixos/var/lib dataset, so every image
-          # layer and container is an ephemeral child dataset there: 64-hex layer
-          # IDs, "<id>-init" container layers, and 25-char container IDs. Raw
-          # replication with --use-hold places a ZFS hold on each one's snapshot,
-          # which then blocks `docker rm`/`docker rmi` ("cannot destroy snapshot
-          # ... it's being held") until the next syncoid run. They are fully
-          # rebuildable, so skip them entirely. The regex matches any child of
-          # var/lib whose name is a 25+-char run of [a-z0-9] (all three docker
-          # dataset name forms) while still backing up the var/lib dataset itself
-          # and any normally-named child datasets.
-          "--exclude-datasets=rpool/nixos/var/lib/[a-z0-9]{25,}"
-        ];
+        ++ gameDatasetSyncoidExcludes;
       };
     };
   };
