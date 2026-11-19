@@ -29,6 +29,17 @@ in
       description = "Quota applied to each newly created user dataset.";
     };
 
+    quotas = lib.mkOption {
+      type        = lib.types.attrsOf lib.types.str;
+      default     = {};
+      example     = { alice = "1T"; };
+      description = ''
+        Per-user quotas, enforced on every activation (also on existing
+        datasets). Users not listed get defaultQuota only at creation time.
+        The quota covers the dataset's children and snapshots.
+      '';
+    };
+
     primaryGroup = lib.mkOption {
       type        = lib.types.str;
       default     = "users";
@@ -72,7 +83,10 @@ in
     system.activationScripts.zfs-home-datasets = {
       deps = [ "users" ];
       text = lib.concatStrings (lib.mapAttrsToList (name: u:
-        let dataset = datasetFor name; in
+        let
+          dataset = datasetFor name;
+          quota = cfg.quotas.${name} or cfg.defaultQuota;
+        in
         ''
           if ! ${pkgs.zfs}/bin/zfs list -H -o name ${lib.escapeShellArg dataset} &>/dev/null; then
             echo "zfs-home: creating ${dataset}"
@@ -85,7 +99,7 @@ in
               -o mountpoint=${lib.escapeShellArg u.home} \
               ${lib.escapeShellArg dataset} \
             && ${pkgs.zfs}/bin/zfs set \
-              quota=${lib.escapeShellArg cfg.defaultQuota} \
+              quota=${lib.escapeShellArg quota} \
               ${lib.escapeShellArg dataset} \
             && chown ${lib.escapeShellArg name}:${lib.escapeShellArg cfg.primaryGroup} \
               ${lib.escapeShellArg u.home} \
@@ -93,6 +107,11 @@ in
               ${lib.escapeShellArg u.home} \
             || true
           fi
+        ''
+        + lib.optionalString (cfg.quotas ? ${name}) ''
+          ${pkgs.zfs}/bin/zfs set quota=${lib.escapeShellArg quota} \
+            ${lib.escapeShellArg dataset} \
+            || echo "zfs-home: failed to set quota on ${dataset}" >&2
         ''
       ) managedUsers);
     };
