@@ -7,11 +7,11 @@ let
   cyreneZfs = import ./lib.nix { inherit lib; };
   inherit (cyreneZfs)
     snapshotRetention
-    gameHomeDatasets
+    unsnapshottedHomeDatasets
     agentsPoolCreated
     ;
 
-  gameDatasetSanoidEntries = lib.genAttrs gameHomeDatasets (_: {
+  unsnapshottedSanoidEntries = lib.genAttrs unsnapshottedHomeDatasets (_: {
     autosnap = false;
     autoprune = false;
   });
@@ -31,7 +31,7 @@ let
     };
   }
   // lib.optionalAttrs agentsPoolCreated (
-    lib.genAttrs [ "agents/ccache" "agents/coda/build" "agents/coda/ci" ] (_: {
+    lib.genAttrs [ "agents/ccache" "agents/coda/build" "agents/coda/ci" "agents/coda/host" ] (_: {
       autosnap = false;
       autoprune = false;
     })
@@ -42,7 +42,7 @@ in
     enable = true;
     interval = "hourly";
 
-    datasets = gameDatasetSanoidEntries // agentsSanoidEntries // {
+    datasets = unsnapshottedSanoidEntries // agentsSanoidEntries // {
       # Home: longer retention; recursive covers all per-user sub-datasets
       # automatically - no per-user entry needed when new users are added.
       "rpool/nixos/home" = {

@@ -6,9 +6,11 @@
 
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
-  inherit (cyreneZfs) gameHomeDatasets localBackupAttached;
+  inherit (cyreneZfs) unsnapshottedHomeDatasets localBackupAttached;
 
-  gameDatasetSyncoidExcludes = map (dataset: "--exclude-datasets=${dataset}") gameHomeDatasets;
+  unsnapshottedSyncoidExcludes = map (
+    dataset: "--exclude-datasets=${dataset}"
+  ) unsnapshottedHomeDatasets;
 in
 {
   services.syncoid = {
@@ -92,7 +94,7 @@ in
           # nothing worth backing up there and it could be enormous mid-build.
           "--exclude-datasets=rpool/nixos/tmp"
         ]
-        ++ gameDatasetSyncoidExcludes;
+        ++ unsnapshottedSyncoidExcludes;
       };
     };
   };

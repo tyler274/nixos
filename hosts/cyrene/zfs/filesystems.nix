@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   # NOTE: Nix >= 2.24 moved daemon build sandboxes from /tmp to
@@ -69,6 +69,37 @@
     ];
   };
 
-  # Game datasets mount via zfs-game-home-mounts.service after /home/luluco.
-  # Do not add fileSystems entries here - nested children race the home mount.
+  # Coda builds put CARGO_TARGET_DIR at /tmp/coda-target-<worktree>, tens of GB
+  # each, and nothing removes them. /tmp is only wiped at boot, so on a
+  # long-running system they fill the pool. Remove a whole directory once
+  # nothing in it has been written for 2 days. Not a tmpfiles age rule: that
+  # deletes old files one by one inside a live target dir (/tmp is noatime),
+  # leaving cargo a half-deleted cache.
+  systemd.services.clean-stale-coda-targets = {
+    description = "Remove /tmp/coda-target-* dirs untouched for 2 days";
+    path = [
+      pkgs.coreutils
+      pkgs.findutils
+    ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      for dir in /tmp/coda-target-*; do
+        [ -d "$dir" ] || continue
+        if [ -z "$(find "$dir" -mmin -2880 -print -quit)" ]; then
+          echo "removing stale $dir"
+          rm -rf -- "$dir"
+        fi
+      done
+    '';
+  };
+  systemd.timers.clean-stale-coda-targets = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+    };
+  };
+
+  # Datasets nested under the home dataset (games, ~/.cache) are mounted from
+  # game-home.nix, not here.
 }

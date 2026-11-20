@@ -52,6 +52,15 @@ in
       User = "root";
     };
     script = ''
+      # Snapshot pruning can't free build output or caches, so warn early
+      # enough to clean those by hand (journalctl -p warning). agents holds
+      # the build roots and is absent until agents-pool.service imports it.
+      for pool in rpool agents; do
+        cap=$(${pkgs.zfs}/bin/zpool list -Hpo capacity "$pool" 2>/dev/null) || continue
+        if [ "$cap" -ge 80 ]; then
+          echo "<4>$pool at ''${cap}% capacity: clear build output (/tmp/coda-target-*, build roots, target/)"
+        fi
+      done
       USED=$(${pkgs.zfs}/bin/zpool list -Hpo capacity rpool)
       if [ "$USED" -ge 85 ]; then
         echo "rpool at ''${USED}% capacity, pruning snapshots..."

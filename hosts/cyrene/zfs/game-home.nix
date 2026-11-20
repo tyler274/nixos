@@ -2,25 +2,29 @@
 
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
-  inherit (cyreneZfs) gameHomeMounts;
+  inherit (cyreneZfs) unsnapshottedHomeMounts;
 in
 {
-  # Large, re-downloadable game data lives on dedicated ZFS children of the home
-  # dataset, mounted at their ~/.local/share/* paths. Each is a normal fileSystems
-  # entry using zfsutil (mount.zfs reads the dataset's own mountpoint property).
+  # Large, rebuildable data (game installs, ~/.cache) lives on dedicated ZFS
+  # children of the home dataset, mounted at their paths under ~. Each is a
+  # normal fileSystems entry using zfsutil (mount.zfs reads the dataset's own
+  # mountpoint property).
   #
   # Why this is enough - no custom service or activation script needed:
   #   * systemd auto-orders these mount units AFTER /home/luluco because the
   #     paths are nested, so the parent home dataset is always mounted first.
+  #     They mount at boot, before any login, so ~/.cache is in place before
+  #     anything in the session writes to it.
   #   * X-mount.mkdir creates the mountpoint directory if it does not exist.
-  #   * nofail keeps a missing/again-empty dataset from blocking boot.
+  #   * nofail keeps a missing/again-empty dataset from blocking boot; the
+  #     path then falls back to a plain directory on the home dataset.
   #
-  # One-time per dataset (already done for the existing ones; required for any
-  # new launcher added to gameHomeMounts in lib.nix). canmount=noauto stops
+  # One-time per dataset (already done for the game ones; required for any
+  # new entry in unsnapshottedHomeMounts in lib.nix). canmount=noauto stops
   # zfs-mount.service from also mounting it and racing the systemd mount unit:
   #   sudo zfs create -o canmount=noauto \
   #                   -o com.sun:auto-snapshot=false \
-  #                   -o mountpoint=<the ~/.local/share/* path> \
+  #                   -o mountpoint=<the path under ~> \
   #                   rpool/nixos/home/luluco/<name>
   # For an existing dataset, set the same properties instead of create:
   #   sudo zfs set canmount=noauto com.sun:auto-snapshot=false \
@@ -33,7 +37,7 @@ in
       "X-mount.mkdir"
       "nofail"
     ];
-  }) gameHomeMounts;
+  }) unsnapshottedHomeMounts;
 
   # X-mount.mkdir creates any missing mountpoint path components as root:root,
   # and a freshly `zfs create`d dataset root is also root-owned. After a fresh
@@ -47,5 +51,12 @@ in
     "d /home/luluco/.local 0755 luluco users -"
     "d /home/luluco/.local/share 0755 luluco users -"
   ]
-  ++ map (mountPoint: "d ${mountPoint} 0755 luluco users -") (lib.attrNames gameHomeMounts);
+  ++ map (
+    mountPoint:
+    let
+      # XDG: the cache dir is private to the user.
+      mode = if mountPoint == "/home/luluco/.cache" then "0700" else "0755";
+    in
+    "d ${mountPoint} ${mode} luluco users -"
+  ) (lib.attrNames unsnapshottedHomeMounts);
 }
