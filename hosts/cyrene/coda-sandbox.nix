@@ -29,11 +29,15 @@ in
     ];
   };
 
-  # NixOS installs user units for every user manager. Only the sandbox owner
-  # should open this port and the existing account database in their home.
-  systemd.user.services.ungate.unitConfig.ConditionUser = lib.mkIf agentsPoolCreated (
-    config.services.coda-sandbox.user
-  );
+  systemd.user.services.ungate = lib.mkIf agentsPoolCreated {
+    # NixOS installs user units for every user manager. Only the sandbox owner
+    # should open this port and the existing account database in their home.
+    unitConfig.ConditionUser = config.services.coda-sandbox.user;
+    # Keep the proxy up even after a clean exit, so Cursor's extension finds it
+    # healthy on startup and adopts it instead of spawning its own copy. The
+    # ungate module sets on-failure; RestartSec stays at its 2s.
+    serviceConfig.Restart = lib.mkForce "always";
+  };
 
   services.coda-sandbox = {
     # The sandbox lives on the agents pool (zfs/agents.nix).
