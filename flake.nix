@@ -90,7 +90,7 @@
     # Coda's ungate fork: the model proxy that keeps the Claude and ChatGPT
     # sign-ins for the agent sandbox and Cursor (hosts/cyrene/coda-sandbox.nix).
     ungate = {
-      url = "git+ssh://git@github.com/Coda-Health/ungate";
+      url = "git+ssh://git@github.com/tyler274/ungate-coda";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

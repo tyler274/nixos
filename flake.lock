@@ -672,17 +672,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1794549849,
-        "narHash": "sha256-MHKFy6tp4rheOLSRcjoZRBKG/EbT+nbgM6HX1X9/1yk=",
+        "lastModified": 1794996288,
+        "narHash": "sha256-sb6HHQCkea+IBi7qYHA+rPk9klFGNIDK1FL3eGzaRe0=",
         "ref": "refs/heads/main",
-        "rev": "dbdd60ae5af76872030dda6e9693e4bcd8e667ea",
-        "revCount": 154,
+        "rev": "c1f36974c386abbf3f302952672d4c7676b01c67",
+        "revCount": 156,
         "type": "git",
-        "url": "ssh://git@github.com/Coda-Health/ungate"
+        "url": "ssh://git@github.com/tyler274/ungate-coda"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/Coda-Health/ungate"
+        "url": "ssh://git@github.com/tyler274/ungate-coda"
       }
     },
     "uv2nix": {
