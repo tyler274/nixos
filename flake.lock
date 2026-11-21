@@ -32,18 +32,18 @@
       },
       "locked": {
         "dir": "crates/workspace-tools/sandbox",
-        "lastModified": 1794786187,
-        "narHash": "sha256-9ybg4Ci8gvMky7rWhFvu78wm1B2An6KQk4CohOB3zno=",
+        "lastModified": 1795237538,
+        "narHash": "sha256-WQfMdTfgJspFAcQRYK02qHomkNoiBivx9V4zbq5FPGc=",
         "ref": "refs/heads/main",
-        "rev": "923616a03d08e8c694f66d870ba19f0de2e13071",
-        "revCount": 1296,
+        "rev": "81da9392bf8065e3d138479bd6350df755470dd5",
+        "revCount": 1489,
         "type": "git",
-        "url": "ssh://git@github.com/Coda-Health/coda-rust"
+        "url": "ssh://git@github.com/tyler274/coda-rust"
       },
       "original": {
         "dir": "crates/workspace-tools/sandbox",
         "type": "git",
-        "url": "ssh://git@github.com/Coda-Health/coda-rust"
+        "url": "ssh://git@github.com/tyler274/coda-rust"
       }
     },
     "crane": {

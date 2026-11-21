@@ -25,9 +25,15 @@ in
     enable = agentsPoolCreated;
     hosts = [
       "127.0.0.1"
-      "10.233.1.1"
+      config.services.coda-sandbox.hostAddress
     ];
   };
+
+  # NixOS installs user units for every user manager. Only the sandbox owner
+  # should open this port and the existing account database in their home.
+  systemd.user.services.ungate.unitConfig.ConditionUser = lib.mkIf agentsPoolCreated (
+    config.services.coda-sandbox.user
+  );
 
   services.coda-sandbox = {
     # The sandbox lives on the agents pool (zfs/agents.nix).
