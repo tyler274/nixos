@@ -12,6 +12,7 @@
     ./bitwarden.nix
     ./halloy.nix
     ./linear.nix
+    ./agent-desktop-tools.nix
   ];
 
   bitwarden.enable = true;

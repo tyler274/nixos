@@ -271,6 +271,26 @@
         "url": "https://github.com/nix-community/home-manager.git"
       }
     },
+    "kde-wayland-agent-tools": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795233220,
+        "narHash": "sha256-d3F8vkJmKy15Ak2O38DwMIXtdq9txXl8Bqfqlw6UXMk=",
+        "owner": "tyler274",
+        "repo": "kde-wayland-agent-tools",
+        "rev": "8cad8f2bf899eb00bc2c76004e8f90de55a825c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tyler274",
+        "repo": "kde-wayland-agent-tools",
+        "type": "github"
+      }
+    },
     "kwin-src": {
       "flake": false,
       "locked": {
@@ -554,6 +574,7 @@
         "elymalloc": "elymalloc",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
+        "kde-wayland-agent-tools": "kde-wayland-agent-tools",
         "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
         "mini-diarium": "mini-diarium",

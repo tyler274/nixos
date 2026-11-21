@@ -37,6 +37,11 @@
   environment.systemPackages = [ pkgs.pipewire.jack ];
 
   hardware = {
+    # /dev/uinput for kde-wayland-agent-tools (modules/home/agent-desktop-tools.nix):
+    # KWin offers no virtual-keyboard protocol, so agent input goes through a
+    # uinput device. Until now only Steam's uaccess udev rule exposed it; this
+    # makes the access explicit (uinput group, 0660) and survives Steam changes.
+    uinput.enable = true;
     bluetooth = {
       enable = true;
       package = pkgs.bluez5-experimental;

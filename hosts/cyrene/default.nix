@@ -199,6 +199,8 @@
       "scanner"
       "lp"
       "docker"
+      # kw-input (modules/home/agent-desktop-tools.nix) writes /dev/uinput.
+      "uinput"
     ];
   };
 

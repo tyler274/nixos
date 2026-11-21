@@ -33,6 +33,7 @@ Multi-host NixOS flake for Tyler's machines. Home Manager is the primary configu
 │       ├── bitwarden.nix           Bitwarden desktop + CLI, SSH agent, Libera item option
 │       ├── halloy.nix              Halloy + Libera SASL via Bitwarden password_command
 │       ├── desktop.nix             GUI apps, dev toolchain, wayland wrappers, mimeApps
+│       ├── agent-desktop-tools.nix kde-wayland-agent-tools: KWin focus, uinput input, screenshots for terminal agents
 │       ├── hermes-agent.nix        Cyrene: Hermes Agent (Nous Research) gateway + dashboard user services
 │       └── plasma.nix              plasma-manager: look & feel, kwin, screen locker, panels, konsole
 └── hosts/
@@ -124,6 +125,10 @@ Four things in [hosts/wsl/default.nix](hosts/wsl/default.nix) and [modules/nixos
 ## Bitwarden + Halloy
 
 Libera IRC SASL passwords are fetched from Bitwarden at runtime (not stored in the Nix store). Desktop unlock does **not** unlock the CLI - see [docs/bitwarden-halloy.md](docs/bitwarden-halloy.md) for setup, security model, upstream CLI status, and open work (e.g. optional **bwbio** integration).
+
+## Agent desktop tools on Plasma Wayland
+
+Desktop hosts install [`kde-wayland-agent-tools`](https://github.com/tyler274/kde-wayland-agent-tools) through [modules/home/agent-desktop-tools.nix](modules/home/agent-desktop-tools.nix): `kw-focus`, `kw-input`, `kw-screenshot`, `kw-mpris`, `firefox-tabs` and `kw-press-play` let a terminal agent focus a window, type or click, take a screenshot and check playback without AT-SPI or `xdotool`, neither of which reaches native Wayland apps here. Input goes through `/dev/uinput` with `dotool`, so [modules/nixos/desktop-common.nix](modules/nixos/desktop-common.nix) sets `hardware.uinput.enable` and Cyrene's user is in the `uinput` group. `nix flake update kde-wayland-agent-tools` picks up new tool revisions.
 
 ## Configuration philosophy
 

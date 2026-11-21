@@ -73,6 +73,14 @@
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Terminal-agent desktop tools for Plasma Wayland (KWin focus, uinput
+    # input via dotool, Spectacle screenshots, MPRIS, Firefox tabs). Installed
+    # by modules/home/agent-desktop-tools.nix; hardware.uinput in
+    # modules/nixos/desktop-common.nix grants the input device.
+    kde-wayland-agent-tools = {
+      url = "github:tyler274/kde-wayland-agent-tools";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Cyrene's Coda agent sandbox: the coda-sandbox binary and its NixOS
     # module (hosts/cyrene/coda-sandbox.nix sets Cyrene's values).
     coda-sandbox = {
