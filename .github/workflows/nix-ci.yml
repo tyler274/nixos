@@ -1,0 +1,106 @@
+name: Nix CI
+
+on:
+  pull_request:
+    branches: [main, coda-ungate]
+  push:
+    branches: [main, coda-ungate]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Hosted runners only: no secrets, deployment, full builds, or pull_request_target.
+jobs:
+  syntax:
+    name: Nix syntax and input access preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      evaluable: ${{ steps.inputs.outputs.evaluable }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+        with:
+          enable_kvm: false
+      # The unused hosts/sulla/zfs.nix is already malformed at the base revision.
+      # Keep checking all other Nix files, not only files changed in the PR.
+      # Cyrene's real import graph is validated by the separate evaluation job.
+      - name: Parse Nix files without fetching inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files -z -- '*.nix' ':!:hosts/sulla/zfs.nix' | xargs -0 -r -n 1 nix-instantiate --parse --quiet > /dev/null
+      - name: Validate lock JSON and report evaluation availability
+        id: inputs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          with open("flake.lock", encoding="utf-8") as lock_file:
+              nodes = json.load(lock_file)["nodes"]
+          blocked = []
+          for name, node in nodes.items():
+              url = node.get("locked", {}).get("url", "")
+              if "ssh://" in url or url.startswith("git@"):
+                  blocked.append(name)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print("evaluable=" + str(not blocked).lower(), file=output)
+          if blocked:
+              message = "Cyrene evaluation SKIPPED: locked SSH inputs require an approved access design: " + ", ".join(blocked)
+              print("::warning::" + message)
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+                  print("## Evaluation unavailable\n" + message, file=summary)
+                  print("Syntax checks are not system evaluation, build, or runtime coverage.", file=summary)
+          PY
+
+  # Current coda-ungate locks private Coda-Health inputs over SSH. GITHUB_TOKEN
+  # does not grant cross-repository private/SSH access. No configured secret is
+  # assumed. This job is visibly SKIPPED, never reported as evaluated successfully.
+  # To enable it, move to reviewed publicly accessible HTTPS inputs, or separately
+  # approve a trusted private-evaluation design. Never hand private sources or
+  # credentials to untrusted PR code or put it on a privileged self-hosted runner.
+  cyrene-evaluation:
+    name: Cyrene drvPath evaluation (skipped without public inputs)
+    needs: syntax
+    if: needs.syntax.outputs.evaluable == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+        with:
+          enable_kvm: false
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = false
+            max-jobs = 0
+            builders =
+      # Pure, unmodified configuration: catch filesystem-dependent predicates
+      # silently disabling services on hosted runners. Do not force-enable them.
+      - name: Assert sandbox and ungate coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in coda-sandbox ungate; do
+            enabled=$(nix eval --no-write-lock-file --json ".#nixosConfigurations.Cyrene.config.services.${service}.enable")
+            if [[ "$enabled" != true ]]; then
+              echo "::error::Cyrene services.${service}.enable is not true; hosted evaluation would miss coverage."
+              exit 1
+            fi
+          done
+      # flake check --no-build alone does not validate a NixOS toplevel.
+      # drvPath forces module assertions and derivation evaluation, NOT a build.
+      # IFD is disabled so evaluation cannot unexpectedly build dependencies.
+      - name: Evaluate Cyrene system derivation (no build)
+        run: nix eval --no-write-lock-file --raw .#nixosConfigurations.Cyrene.config.system.build.toplevel.drvPath

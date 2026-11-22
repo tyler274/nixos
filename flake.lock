@@ -34,7 +34,7 @@
         "dir": "crates/workspace-tools/sandbox",
         "lastModified": 1795237538,
         "narHash": "sha256-WQfMdTfgJspFAcQRYK02qHomkNoiBivx9V4zbq5FPGc=",
-        "ref": "main",
+        "ref": "refs/heads/main",
         "rev": "81da9392bf8065e3d138479bd6350df755470dd5",
         "revCount": 1489,
         "type": "git",
@@ -42,7 +42,6 @@
       },
       "original": {
         "dir": "crates/workspace-tools/sandbox",
-        "ref": "main",
         "type": "git",
         "url": "ssh://git@github.com/tyler274/coda-rust"
       }
@@ -583,7 +582,8 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
-        "plasma-manager": "plasma-manager"
+        "plasma-manager": "plasma-manager",
+        "ungate": "ungate"
       }
     },
     "rust-overlay": {
@@ -663,6 +663,26 @@
       "original": {
         "type": "git",
         "url": "https://spectrum-os.org/git/spectrum"
+      }
+    },
+    "ungate": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794996288,
+        "narHash": "sha256-sb6HHQCkea+IBi7qYHA+rPk9klFGNIDK1FL3eGzaRe0=",
+        "ref": "refs/heads/main",
+        "rev": "c1f36974c386abbf3f302952672d4c7676b01c67",
+        "revCount": 156,
+        "type": "git",
+        "url": "ssh://git@github.com/tyler274/ungate-coda"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/tyler274/ungate-coda"
       }
     },
     "uv2nix": {
