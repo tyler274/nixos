@@ -32,8 +32,21 @@
       passwordRequiredDelay = 0;
     };
 
-    # We don't have any shortcuts enabled because I'm fine with default behavior.
     shortcuts = {
+      # Desktop-service shortcuts live under services/ in Plasma 6.8.
+      # Meta+Shift+S captures a region directly. Alt+Shift+S does the same
+      # because the Keychron Q6 HE sends Left Alt from its Win-position key.
+      "services/org.kde.spectacle.desktop" = {
+        _launch = "Print";
+        RectangularRegionScreenShot = [
+          "Meta+Shift+S"
+          "Alt+Shift+S"
+          "Meta+Shift+Print"
+        ];
+        FullScreenScreenShot = "Shift+Print";
+        ActiveWindowScreenShot = "Meta+Print";
+        WindowUnderCursorScreenShot = "Meta+Ctrl+Print";
+      };
       # ksmserver."Lock Session" = [ "Screensaver" "Meta+Ctrl+Alt+L" ];
       kwin = {
         # Overview / Expose for quick window switching.
