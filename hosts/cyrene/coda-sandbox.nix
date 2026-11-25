@@ -52,9 +52,10 @@ in
     authorizedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBeBvlXnNHWV5nhvbyvTG0xe+41dxNtX9l/QRPDqOD8s coda-agent"
     ];
-    # The controller's GitHub token is `github-ci` in luluco's keyring,
-    # served by the token broker.
-    ci.enable = true;
+    # Off: no controller polls GitHub and no self-hosted runner registers, so
+    # no workflow on GitHub can start a job on this machine. The spool stays
+    # (it comes with the sandbox), but nothing consumes it.
+    ci.enable = false;
     # Claude Code and Codex in the container go through ungate above; the
     # key is `model-proxy` in luluco's keyring.
     container.modelProxy = {

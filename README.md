@@ -90,6 +90,8 @@ nrs   # = sudo nixos-rebuild switch --flake ~/code/nixos#$(hostname)
 
 Cyrene runs the Coda agent sandbox: the `coda-agent` container, where coding agents work on `coda-rust`, and Coda CI in disposable Firecracker guests. The module, the `coda-sandbox` binary, their VM tests and the full guide live in coda-rust's [`sandbox/`](https://github.com/Coda-Health/coda-rust/tree/main/sandbox) flake (its `README.md`), consumed here as the input `coda-sandbox`. [hosts/cyrene/coda-sandbox.nix](hosts/cyrene/coda-sandbox.nix) holds only Cyrene's values: the `agents-pool.service` unit the sandbox requires ([hosts/cyrene/zfs/agents.nix](hosts/cyrene/zfs/agents.nix) imports the pool after boot, so a missing disk or key fails only the pool, the container and CI), addresses, memory limits, the SSH key, and the CI token file. `coda-sandbox doctor` checks the result on the host.
 
+CI is switched off on Cyrene (`ci.enable = false`): no controller polls GitHub and no self-hosted runner registers, so no workflow can start a job on this machine. The agent container is unaffected.
+
 `nix flake update coda-sandbox` picks up a new revision of the module. coda-rust is private, so the input fetches over SSH (`git+ssh://git@github.com/...`) with your own GitHub SSH key from your agent. A rebuild evaluates the flake and may fetch it too, so rebuild with `nixos-rebuild switch --flake ~/code/nixos#$(hostname) --sudo` rather than `sudo nixos-rebuild`: it evaluates and fetches as you, with your key and agent, and uses sudo only to activate. Root needs no GitHub credential.
 
 ## Update inputs
