@@ -6,11 +6,22 @@
   appimageTools,
   undmg,
   commandLineArgs ? "",
-  useVSCodeRipgrep ? stdenv.hostPlatform.isDarwin,
 }:
 
 let
   inherit (stdenv) hostPlatform;
+
+  # Cursor bundles its ripgrep fork as @cursor/ripgrep-<platform>; its agent
+  # extensions pass the fork-only --cursor-ignore flag, so nixpkgs' ripgrep
+  # cannot stand in for it. Only Linux needs this: buildVscode's ripgrep
+  # handling lives in its Linux-only postPatch.
+  cursorRipgrep = "@cursor/ripgrep-${
+    {
+      x86_64-linux = "linux-x64";
+      aarch64-linux = "linux-arm64";
+    }
+    .${hostPlatform.system}
+  }/bin/rg";
 
   sourcesJson = lib.importJSON ./sources.json;
   sources = lib.mapAttrs (
@@ -23,10 +34,13 @@ let
   source = sources.${hostPlatform.system};
 in
 (buildVscode rec {
-  inherit commandLineArgs useVSCodeRipgrep;
+  inherit commandLineArgs;
+  useVSCodeRipgrep = true;
   inherit (sourcesJson) version;
-  # Cursor reports vscode >= 1.122 but still ships @vscode/ripgrep.
-  # Capping the build-time vscodeVersion avoids modifying the notarized app bundle on Darwin.
+  # Cursor reports vscode >= 1.122 but doesn't ship @vscode/ripgrep-universal;
+  # the cap keeps buildVscode on the @vscode/ripgrep path that postPatch
+  # below rewrites to cursorRipgrep. Capping the build-time vscodeVersion
+  # avoids modifying the notarized app bundle on Darwin.
   vscodeVersion =
     if lib.versionAtLeast sourcesJson.vscodeVersion "1.122.0" then
       "1.121.0"
@@ -87,23 +101,31 @@ in
     mainProgram = "cursor";
   };
 }).overrideAttrs
-  (oldAttrs: {
-    autoPatchelfIgnoreMissingDeps =
-      (oldAttrs.autoPatchelfIgnoreMissingDeps or [ ])
-      ++ lib.optionals (stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isMusl) [
-        "libc.musl-*.so.*" # musl-based node modules are not used on glibc systems
-      ];
+  (
+    oldAttrs:
+    lib.optionalAttrs hostPlatform.isLinux {
+      postPatch =
+        assert lib.hasInfix "@vscode/ripgrep/bin/rg" oldAttrs.postPatch;
+        builtins.replaceStrings [ "@vscode/ripgrep/bin/rg" ] [ cursorRipgrep ] oldAttrs.postPatch;
+    }
+    // {
+      autoPatchelfIgnoreMissingDeps =
+        (oldAttrs.autoPatchelfIgnoreMissingDeps or [ ])
+        ++ lib.optionals (stdenv.hostPlatform.isLinux && !stdenv.hostPlatform.isMusl) [
+          "libc.musl-*.so.*" # musl-based node modules are not used on glibc systems
+        ];
 
-    preFixup =
-      (oldAttrs.preFixup or "")
-      + lib.optionalString hostPlatform.isLinux ''
-        sed -i '/^Keywords=/a MimeType=application/x-cursor-workspace;' \
-          $out/share/applications/cursor.desktop
-      '';
-    postInstall =
-      (oldAttrs.postInstall or "")
-      + lib.optionalString hostPlatform.isLinux ''
-        install -Dm644 ../mime/packages/cursor-workspace.xml -t $out/share/mime/packages
-        rm -f $out/lib/cursor/resources/appimageupdatetool.AppImage
-      '';
-  })
+      preFixup =
+        (oldAttrs.preFixup or "")
+        + lib.optionalString hostPlatform.isLinux ''
+          sed -i '/^Keywords=/a MimeType=application/x-cursor-workspace;' \
+            $out/share/applications/cursor.desktop
+        '';
+      postInstall =
+        (oldAttrs.postInstall or "")
+        + lib.optionalString hostPlatform.isLinux ''
+          install -Dm644 ../mime/packages/cursor-workspace.xml -t $out/share/mime/packages
+          rm -f $out/lib/cursor/resources/appimageupdatetool.AppImage
+        '';
+    }
+  )
