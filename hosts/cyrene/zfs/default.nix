@@ -9,6 +9,8 @@
       "agents/coda/src" = "/agents/coda/src";
       "agents/coda/build" = "/agents/coda/build";
       "agents/coda/ci" = "/agents/coda/ci";
+    };
+    optionalMounts = {
       # luluco's build root for host worktrees (cyrene-host.toml in
       # coda-rust): keeps build output off rpool and out of home snapshots.
       # One-time, then `sudo chown luluco:users /agents/coda/host`:

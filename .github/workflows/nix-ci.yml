@@ -14,7 +14,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# Hosted runners only: no secrets, deployment, full builds, or pull_request_target.
+# Hosted runners only: no secrets, deployment, or pull_request_target.
+# Full VM builds are gated on public inputs and have a bounded runtime.
 jobs:
   syntax:
     name: Nix syntax and input access preflight
@@ -37,6 +38,10 @@ jobs:
         run: |
           set -euo pipefail
           git ls-files -z -- '*.nix' ':!:hosts/sulla/zfs.nix' | xargs -0 -r -n 1 nix-instantiate --parse --quiet > /dev/null
+      - name: Test Docker ZFS cleanup safety
+        run: python3 -B -m unittest discover -s hosts/cyrene/zfs -p 'test_docker_zfs_cleanup.py' -v
+      - name: Check VM harness syntax
+        run: python3 -c 'import ast; ast.parse(open("tests/cyrene-vm-login.py").read())'
       - name: Validate lock JSON and report evaluation availability
         id: inputs
         shell: bash
@@ -104,3 +109,39 @@ jobs:
       # IFD is disabled so evaluation cannot unexpectedly build dependencies.
       - name: Evaluate Cyrene system derivation (no build)
         run: nix eval --no-write-lock-file --raw .#nixosConfigurations.Cyrene.config.system.build.toplevel.drvPath
+      - name: Test required and optional agents-pool mounts
+        run: python3 -B tests/cyrene-storage.py
+
+  cyrene-kde-login:
+    name: Cyrene KDE login VM (skipped without public inputs)
+    needs: [syntax, cyrene-evaluation]
+    if: needs.syntax.outputs.evaluable == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+        with:
+          enable_kvm: true
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            max-jobs = 2
+            cores = 2
+      - name: Require KVM
+        run: test -w /dev/kvm
+      - name: Build Cyrene VM and assert storage configuration
+        run: nix build --impure --no-link --print-out-paths -f tests/cyrene-vm.nix config.system.build.vm > "$RUNNER_TEMP/cyrene-vm-path"
+      - name: Boot to active Wayland SDDM greeter
+        run: python3 -B tests/cyrene-vm-login.py "$(cat "$RUNNER_TEMP/cyrene-vm-path")" /tmp/cyrene-ci-login
+      - name: Upload boot evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cyrene-kde-login
+          path: |
+            /tmp/cyrene-ci-login/*.log
+            /tmp/cyrene-ci-login/*.txt
+            /tmp/cyrene-ci-login/*.png
+          if-no-files-found: ignore

@@ -5,7 +5,10 @@ let
   # Rebuildable data (games, caches) on unsnapshotted, unreplicated children of
   # the home dataset, so deleting it frees space at once.
   unsnapshottedHomeMounts = {
-    "/home/luluco/.cache" = "rpool/nixos/home/luluco/cache";
+    # The cache dataset has not been provisioned. Keep the live directory on
+    # the home filesystem; mounting an empty dataset here would hide its data.
+    # Add this mapping only after an offline migration of ~/.cache.
+    # "/home/luluco/.cache" = "rpool/nixos/home/luluco/cache";
     "/home/luluco/.local/share/Steam" = "rpool/nixos/home/luluco/steam";
     "/home/luluco/.local/share/anime-game-launcher" = "rpool/nixos/home/luluco/anime-game-launcher";
     "/home/luluco/.local/share/honkers-railway-launcher" =

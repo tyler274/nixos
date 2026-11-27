@@ -48,6 +48,8 @@ in
   # the mounted dataset roots (ownership persists in the dataset) and the
   # intermediate directories on the home dataset always end up user-owned.
   systemd.tmpfiles.rules = [
+    # Keep the fallback cache directory private even without a dedicated dataset.
+    "d /home/luluco/.cache 0700 luluco users -"
     "d /home/luluco/.local 0755 luluco users -"
     "d /home/luluco/.local/share 0755 luluco users -"
   ]

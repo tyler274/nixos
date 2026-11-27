@@ -53,6 +53,14 @@ in
       };
       description = "Datasets that must be mounted at these paths before the pool counts as ready.";
     };
+    optionalMounts = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = ''
+        Datasets mounted at these paths when they exist. A missing one only
+        logs a warning, so it cannot fail the unit the sandbox requires.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -88,6 +96,15 @@ in
             fi
             test "$(findmnt -rn -M ${mountpoint} -o SOURCE)" = ${dataset}
           '') cfg.mounts
+        )}
+        ${lib.concatStrings (
+          lib.mapAttrsToList (dataset: mountpoint: ''
+            if ! zfs list -H ${dataset} >/dev/null 2>&1; then
+              echo "<4>optional dataset ${dataset} does not exist; ${mountpoint} not mounted"
+            elif [ "$(findmnt -rn -M ${mountpoint} -o SOURCE)" != ${dataset} ]; then
+              zfs mount ${dataset} || echo "<4>could not mount ${dataset} at ${mountpoint}"
+            fi
+          '') cfg.optionalMounts
         )}
       '';
     };
