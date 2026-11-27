@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -7,6 +8,14 @@
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
   inherit (cyreneZfs) nixosSnapshotRetentionDays;
+  dockerZfsCleanup = pkgs.writeShellApplication {
+    name = "docker-zfs-cleanup";
+    runtimeInputs = [ config.virtualisation.docker.package config.boot.zfs.package pkgs.util-linux ];
+    text = ''
+      exec flock --nonblock /run/lock/docker-zfs-cleanup.lock \
+        ${pkgs.python3}/bin/python3 ${./docker-zfs-cleanup.py} "$@"
+    '';
+  };
 in
 {
   services.zfs = {
@@ -17,6 +26,40 @@ in
     trim = {
       enable = true;
       interval = "daily";
+    };
+  };
+
+  # Prune through Docker, which knows which objects are still referenced.
+  # This does not remove datasets orphaned by the former ZFS storage driver.
+  # Keep all volumes and give unused images/stopped containers a week's grace.
+  virtualisation.docker.autoPrune = lib.mkIf config.virtualisation.docker.enable {
+    enable = true;
+    dates = "daily";
+    persistent = true;
+    randomizedDelaySec = "30min";
+    flags = [ "--all" "--filter=until=168h" ];
+    allVolumes.enable = false;
+  };
+
+  environment.systemPackages = lib.optional config.virtualisation.docker.enable dockerZfsCleanup;
+  systemd.services.docker-zfs-cleanup = lib.mkIf config.virtualisation.docker.enable {
+    description = "Remove retired Docker ZFS layers after migration to overlay2";
+    after = [ "docker.service" ];
+    requisite = [ "docker.service" ];
+    unitConfig.RequiresMountsFor = "/var/lib/docker";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${dockerZfsCleanup}/bin/docker-zfs-cleanup --apply";
+      TimeoutStartSec = "1h";
+      Nice = 19;
+    };
+  };
+  systemd.timers.docker-zfs-cleanup = lib.mkIf config.virtualisation.docker.enable {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+      RandomizedDelaySec = "30min";
     };
   };
 
