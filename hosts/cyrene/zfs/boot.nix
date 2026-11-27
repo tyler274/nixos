@@ -54,19 +54,17 @@ in
   # before userspace starts.
   boot.initrd.supportedFilesystems = [ "zfs" ];
   boot.kernelParams = [ "console=tty1" ];
-  # The hostid change has been reconciled (every generation since June ships
-  # 69e5e3ea, and the 2026-11-15 boot imported rpool under it), so a pool last
-  # imported by another system is refused instead of silently force-imported.
-  # If an import is ever refused, boot once with the `zfs_force=1` kernel
-  # parameter from the boot menu.
-  boot.zfs.forceImportRoot = false;
+  # Permanent, not a migration step: always force-import rpool so a hostid
+  # mismatch (rescue boot from install media, hostid change, ...) never stops
+  # boot and needs manual recovery. Don't turn this off as cleanup.
+  boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = [ "rpool" ];
   # Gated on localBackupAttached (see lib.nix): importing the pool while its
   # disk is detached retries for 60s and stalls every boot.
   boot.zfs.extraPools = lib.optionals cyreneZfs.localBackupAttached [ "local-backup" ];
-  # Unique per-host ZFS hostid. If it ever changes again, set forceImportRoot
-  # back to true for one boot so the root pool reconciles it; local-backup
-  # needs a one-time `zpool import -f local-backup` after the id changes.
+  # Unique per-host ZFS hostid. forceImportRoot above lets rpool reconcile a
+  # change on the next boot; local-backup needs a one-time
+  # `zpool import -f local-backup` after the id changes.
   networking.hostId = "69e5e3ea";
 
   # Pinned to 7.3 with patched ZFS until nixpkgs' ZFS supports it; then go back
