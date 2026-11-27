@@ -24,14 +24,12 @@
     mbuffer
     lzop
     zstd
-    zfs-prune-snapshots
     httm
     hydra-check
     aha
     lm_sensors
     gh
     fastfetch
-    ripgrep
     vulkan-loader
 
     # Nix language tooling, available on every host so the Cursor/VS Code
@@ -137,6 +135,14 @@
         AddKeysToAgent = "no";
         ControlMaster = "no";
       };
+      # coda-rust's forges and mirrors, on the key kept for them alone.
+      "codeberg.org gitlab.com gitea.com gitcode.com bitbucket.org codefloe.com framagit.org bolha.dev" =
+        lib.hm.dag.entryBefore [ "*" ] {
+          User = "git";
+          IdentityFile = "~/.ssh/id_ed25519_coda_mirrors_20261121";
+          IdentitiesOnly = "yes";
+          AddKeysToAgent = "no";
+        };
     };
   };
 

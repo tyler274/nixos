@@ -11,10 +11,6 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop-common.nix
     ../../modules/nixos/amd.nix
-    # Paused with the znver5 world rebuild (see nixpkgs.hostPlatform below):
-    # both swap stdenv/rustc, so nothing would come from the binary cache.
-    # ../../modules/nixos/wild.nix
-    # ../../modules/nixos/rustc-elymalloc.nix
     # Superseded by the Plasma 6.7 overlay (flake.nix): 6.7 rewrote the DRM
     # color pipeline, so the manual KWin source patching is no longer needed
     # and its 6.6-era patch would fail to apply against 6.7 sources.
@@ -22,7 +18,6 @@
     ../../modules/nixos/zfs-home.nix
     ../../modules/nixos/nvidia.nix
     ../../modules/nixos/ollama.nix
-    ../../modules/nixos/ccache.nix
     ../../modules/nixos/steam-usb.nix
     ../../modules/nixos/xtool-studio
     ../../modules/nixos/chitubox
@@ -30,66 +25,19 @@
     ./radios.nix
     ./scratch.nix
     ./ccache.nix
+    ./world-rebuild.nix
     ./coda-sandbox.nix
     ./zfs
     inputs.aagl.nixosModules.default
   ];
 
-  # Automatic GC OFF during the from-source znver5 world-rebuild campaign
-  # (see gccarch-znver5 below): `nixos-rebuild boot` never registers a GC
-  # root until the ENTIRE system closure builds successfully, so every
-  # source fetch and every leaf package compiled across dozens of
-  # multi-hour --keep-going attempts sits unreferenced in the store the
-  # whole time. GC's mark-and-sweep doesn't care about --delete-older-than
-  # for these - that flag only prunes old *generations*; anything that was
-  # never a root gets swept on every run, age be damned. Confirmed via
-  # nix-gc.service's last run: 14744 store paths / 189.8 GiB deleted in one
-  # sweep, including bare source tarballs and fully-built leaf packages -
-  # a full day of build progress erased, forcing refetches and recompiles
-  # on the next attempt. rpool/nixos/root is at 9% used / 1.1T free (`df -h
-  # /nix/store`), so there's no actual space pressure justifying daily
-  # sweeps right now. Re-enable (`nix.gc.automatic = true;` + a `dates`)
-  # once this generation lands and stabilizes, or run
-  # `sudo nix-collect-garbage --delete-older-than 14d` manually if rpool
-  # usage climbs mid-campaign.
-  # nix.gc.automatic = lib.mkForce "false";
-
   # Match ZFS snapshot retention (hosts/cyrene/zfs/lib.nix): two weeks.
   nix.gc.options = lib.mkForce "--delete-older-than 14d";
 
-  # znver5/ElyLD world rebuild is paused, so the common.nix substituters
-  # (cache.nixos.org + cachix) apply again. Restore these when re-enabling:
-  # nix.settings = {
-  #   # This host builds the world from source (-march=znver5 below), so the
-  #   # cachix substituters in common.nix can never hit - they only serve
-  #   # standard-arch builds - yet each derivation still costs a narinfo query
-  #   # per cache. Keep only cache.nixos.org: it still serves the arch-
-  #   # independent fixed-output sources (tarballs, cargo/go/npm vendor dirs),
-  #   # which beats fetching them from upstream project sites.
-  #   substituters = lib.mkForce [ "https://cache.nixos.org" ];
-  #   # Cache "not in this cache" answers for 24h instead of the default 1h so
-  #   # iterative fix-and-rebuild runs don't re-query thousands of known misses.
-  #   narinfo-cache-negative-ttl = 86400;
-  # };
-
-  # PAUSED: plain x86_64-linux (hardware-configuration.nix) so builds come
-  # from the binary cache. To resume the world rebuild, uncomment this, the
-  # wild.nix / rustc-elymalloc.nix / ccache.nix imports and nix.settings
-  # above, the fix overlays in flake.nix, and the ElyLD bits in home-manager
-  # below and in modules/home/desktop.nix.
-  #
-  # Target the Ryzen 9 9950X3D (Zen 5). Overrides the plain "x86_64-linux"
-  # mkDefault in hardware-configuration.nix; every package is compiled with
-  # -march=znver5. Requires the gccarch-znver5 system-feature (common.nix) so
-  # the daemon accepts derivations marked with that requirement. Note: the
-  # resulting system will not boot on pre-Zen-5 (no AVX-512/newer ISA) CPUs.
-  # modules/nixos/wild.nix then replaces this stdenv's linker with ElyLD
-  # from github:tyler274/ElyLD (another world-rebuild; same campaign as znver5).
-  # nixpkgs.hostPlatform = {
-  #   system = "x86_64-linux";
-  #   gcc.arch = "znver5";
-  #   gcc.tune = "znver5";
-  # };
+  # Paused: builds come from the binary cache. See ./world-rebuild.nix.
+  # Before re-enabling, also consider turning nix.gc.automatic off: GC sweeps
+  # unrooted build progress between --keep-going attempts.
+  cyrene.worldRebuild.enable = false;
 
   networking = {
     hostName = "Cyrene";
@@ -246,18 +194,6 @@
     ];
     home.stateVersion = "25.11";
 
-    # Paused with ElyLD (see nixpkgs.hostPlatform above); common.nix's mold
-    # CC_LD/CXX_LD apply meanwhile.
-    # Interactive Meson/CMake linker. GCC 15 rejects `-fuse-ld=elyld`, so
-    # do not set CC_LD=elyld (Meson would pass that flag). Empty CC_LD
-    # leaves collect2 in charge; NIX_CFLAGS_LINK `-B` points it at ElyLD.
-    # System packages use the same `-B` via modules/nixos/wild.nix.
-    # home.sessionVariables = {
-    #   CC_LD = lib.mkForce "";
-    #   CXX_LD = lib.mkForce "";
-    #   NIX_CFLAGS_LINK = "-B${pkgs.elyld-ld}/ld-prefix";
-    # };
-
     home.packages = with pkgs; [
       nvtopPackages.nvidia
       zenith-nvidia
@@ -279,7 +215,6 @@
       #capacities
       kubectl
       pods
-      hydra-check
       #galaxy-buds-client
       calibre
       #krita

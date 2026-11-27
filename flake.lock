@@ -290,23 +290,6 @@
         "type": "github"
       }
     },
-    "kwin-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794207327,
-        "narHash": "sha256-gjqjn2dz/W7fuK8r4Zas18Fmzstkld0lQ4npnKtuajw=",
-        "owner": "KDE",
-        "repo": "kwin",
-        "rev": "cfebab880a832e1471694b18eacc5577f8fdafbf",
-        "type": "github"
-      },
-      "original": {
-        "owner": "KDE",
-        "ref": "master",
-        "repo": "kwin",
-        "type": "github"
-      }
-    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane_3",
@@ -374,28 +357,6 @@
         "type": "github"
       }
     },
-    "nixos-hardware": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1794051415,
-        "narHash": "sha256-mJok3uMK0awq2MPKdSnvTxm3UD89KD3LclQzASgtY1s=",
-        "ref": "master",
-        "rev": "1a8ff4f57ffe1f732beaa1db842247a381ea471d",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/NixOS/nixos-hardware.git"
-      },
-      "original": {
-        "ref": "master",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/NixOS/nixos-hardware.git"
-      }
-    },
     "nixos-wsl": {
       "inputs": {
         "flake-compat": "flake-compat_3",
@@ -448,23 +409,6 @@
       },
       "original": {
         "ref": "nixos-26.05",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/nixos/nixpkgs.git"
-      }
-    },
-    "nixpkgs-staging": {
-      "locked": {
-        "lastModified": 1794204849,
-        "narHash": "sha256-nn7PoMMkqYQbZZG821F93L+gA+YIOFzh1bSbIOAMUPY=",
-        "ref": "staging",
-        "rev": "c3d000d816e245111cdf1673513a6fcaf4dac89b",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/nixos/nixpkgs.git"
-      },
-      "original": {
-        "ref": "staging",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/nixos/nixpkgs.git"
@@ -574,14 +518,11 @@
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
         "kde-wayland-agent-tools": "kde-wayland-agent-tools",
-        "kwin-src": "kwin-src",
         "lanzaboote": "lanzaboote",
         "mini-diarium": "mini-diarium",
-        "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable",
-        "nixpkgs-staging": "nixpkgs-staging",
         "plasma-manager": "plasma-manager",
         "ungate": "ungate"
       }

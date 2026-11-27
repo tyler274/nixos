@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 
 let
   inherit (import ./zfs/lib.nix { inherit lib; }) agentsPoolCreated;
@@ -127,10 +127,9 @@ in
   #   just rebuilt) and risks subtle nvcc host-compiler breakage across all
   #   of it - not worth it mid-campaign. Revisit if torch actually flakes.
   #
-  # PAUSED with the znver5/ElyLD world rebuild (hosts/cyrene/default.nix):
-  # these wraps change each derivation's hash, so they'd build from source
-  # instead of coming from cache.nixos.org. Flip back to `[ ... ]` to resume.
-  nixpkgs.overlays = lib.optionals false [
+  # Part of the world rebuild (./world-rebuild.nix): these wraps change each
+  # derivation's hash, so they only apply while it is enabled.
+  nixpkgs.overlays = lib.optionals config.cyrene.worldRebuild.enable [
     (
       final: prev:
       let

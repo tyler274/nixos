@@ -29,5 +29,4 @@
   services.power-profiles-daemon.enable = true;
 
   powerManagement.enable = true;
-  powerManagement.cpuFreqGovernor = "schedutil";
 }

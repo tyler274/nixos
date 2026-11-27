@@ -30,36 +30,21 @@
   # Option lists merge, so this appends to the options set in zfs/filesystems.nix.
   fileSystems."/var/lib/docker".options = [ "nofail" ];
 
+  # sshd (port 42069, keys only) and its firewall opening come from common.nix.
   networking = {
     hostName = "Cyrene";
     networkmanager.enable = true;
-    firewall.allowedTCPPorts = [ 22 ];
   };
 
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = false;
-    ports = [ 42069 ];
-  };
+  # No swap: the full config swaps on an encrypted 990 PRO partition set up
+  # in ./scratch.nix, which a fresh install may not have yet. zswap (from
+  # ./zfs/boot.nix) needs a backing swap device, so it is off here too.
+  boot.zswap.enable = lib.mkForce false;
 
-  swapDevices = [
-    { device = "/dev/zvol/rpool/swap"; }
-  ];
-
-  # No zramSwap here: ./zfs/boot.nix already enables boot.zswap, and zram +
-  # zswap are mutually exclusive (both compress swap pages in RAM).
-
-  # common.nix enables incus; not needed for the bootstrap install.
-  virtualisation.incus = {
-    enable = lib.mkForce false;
-    ui.enable = lib.mkForce false;
-  };
-
-  # Docker (zfs storage driver) is disabled during bootstrap: with the
-  # /var/lib/docker mount marked nofail above, a skipped mount would let
-  # dockerd plant its per-layer datasets on rpool/nixos/var/lib - the exact
-  # snapshot/replication flood rpool/docker exists to prevent. The full
-  # Cyrene config re-enables it once the pool layout is settled.
+  # Docker is disabled during bootstrap: with the /var/lib/docker mount marked
+  # nofail above, a skipped mount would let dockerd write its overlay2 layers
+  # into rpool/nixos/var/lib, inside every generation snapshot. The full
+  # Cyrene config enables it once rpool/docker exists.
   virtualisation.docker.enable = lib.mkForce false;
 
   hardware.enableRedistributableFirmware = true;

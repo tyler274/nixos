@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-unstable&shallow=1";
     nixpkgs-stable.url = "git+https://github.com/nixos/nixpkgs.git?ref=nixos-26.05&shallow=1";
-    nixpkgs-staging.url = "git+https://github.com/nixos/nixpkgs.git?ref=staging&shallow=1";
     # Tracks K900's in-progress Plasma 6.7 (beta) work (nixpkgs PR #520160).
     # We overlay only `kdePackages` from this tree (see pkgsOverlay below) so
     # the rest of the system stays on the pinned nixos-unstable above. Plasma
@@ -12,10 +11,6 @@
     # segfault in DrmAbstractColorOp::matchPipeline on NVIDIA 610+.
     # Drop this input (and the overlay) once nixos-unstable carries 6.7.0.
     # nixpkgs-plasma.url = "git+https://github.com/K900/nixpkgs.git?ref=plasma-6.7&shallow=1";
-    nixos-hardware = {
-      url = "git+https://github.com/NixOS/nixos-hardware.git?ref=master&shallow=1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nixos-wsl = {
       url = "git+https://github.com/nix-community/NixOS-WSL.git?ref=main&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -32,10 +27,6 @@
     aagl = {
       url = "github:ezKEa/aagl-gtk-on-nix";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    kwin-src = {
-      url = "github:KDE/kwin/master";
-      flake = false;
     };
     # Declarative KDE management
     plasma-manager = {
@@ -100,8 +91,6 @@
       self,
       nixpkgs,
       nixpkgs-stable,
-      nixpkgs-staging,
-      nixos-hardware,
       nixos-wsl,
       home-manager,
       lanzaboote,
@@ -113,10 +102,6 @@
 
       pkgsOverlay = final: prev: {
         stable-pkgs = import nixpkgs-stable {
-          inherit system;
-          config.allowUnfree = true;
-        };
-        staging-pkgs = import nixpkgs-staging {
           inherit system;
           config.allowUnfree = true;
         };
@@ -204,7 +189,7 @@
           modules = [
             # ({ ... }: { nixpkgs.overlays = [ pkgsOverlay kdeOverlay ]; })
             (
-              { ... }:
+              { config, ... }:
               {
                 nixpkgs.overlays = [
                   pkgsOverlay
@@ -213,19 +198,21 @@
                   snapmakerOrcaOverlay
                   codeCursorOverlay
                   antigravityOverlay
-                  # Paused with the znver5/ElyLD world rebuild (see
-                  # hosts/cyrene/default.nix): each of these overrides a
-                  # core derivation (openssl, gnutls, llvm, nix, nodejs,
-                  # elfutils, numpy, ...), which changes its hash and misses
-                  # cache.nixos.org for it and everything depending on it.
-                  # Re-enable alongside gcc.arch = "znver5".
-                  # llvmFixOverlay
-                  # znver5FixOverlay
-                  # nodejsFixOverlay
-                  # nixFixOverlay
-                  # starlarkFixOverlay
-                  # rsyncFixOverlay
-                  # elfutilsFixOverlay
+                ]
+                # Only during Cyrene's world rebuild (hosts/cyrene/world-rebuild.nix):
+                # each overrides a core derivation (openssl, gnutls, llvm, nix,
+                # nodejs, elfutils, numpy, ...), which changes its hash and
+                # misses cache.nixos.org for it and everything depending on it.
+                ++ nixpkgs.lib.optionals (config.cyrene.worldRebuild.enable or false) [
+                  llvmFixOverlay
+                  znver5FixOverlay
+                  nodejsFixOverlay
+                  nixFixOverlay
+                  starlarkFixOverlay
+                  rsyncFixOverlay
+                  elfutilsFixOverlay
+                ]
+                ++ [
                   # Keep ElyMalloc available for the runtime allocator, but use
                   # stock mold for binary-cache compatibility. ElyMalloc's mold
                   # override passes `mimalloc`, which newer nixpkgs no longer accepts.

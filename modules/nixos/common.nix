@@ -102,6 +102,8 @@
         zlib
       ];
     };
+    # The one SSH agent (SSH_AUTH_SOCK). Turn off if a host switches to
+    # Bitwarden's agent (bitwarden.sshAgent in Home Manager).
     ssh.startAgent = true;
     direnv.enable = true;
     nh.enable = true;
@@ -126,8 +128,6 @@
     ntfs3g
     e2fsprogs
     zfs-prune-snapshots
-    direnv
-    nix-direnv
     nix-output-monitor
     vulnix
     inspec
@@ -186,24 +186,39 @@
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql;
-    enableTCPIP = true;
+    # Loopback only; enableTCPIP would listen on every address.
+    settings.listen_addresses = lib.mkForce "localhost";
+    # The Unix socket checks the OS user (luluco may also act as postgres).
+    # Loopback TCP stays trust: coda-rust's tests connect as
+    # postgresql://postgres@127.0.0.1 with no password.
+    identMap = ''
+      superusers postgres postgres
+      superusers root     postgres
+      superusers luluco   postgres
+      superusers luluco   luluco
+    '';
     authentication = lib.mkOverride 10 ''
-      local all all trust
+      local all all peer map=superusers
       host all all 127.0.0.1/32 trust
       host all all ::1/128 trust
     '';
-    initialScript = pkgs.writeText "backend-initScript" ''
-      CREATE DATABASE msf;
-    '';
+    # Metasploit's database, owned by its own role instead of postgres.
+    ensureDatabases = [ "msf" ];
+    ensureUsers = [
+      {
+        name = "msf";
+        ensureDBOwnership = true;
+      }
+    ];
   };
 
   services.jellyfin.enable = true;
 
   users.defaultUserShell = pkgs.brush;
 
-  services.udev.extraRules = ''
-    SUBSYSTEM=="usb", ATTRS{idVendor}=="0764", ATTRS{idProduct}=="0501", MODE="664", GROUP="nut", OWNER="nut"
-  '';
+  # Root keeps a POSIX shell so a broken brush build cannot lock out rescue
+  # and `sudo -i` logins.
+  users.users.root.shell = pkgs.bashInteractive;
 
   power.ups = {
     enable = true;
@@ -233,7 +248,9 @@
     ];
 
     users.upsmon = {
-      passwordFile = "${pkgs.writeText "upsmon-password" "buttsmcgeeeeee"}";
+      # Root-only, outside the world-readable store; generated on first start
+      # by nut-upsmon-password below.
+      passwordFile = "/var/lib/nut/upsmon.password";
       upsmon = "primary";
     };
 
@@ -256,6 +273,30 @@
         FINALDELAY = 5;
       };
     };
+  };
+
+  # upsd and upsmon only talk to each other over loopback, so the password
+  # needs no human; create it once and keep it across boots.
+  systemd.services.nut-upsmon-password = {
+    description = "Generate the NUT upsmon password";
+    before = [
+      "upsd.service"
+      "upsmon.service"
+    ];
+    requiredBy = [
+      "upsd.service"
+      "upsmon.service"
+    ];
+    unitConfig.ConditionPathExists = "!/var/lib/nut/upsmon.password";
+    serviceConfig = {
+      Type = "oneshot";
+      UMask = "0077";
+    };
+    script = ''
+      mkdir -p /var/lib/nut
+      ${pkgs.openssl}/bin/openssl rand -hex 24 > /var/lib/nut/upsmon.password.tmp
+      mv /var/lib/nut/upsmon.password.tmp /var/lib/nut/upsmon.password
+    '';
   };
 
   users = {

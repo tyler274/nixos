@@ -7,7 +7,11 @@
 
 let
   cyreneZfs = import ./lib.nix { inherit lib; };
-  inherit (cyreneZfs) nixosSnapshotRetentionDays;
+  inherit (cyreneZfs) nixosSnapshotRetentionDays unsnapshottedHomeDatasets;
+  # `zfs snapshot -r` cannot exclude children, so drop the new snapshot on
+  # rebuildable datasets right after taking it; otherwise it pins deleted
+  # games, caches and /tmp for the whole retention window.
+  noGenerationSnapshot = [ "rpool/nixos/tmp" ] ++ unsnapshottedHomeDatasets;
   dockerZfsCleanup = pkgs.writeShellApplication {
     name = "docker-zfs-cleanup";
     runtimeInputs = [ config.virtualisation.docker.package config.boot.zfs.package pkgs.util-linux ];
@@ -21,7 +25,8 @@ in
   services.zfs = {
     autoScrub = {
       enable = true;
-      interval = "daily";
+      # A scrub reads every block of every pool; weekly is enough on NVMe.
+      interval = "weekly";
     };
     trim = {
       enable = true;
@@ -70,6 +75,9 @@ in
     text = ''
       ts=$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S)
       ${pkgs.zfs}/bin/zfs snapshot -r rpool/nixos@nixos-$ts 2>/dev/null || true
+      for ds in ${lib.escapeShellArgs noGenerationSnapshot}; do
+        ${pkgs.zfs}/bin/zfs destroy "$ds@nixos-$ts" 2>/dev/null || true
+      done
 
       cutoff=$(${pkgs.coreutils}/bin/date -d "${toString nixosSnapshotRetentionDays} days ago" +%Y%m%d)
       while IFS= read -r snap; do

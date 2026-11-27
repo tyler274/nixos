@@ -448,7 +448,13 @@ let
     # (not cleared) so WAYLAND_DISPLAY / DISPLAY / XAUTHORITY / XDG_RUNTIME_DIR
     # reach the child unchanged.
     if [ -n "''${XDG_RUNTIME_DIR:-}" ]; then
-      bwrap_args+=(--ro-bind-try "$XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR")
+      # Only the display and audio sockets, not the whole runtime dir: it also
+      # holds the session bus, the systemd user manager and the SSH, KWallet
+      # and Bitwarden agent sockets.
+      bwrap_args+=(--tmpfs "$XDG_RUNTIME_DIR")
+      for s in "''${WAYLAND_DISPLAY:-wayland-0}" pipewire-0 pulse; do
+        bwrap_args+=(--ro-bind-try "$XDG_RUNTIME_DIR/$s" "$XDG_RUNTIME_DIR/$s")
+      done
     fi
     if [ -n "''${XAUTHORITY:-}" ]; then
       bwrap_args+=(--ro-bind-try "$XAUTHORITY" "$XAUTHORITY")

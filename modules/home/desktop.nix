@@ -6,6 +6,36 @@
   ...
 }:
 
+let
+  edgeDesktopEntry = noDisplay: {
+    name = "Microsoft Edge";
+    genericName = "Web Browser";
+    exec = "microsoft-edge %U";
+    icon = "microsoft-edge";
+    terminal = false;
+    startupNotify = true;
+    inherit noDisplay;
+    settings.StartupWMClass = "microsoft-edge";
+    categories = [ "Network" "WebBrowser" ];
+    mimeType = [
+      "text/html"
+      "application/xhtml+xml"
+      "x-scheme-handler/http"
+      "x-scheme-handler/https"
+      "x-scheme-handler/microsoft-edge"
+    ];
+    actions = {
+      new-window = {
+        name = "New Window";
+        exec = "microsoft-edge";
+      };
+      new-private-window = {
+        name = "New InPrivate Window";
+        exec = "microsoft-edge --inprivate";
+      };
+    };
+  };
+in
 {
   imports = [
     inputs.mini-diarium.homeModules.default
@@ -26,25 +56,21 @@
     });
   };
 
+  # Firefox, Thunderbird, Signal, Edge, Fractal and Halloy are installed by
+  # modules/nixos/desktop-common.nix, where the firejail wrapper wins their
+  # bin/ entry. A copy here would come first on PATH and skip firejail, so
+  # Home Manager manages their config only (package = null).
   programs.firefox = {
     enable = true;
     nativeMessagingHosts = [ pkgs.kdePackages.plasma-browser-integration ];
     configPath = "${config.xdg.configHome}/mozilla/firefox";
-    package = pkgs.firefox;
-  };
-
-  programs.thunderbird = {
-    enable = true;
-    package = pkgs.thunderbird-bin;
+    package = null;
   };
 
   #programs.nheko.enable = true;
 
   home.packages = with pkgs; [
-    signal-desktop
     discord
-    fractal
-    microsoft-edge
     stable-pkgs.telegram-desktop
 
     wowup-cf
@@ -55,16 +81,10 @@
     pkg-config
     freetype
     mold
-    # PATH-safe ElyLD (`elyld` / `ld.elyld`). `pkgs.wild` / `pkgs.elyld` is
-    # wrapBintoolsWith and ships `bin/ld`, which collides with gcc's `ld`
-    # in home-manager-path. Interactive `-B` is NIX_CFLAGS_LINK in
-    # hosts/cyrene/default.nix; collect2 finds ld-prefix/ld from there.
-    # Paused with the znver5/ElyLD world rebuild (built from source).
-    # elyld-ld
+    # Cyrene adds elyld-ld here during its world rebuild (hosts/cyrene/world-rebuild.nix).
     rustup
     dotnet-sdk_10
 
-    nix-output-monitor
 
     #(appimage-run.override {
     #  extraPkgs = pkgs: [ nss swt webkitgtk_4_1 glib-networking ];
@@ -75,7 +95,6 @@
     krita
     # Unmaintained and removed from nixpkgs
     #stable-pkgs.cura
-    obs-studio
     reaper
     lycheeslicer
     cura-appimage
@@ -187,6 +206,11 @@
       };
     };
   };
+
+  # Edge's shipped desktop files exec its store path, bypassing the firejail
+  # wrapper on PATH. Shadow both IDs (the portal uses com.microsoft.Edge).
+  xdg.desktopEntries.microsoft-edge = edgeDesktopEntry false;
+  xdg.desktopEntries."com.microsoft.Edge" = edgeDesktopEntry true;
 
   # desktopEntries installs a package, not an xdg.dataFile. Explicitly manage
   # the local override too, so it cannot shadow future launcher updates.

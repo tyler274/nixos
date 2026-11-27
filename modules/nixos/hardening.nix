@@ -2,10 +2,6 @@
   # Prevent replacing the running kernel image (blocks kexec attacks).
   security.protectKernelImage = true;
 
-  # Force Page Table Isolation; mitigates Meltdown on Intel, harmless no-op on
-  # unaffected AMD CPUs (the hardware detection will skip it there).
-  security.forcePageTableIsolation = true;
-
   # Hardening kernel params recommended by https://wiki.nixos.org/wiki/NixOS_Hardening
   boot.kernelParams = [
     # Don't merge slab caches - makes heap spray harder.

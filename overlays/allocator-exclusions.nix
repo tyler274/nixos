@@ -267,6 +267,7 @@ in
 // lib.genAttrs [
   "electron_42"
   "electron_43"
+  "electron_44"
 ] (n: wrapElectron prev.${n})
 // lib.genAttrs [
   "firefox"

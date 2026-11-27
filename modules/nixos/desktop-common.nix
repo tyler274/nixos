@@ -33,8 +33,22 @@
     pulse.enable = true;
   };
 
-  # Provides `pw-jack` for running JACK apps on PipeWire on demand.
-  environment.systemPackages = [ pkgs.pipewire.jack ];
+  environment.systemPackages = with pkgs; [
+    # Provides `pw-jack` for running JACK apps on PipeWire on demand.
+    pipewire.jack
+
+    # The apps programs.firejail.wrappedBinaries confines (below). They must
+    # be installed here, not by Home Manager: the per-user profile comes
+    # before /run/current-system/sw/bin on PATH, so a Home Manager copy runs
+    # unconfined. Here the wrapper (meta.priority = -1) wins bin/, and the
+    # packages still supply the desktop files and icons.
+    firefox
+    thunderbird-bin
+    signal-desktop
+    microsoft-edge
+    fractal
+    halloy
+  ];
 
   hardware = {
     # /dev/uinput for kde-wayland-agent-tools (modules/home/agent-desktop-tools.nix):
@@ -206,11 +220,6 @@
       }
     '';
   };
-
-  # Remove once Bitwarden ships with a non-insecure Electron version.
-  nixpkgs.config.permittedInsecurePackages = [
-    "electron-39.8.10"
-  ];
 
   fonts.packages = with pkgs; [
     # Hack patched with Nerd Font glyphs (powerline + icon Private Use Area

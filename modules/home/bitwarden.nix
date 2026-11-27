@@ -17,6 +17,17 @@ in
   options.bitwarden = {
     enable = lib.mkEnableOption "Bitwarden password manager";
 
+    sshAgent = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Point SSH_AUTH_SOCK at Bitwarden's SSH agent. Turn on only after
+        enabling the agent in Bitwarden's settings, and set
+        programs.ssh.startAgent = false on the host; otherwise SSH sees a
+        socket that does not exist.
+      '';
+    };
+
     liberaItem = lib.mkOption {
       type = lib.types.str;
       default = "libera.chat";
@@ -81,7 +92,7 @@ in
       fi
     '';
 
-    home.sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
+    home.sessionVariables.SSH_AUTH_SOCK = lib.mkIf cfg.sshAgent "$XDG_RUNTIME_DIR/.bitwarden-ssh-agent.sock";
 
     xdg.mimeApps.defaultApplications."x-scheme-handler/bitwarden" = [ "bitwarden.desktop" ];
   };
